@@ -397,9 +397,111 @@ function renderForbidden(d) {
 }
 
 // ======================================================================
+// Citation — JAMA text + BibTeX + downloadable RIS
+// ======================================================================
+const CITE = {
+  authors: "Methodology Working Group, Population Health Data Center, National Cheng Kung University; Tsai DH-T, Lai EC-C.",
+  publisher: "Population Health Data Center, National Cheng Kung University",
+  titleZh: "工具變數 IV 線上工具",
+  titleEn: "Instrumental Variables — Online Teaching Tool",
+  year: "2026",
+  url: "https://danielhttsai.github.io/iv-tool/",
+};
+const MONTHS = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+function accessDates() {
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+  return {
+    en: `${MONTHS[m]} ${day}, ${y}`,                                  // Accessed May 30, 2026
+    zh: `${y}年${m + 1}月${day}日`,                                    // 2026年5月30日
+    ris: `${y}/${String(m + 1).padStart(2, "0")}/${String(day).padStart(2, "0")}`, // 2026/05/30
+  };
+}
+
+function citationText() {
+  const a = accessDates();
+  const title = lang() === "en" ? CITE.titleEn : CITE.titleZh;
+  return lang() === "en"
+    ? `${CITE.authors} ${title}. ${CITE.publisher}. Published ${CITE.year}. Accessed ${a.en}. ${CITE.url}`
+    : `${CITE.authors} ${title}. ${CITE.publisher}. 發表於 ${CITE.year} 年。取用於 ${a.zh}。${CITE.url}`;
+}
+
+function bibtex() {
+  const a = accessDates();
+  return [
+    "@misc{phdc-iv-tool-2026,",
+    "  author       = {{Methodology Working Group, Population Health Data Center, National Cheng Kung University} and Tsai, DH-T and Lai, EC-C},",
+    `  title        = {${CITE.titleEn}},`,
+    `  year         = {${CITE.year}},`,
+    `  publisher    = {${CITE.publisher}},`,
+    `  howpublished = {\\url{${CITE.url}}},`,
+    `  note         = {Accessed ${a.en}}`,
+    "}",
+  ].join("\n");
+}
+
+function risText() {
+  const a = accessDates();
+  return [
+    "TY  - ELEC",
+    "AU  - Methodology Working Group, Population Health Data Center, National Cheng Kung University",
+    "AU  - Tsai, DH-T",
+    "AU  - Lai, EC-C",
+    `TI  - ${CITE.titleEn}`,
+    `PY  - ${CITE.year}`,
+    `PB  - ${CITE.publisher}`,
+    `UR  - ${CITE.url}`,
+    `Y2  - ${a.ris}`,
+    "ER  - ",
+    "",
+  ].join("\r\n");
+}
+
+function renderCitation() {
+  const el = document.getElementById("citeText");
+  if (!el) return;
+  const txt = citationText();
+  // linkify the trailing URL
+  el.innerHTML = txt.replace(CITE.url, `<a href="${CITE.url}" target="_blank" rel="noopener">${CITE.url}</a>`);
+}
+
+async function flash(btn, msg) {
+  const cur = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(() => { btn.textContent = cur; }, 1400);
+}
+async function copyText(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    flash(btn, tr("已複製 ✓", "Copied ✓"));
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); flash(btn, tr("已複製 ✓", "Copied ✓")); }
+    catch (e2) { flash(btn, tr("複製失敗", "Copy failed")); }
+    document.body.removeChild(ta);
+  }
+}
+
+document.getElementById("copyCite").addEventListener("click", (e) => copyText(citationText(), e.target));
+document.getElementById("copyBib").addEventListener("click", (e) => copyText(bibtex(), e.target));
+document.getElementById("dlRis").addEventListener("click", () => {
+  const blob = new Blob([risText()], { type: "application/x-research-info-systems" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "iv-tool.ris";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+renderCitation();
+
+// ======================================================================
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
+  renderCitation();
   refreshPlay();                                   // interactive tab
   if (state.lastReq) {                             // analysis + dashboard
     const req = { ...state.lastReq, lang: lang() };

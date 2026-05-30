@@ -33,16 +33,19 @@ b { color: #0b1020; }
   position: sticky; top: 0; z-index: 10;
   background: #fff; border-bottom: 1px solid var(--line);
   padding: .7rem 1.5rem; box-shadow: var(--shadow);
-  display: grid; grid-template-columns: 1fr auto; align-items: start; column-gap: 1rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem;
 }
-.topbar .tabs { grid-column: 1 / -1; }
+.topbar .brand { order: 0; }
 .lang-toggle {
-  grid-column: 2; grid-row: 1; align-self: center;
-  border: 1px solid var(--z); background: #fff; color: var(--z);
-  padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
-  font-size: .85rem; font-weight: 700; white-space: nowrap; transition: .15s;
+  order: 2; margin-left: auto;
+  border: 1.5px solid var(--z); background: var(--z); color: #fff;
+  padding: .45rem 1rem; border-radius: 999px; cursor: pointer;
+  font-size: .95rem; font-weight: 700; white-space: nowrap; transition: .15s;
+  box-shadow: var(--shadow);
 }
-.lang-toggle:hover { background: var(--z); color: #fff; }
+.lang-toggle::before { content: "🌐 "; }
+.lang-toggle:hover { filter: brightness(1.08); }
+.topbar .tabs { order: 3; flex-basis: 100%; }
 .brand { font-weight: 800; font-size: 1.15rem; letter-spacing: .5px; }
 .brand span { color: var(--z); }
 .tabs { display: flex; gap: .4rem; margin-top: .6rem; flex-wrap: wrap; }
@@ -159,10 +162,14 @@ select { padding: .45rem; border: 1px solid var(--line); border-radius: 8px; fon
   background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
 }
 .refs h2 { margin-top: 0; }
+.refs h3 { margin: 1.2rem 0 .5rem; }
 .refs .cite {
   background: #f7f9fd; border-left: 4px solid var(--z); border-radius: 8px;
-  padding: .7rem .9rem; font-size: .95rem; color: #2b3849;
+  padding: .7rem .9rem; font-size: .95rem; color: #2b3849; line-height: 1.7;
 }
+.refs .cite a { color: var(--z); word-break: break-all; }
+.cite-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: .8rem 0 1.4rem; }
+.cite-actions .btn { font-size: .88rem; padding: .45rem .9rem; }
 .refs .reflist { margin: .8rem 0 0; padding-left: 1.2rem; }
 .refs .reflist li { font-size: .88rem; color: #404a60; margin: .4rem 0; line-height: 1.6; }
 
