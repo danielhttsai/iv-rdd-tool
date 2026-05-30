@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>工具變數 IV 線上工具</title>
+<link rel="stylesheet" href="/styles.css" />
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">工具變數 <span>IV</span> 線上工具</div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="learn">① IV 是什麼</button>
+    <button class="tab" data-tab="play">② 互動講解</button>
+    <button class="tab" data-tab="analyze">③ 資料分析</button>
+    <button class="tab" data-tab="assume">④ 假設檢驗</button>
+    <button class="tab" data-tab="ml">⑤ 用 AI 強化</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===================== 1. 教學 ===================== -->
+  <section id="learn" class="panel active">
+    <div class="banner">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1>用「政府疫苗券」的故事看懂工具變數</h1>
+    <p class="lead">
+      我們想知道一個因果問題：<b>去接種疫苗，真的能改善健康嗎？</b>
+      最直覺的做法是「把有打疫苗的人和沒打的人直接比較」——但這會被誤導。
+    </p>
+
+    <div class="card warn">
+      <h3>為什麼不能直接比較？</h3>
+      <p>
+        會主動去打疫苗的人，可能本來就比較注重健康、平常也更願意運動、按時看醫生。
+        於是他們後來比較健康，<b>不一定是疫苗的功勞</b>，而是「健康意識」這個
+        看不見的<b>干擾因子</b>同時影響了兩邊。直接比較會<b>高估</b>真正的效果。
+      </p>
+    </div>
+
+    <h2>工具變數的聰明之處</h2>
+    <p>
+      我們改用一個「外力」當作切入點：<b>政府隨機抽中一些地區，免費寄送疫苗券（還提供到府接送）</b>。
+      抽中哪些地區是隨機的，跟個人有沒有健康意識無關，但它會推一部分人去接種疫苗。
+      這個外力就是<b>工具變數（Instrument）</b>。
+    </p>
+
+    <div class="dag">
+      <div class="node z">疫苗券 Z<small>工具變數</small></div>
+      <div class="arrow">→</div>
+      <div class="node a">接種疫苗 A<small>處置</small></div>
+      <div class="arrow">→</div>
+      <div class="node y">健康變化 Y<small>結果</small></div>
+      <div class="confounder">
+        <div class="node u">健康意識 U<small>看不見的干擾因子</small></div>
+        <div class="u-arrows">↘ &nbsp;&nbsp;&nbsp; ↙</div>
+      </div>
+    </div>
+    <p class="caption">
+      重點：疫苗券(Z) <b>只透過</b> 讓人去接種(A) 來影響健康(Y)，而且 <b>不</b> 受「健康意識(U)」影響。
+      因此用它當切入點，就能把 U 造成的污染繞過去。
+    </p>
+
+    <h2>三種人</h2>
+    <div class="cards">
+      <div class="card"><h3>Complier（順從者）</h3><p>收到疫苗券就會去接種、沒收到就不會。<b>IV 估計的就是這群人的效果。</b></p></div>
+      <div class="card"><h3>Always/Never-taker</h3><p>不管有沒有收到疫苗券，行為都一樣（本來就會打 / 怎樣都不打）。他們不提供因果資訊。</p></div>
+      <div class="card"><h3>Defier（反抗者）</h3><p>收到疫苗券反而更不去打——我們<b>假設這種人不存在</b>（單調性）。</p></div>
+    </div>
+
+    <div class="card info">
+      <h3>一句話總結</h3>
+      <p>
+        工具變數法 = 先看「疫苗券推動了多少人去接種」（第一階段），
+        再看「疫苗券讓健康改變多少」（簡化式），兩者相除就得到
+        <b>順從者身上的真正因果效應（稱為 LATE）</b>。
+        想看實際數字，請到 <b>② 互動講解</b> 與 <b>③ 資料分析</b>。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== 2. 互動 ===================== -->
+  <section id="play" class="panel">
+    <h1>動手玩：外力「夠不夠力」會怎樣影響答案</h1>
+
+    <div class="card info">
+      <h3>先用白話想一遍</h3>
+      <p>
+        政府寄出疫苗券，我們想用「收到券的人後來有沒有比較健康」去<b>回推疫苗到底有沒有效</b>。
+        但這招好不好用，取決於兩件事：
+      </p>
+      <p>
+        ① <b>這張券有多少「說服力」</b>——能真的說動多少人去打針？<br />
+        ② <b>我們調查了多少人</b>——問越多人，答案就越穩、越不會亂跳。
+      </p>
+      <p>
+        下面兩個滑桿就是讓你調這兩件事。我們偷偷把<b>真正的疫苗效果固定成 1.80</b>，
+        你來看看：自己拉出來的估計，能不能準確抓到這個藏起來的 1.80。
+      </p>
+    </div>
+
+    <div class="controls">
+      <label>
+        這張券的「說服力」：<b id="csVal">9.0%</b>
+        <input type="range" id="csSlider" min="1" max="40" value="9.0" step="0.1" />
+        <small>收到券的人裡，有多少人因此真的去打針。說動越多人，後面越好估。</small>
+      </label>
+      <label>
+        我們調查了多少人：<b id="stVal">1.0×</b>
+        <input type="range" id="stSlider" min="0.2" max="2" value="1" step="0.1" />
+        <small>調查越多人，答案的誤差範圍越小、越穩定。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label">這張券夠不夠力</div><div class="stat-num" id="fStat">–</div><div class="stat-foot" id="fNote"></div></div>
+      <div class="stat"><div class="stat-label">估出來的疫苗效果</div><div class="stat-num" id="ivEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
+      <div class="stat"><div class="stat-label">答案的誤差範圍</div><div class="stat-num small" id="ivCi">–</div><div class="stat-foot" id="ciNote"></div></div>
+    </div>
+    <div id="playChart" class="chart"></div>
+    <p class="caption">
+      觀察：當「券的說服力」很低（沒說動幾個人），就算真正效果固定是 1.80，
+      你的估計也會劇烈亂跳、誤差範圍超寬——這就是 IV 分析最大的陷阱。
+    </p>
+
+    <details class="term">
+      <summary>看專有名詞解釋</summary>
+      <p>
+        上面那些白話，對應到統計課本的術語是這樣：<br />
+        • 「券的說服力」＝<b>complier（順從者）比例</b>＝第一階段係數：被這個外力推動而改變行為的人佔多少。<br />
+        • 「這張券夠不夠力」的分數＝<b>第一階段 F 統計量</b>：大於 10 才算夠力，低於 10 稱為「<b>弱工具（weak instrument）</b>」。<br />
+        • 「估出來的疫苗效果」＝<b>IV 估計（LATE，局部平均處置效果）</b>：只代表被券推動的那群順從者身上的效果。<br />
+        • 「答案的誤差範圍」＝<b>95% 信賴區間</b>：區間越寬，代表估計越不確定。
+      </p>
+    </details>
+  </section>
+
+  <!-- ===================== 3. 分析 ===================== -->
+  <section id="analyze" class="panel">
+    <h1>資料分析：跑一次完整的 IV</h1>
+
+    <div class="datasource">
+      <button id="useExample" class="btn primary">載入內建疫苗券範例</button>
+      <span class="or">或</span>
+      <label class="btn">上傳 CSV<input type="file" id="fileInput" accept=".csv" hidden /></label>
+      <span id="dataStatus" class="muted">尚未載入資料</span>
+    </div>
+
+    <div id="colMap" class="colmap hidden">
+      <div class="field"><label>結果 Y（outcome）</label><select id="selY"></select></div>
+      <div class="field"><label>處置 A（treatment）</label><select id="selA"></select></div>
+      <div class="field"><label>工具 Z（instrument）</label><select id="selZ"></select></div>
+      <div class="field wide"><label>共變項（covariates，可多選）</label><select id="selCov" multiple size="5"></select></div>
+      <button id="runAnalyze" class="btn primary">執行 IV 分析</button>
+    </div>
+
+    <div id="analyzeOut" class="hidden">
+      <h2>各種估計的比較</h2>
+      <div id="estChart" class="chart"></div>
+      <div class="result-cards" id="resultCards"></div>
+    </div>
+  </section>
+
+  <!-- ===================== 4. 儀表板 ===================== -->
+  <section id="assume" class="panel">
+    <h1>這個分析可不可信?五項體檢</h1>
+    <p class="lead">
+      工具變數法要成立,得先通過幾道關卡。下面用<b>白話</b>幫你一項一項體檢,
+      綠燈代表沒問題、黃燈要留意、紅燈代表有狀況。每張卡片最下面可以展開看「專有名詞解釋」。
+      先到 <b>③ 資料分析</b> 載入資料,這裡就會自動跑。
+    </p>
+    <p class="caption">（這五項對應統計上的 A1–A4b 假設,但你不用記這些代號,看白話說明就好。）</p>
+    <div id="overall" class="overall hidden"></div>
+    <div id="assumeCards" class="assume-cards"></div>
+    <p id="assumeHint" class="muted">尚未載入資料——請先到「③ 資料分析」載入或上傳資料。</p>
+  </section>
+
+  <!-- ===================== 5. 用 AI 強化 ===================== -->
+  <section id="ml" class="panel">
+    <div class="banner">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時模擬出來的，僅供教學展示。</div>
+    <h1>AI 怎麼幫「工具變數」一把</h1>
+    <p class="lead">
+      還記得 ② 互動講解裡那個最大的陷阱嗎？——<b>外力（券）太弱，答案就會亂跳</b>。
+      AI／機器學習能在這裡幫上兩個忙，下面我們用<b>同一個疫苗的故事</b>，一步一步看懂。
+    </p>
+
+    <div class="cards">
+      <div class="card"><h3>藥方一：把很多弱外力揉成一個強外力</h3>
+        <p>一張券推不動幾個人，但如果手上有<b>很多種小外力</b>（券、診所傳單、公司提醒、社區廣播…），
+        每個都弱，AI 能把它們<b>聰明地加起來</b>，合成一個夠力的大外力。</p></div>
+      <div class="card"><h3>藥方二：讓「外力→打針」這條關係可以彎</h3>
+        <p>有些外力的影響<b>不是一條直線</b>。用直線去抓會抓不到、以為它沒用；
+        讓 AI 把這條關係「<b>彎起來</b>」，就能抓到直線錯過的力道。</p></div>
+      <div class="card warn"><h3>安全帶：交叉擬合（一定要繫）</h3>
+        <p>讓 AI 學這些關係時，有個鐵則：<b>不能拿同一批人的資料既學習又驗證</b>，
+        否則它會「<b>偷看答案</b>」、給出看似漂亮其實騙人的結果。交叉擬合就是這條安全帶。</p></div>
+    </div>
+
+    <!-- 藥方一 -->
+    <h2>藥方一：把很多弱外力合成一個強外力</h2>
+    <div class="card info">
+      <h3>先用白話想一遍</h3>
+      <p>
+        想像你手上有<b>好幾種</b>推人去打針的小外力，每一種單獨看都<b>太弱</b>
+        （像 ② 裡那種會讓答案亂跳的弱券）。
+        AI 的做法是：把這些小外力<b>各取一點、聰明地組合</b>成一個全新的「合成外力」。
+        合成後它變得<b>夠力</b>，答案就穩了。下面拉拉看：
+      </p>
+    </div>
+    <div class="controls">
+      <label>
+        手上有幾種小外力：<b id="kVal">12</b>
+        <input type="range" id="kSlider" min="3" max="20" value="12" step="1" />
+        <small>種類越多，AI 能組合出的合成外力通常越強。</small>
+      </label>
+      <label>
+        每種外力的力道：<b id="psVal">3.0%</b>
+        <input type="range" id="psSlider" min="1" max="7" value="3" step="0.5" />
+        <small>每一種單獨能說動多少人。刻意調很小，凸顯「單獨都很弱」。</small>
+      </label>
+    </div>
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label">最強的單一外力</div><div class="stat-num" id="synSingleF">–</div><div class="stat-foot">單獨用最好的那一個</div></div>
+      <div class="stat"><div class="stat-label">合成後的外力</div><div class="stat-num" id="synMlivF">–</div><div class="stat-foot">AI 把全部揉成一個</div></div>
+      <div class="stat"><div class="stat-label">合成後估出的效果</div><div class="stat-num" id="synEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
+    </div>
+    <div id="synChart" class="chart"></div>
+    <p class="caption">
+      觀察：左邊一根根矮柱是<b>每種外力單獨的力道</b>（大多很矮、不及格線 10），
+      最右邊那根高柱是 AI <b>合成後的外力</b>——通常遠遠超過及格線。
+      用單一弱外力估，誤差範圍寬到沒法用；用合成外力，範圍收窄、穩穩罩住 1.80。
+    </p>
+    <details class="term">
+      <summary>看專有名詞解釋</summary>
+      <p>
+        • 「小外力」＝<b>候選工具變數（candidate instruments）</b>；「把它們揉成一個」＝
+        <b>工具合成（instrument synthesis / MLIV）</b>，用機器學習預測處置，再把預測值當成新工具。<br />
+        • 柱子的高度＝<b>第一階段 F 統計量</b>，<b>10</b> 是常用門檻；低於 10 叫<b>弱工具</b>。<br />
+        • 「誤差範圍」＝<b>95% 信賴區間</b>。
+      </p>
+    </details>
+
+    <!-- 藥方二 -->
+    <h2>藥方二：讓第一階段「可以彎」</h2>
+    <div class="card info">
+      <h3>先用白話想一遍</h3>
+      <p>
+        換一個外力：<b>「離今天的快打巡迴車有多遠」</b>。它的影響<b>不是直線</b>——
+        太近沒感覺、太遠也懶得去，只有<b>中間某個甜蜜點</b>最會推人去打針（像一座小山丘）。
+        如果你硬用一條<b>直線</b>去描述它，會發現<b>幾乎抓不到關係</b>，誤以為這個外力沒用；
+        但讓 AI 把這條關係<b>彎成山丘的形狀</b>，力道一下子就出來了。按下面看結果：
+      </p>
+    </div>
+    <button id="runNonlinear" class="btn primary">跑「直線 vs 可彎」的比較</button>
+    <div id="nlOut" class="hidden">
+      <div class="play-grid">
+        <div class="stat"><div class="stat-label">用直線抓</div><div class="stat-num" id="nlLinF">–</div><div class="stat-foot" id="nlLinNote"></div></div>
+        <div class="stat"><div class="stat-label">讓它可以彎</div><div class="stat-num" id="nlFlexF">–</div><div class="stat-foot" id="nlFlexNote"></div></div>
+        <div class="stat"><div class="stat-label">可彎後估出的效果</div><div class="stat-num" id="nlFlexEst">–</div><div class="stat-foot">真正答案藏在 1.80</div></div>
+      </div>
+      <div id="nlChart" class="chart"></div>
+      <p class="caption">
+        藍色平線是「<b>硬用直線</b>」看到的——幾乎是平的，所以以為外力沒用。
+        綠色曲線是「<b>讓它可以彎</b>」看到的——清楚抓到中間那座山丘。
+      </p>
+    </div>
+    <details class="term">
+      <summary>看專有名詞解釋</summary>
+      <p>
+        • 「讓關係可以彎」＝用<b>彈性／非線性的第一階段</b>（多項式、樹模型、神經網路…）取代直線回歸。<br />
+        • 但<b>不能</b>把彎好的預測值直接塞回第二階段——那叫<b>禁止迴歸（forbidden regression）</b>，
+        會因為「偷看答案」而出現偏誤；正確做法是搭配下面的<b>交叉擬合</b>。
+      </p>
+    </details>
+
+    <!-- 安全帶 / 藥方三 -->
+    <h2>藥方三・安全帶：為什麼一定要「交叉擬合」</h2>
+    <div class="card warn">
+      <h3>用白話講這條鐵則</h3>
+      <p>
+        AI 很會「<b>背答案</b>」。如果讓它用<b>同一批人</b>的資料既學習「外力→打針」這條關係、
+        又拿這條關係去估效果，它會把這批人的<b>運氣（雜訊）也一起背起來</b>，
+        給你一個<b>看似很準、其實騙你</b>的結果（這就是「禁止迴歸」陷阱）。<br />
+        <b>交叉擬合</b>的做法很單純：把人<b>分成幾組</b>，永遠用<b>「別組」</b>的資料學關係、
+        再套到<b>「這組」</b>沒看過的人身上。AI 沒機會偷看，結果才誠實。
+      </p>
+    </div>
+
+    <div class="card info">
+      <h3>現場示範：同一個 AI 模型，兩種用法</h3>
+      <p>
+        下面用一個真正會「背答案」的<b>樹模型（random forest）</b>當第一階段，
+        在<b>同一筆資料</b>上跑兩次，唯一的差別是有沒有繫安全帶。按鈕跑跑看
+        （要訓練模型，約需幾秒）：
+      </p>
+    </div>
+    <button id="runForbidden" class="btn primary">跑「偷看 vs 交叉擬合」現場示範</button>
+    <div id="fbOut" class="hidden">
+      <div class="play-grid">
+        <div class="stat"><div class="stat-label">未調整（直接比較）</div><div class="stat-num" id="fbNaive">–</div><div class="stat-foot">被汙染、高估的起點</div></div>
+        <div class="stat"><div class="stat-label">AI 偷看版</div><div class="stat-num" id="fbTrap">–</div><div class="stat-foot" id="fbTrapFoot"></div></div>
+        <div class="stat"><div class="stat-label">AI 交叉擬合版</div><div class="stat-num" id="fbCf">–</div><div class="stat-foot" id="fbCfFoot"></div></div>
+      </div>
+      <div id="fbChart" class="chart"></div>
+      <p class="caption">
+        看出來了嗎？<b>偷看版</b>幾乎黏在「未調整」那根被汙染的數字上、誤差棒還很窄
+        （看起來超準，其實把干擾因子整包背了回來——這就是禁止迴歸）；
+        <b>交叉擬合版</b>則被拉回真值 1.80 附近。<b>同一個模型，差別只在有沒有偷看。</b>
+      </p>
+    </div>
+    <details class="term">
+      <summary>看專有名詞解釋</summary>
+      <p>
+        • 「背答案」＝<b>過度配適（overfitting）</b>；「偷看同一批人」造成的偏誤＝
+        <b>禁止迴歸（forbidden regression）</b>。<br />
+        • 「用別組學、套到這組」＝<b>交叉擬合（cross-fitting / out-of-fold prediction）</b>，
+        是雙重機器學習（double/debiased ML）的核心步驟。
+      </p>
+    </details>
+
+    <!-- 綜合比較 -->
+    <h2>把所有做法擺在一起比</h2>
+    <button id="runMlCompare" class="btn primary">產生綜合比較圖</button>
+    <div id="mlCompareOut" class="hidden">
+      <div id="mlCompareChart" class="chart"></div>
+      <div class="result-cards" id="mlCompareCards"></div>
+      <p class="caption">
+        虛線是<b>真正答案 1.80</b>。「未調整」與「單一弱工具」明顯偏掉或亂跳，
+        AI 的兩帖藥方則把估計拉回真相附近、且誤差範圍可用。
+      </p>
+    </div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
