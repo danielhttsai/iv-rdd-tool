@@ -506,7 +506,38 @@
     </p>
 
     <div class="card warn">
-      <h3 data-en="Bonus: survival outcome with censoring (IPCW / doubly-robust)">進階：帶設限的存活結果（IPCW／雙重穩健）</h3>
+      <h3 data-en="Bonus: when the outcome is time-to-event (survival)">進階：當結果是「多久後才發生」（存活型）</h3>
+
+      <div class="card scene">
+        <h3 data-en="What does the data look like? Each line is one person's follow-up">資料長什麼樣子？每條線是一個人的追蹤過程</h3>
+        <p data-en="Here the outcome is no longer a single number — it is <b>how long until a major event happens</b>. Each line is one person, from enrolment to the end of their follow-up. <b style=&quot;color:#ef4444&quot;>●</b> = the event actually happened; <b>|</b> = follow-up ended while still event-free — that person is <b>censored</b> (their data is incomplete). The frailer people (amber) tend to drop out earlier, which is exactly what makes this tricky.">
+          這次的結果不再是一個數字，而是「<b>多久之後會發生大事件</b>」。每條線＝一個人，從進場到追蹤結束。
+          <b style="color:#ef4444">●</b>＝期間真的發生了事件；<b>|</b>＝追蹤結束時還沒發生——這個人被「<b>設限</b>」了
+          （他的資料不完整）。比較虛弱的人（琥珀色）常常更早離開，這正是麻煩的地方。
+        </p>
+        <div id="sceneSurvIntro" class="chart"></div>
+      </div>
+
+      <p data-en="There are two ways to cope, in opposite directions:"><b data-en="There are two ways to cope, pulling in opposite directions:">面對這種資料，有兩個方向（剛好相反）：</b></p>
+      <div class="cards">
+        <div class="card">
+          <h3 data-en="① Upgrade the analysis: an AFT time model">① 把分析「升階」：用 AFT 時間模型</h3>
+          <p data-en="Instead of comparing only averages, fit a <b>parametric time-to-event model</b> — Accelerated Failure Time (AFT; e.g. log-normal or log-logistic) — that describes the <b>whole distribution of event times</b>. It can say directly &quot;the treatment stretches time-to-event by ×N&quot;, which is richer than a single mean. This is taking the same time-to-event analysis and levelling it up.">
+            不要只比平均，而是配一個<b>參數化的時間模型</b>——加速失效時間（Accelerated Failure Time, AFT；
+            例如對數常態、對數羅吉斯）——它描述「<b>整段事件時間的分布</b>」，能直接講「處置讓事件時間延後幾倍」，
+            比單一平均資訊更豐富。這是把同一份 time-to-event 分析往上升一階。
+          </p>
+        </div>
+        <div class="card">
+          <h3 data-en="② Repair the &quot;downgraded&quot; data: IPCW / doubly-robust">② 把「降階」的資料補回來：IPCW／雙重穩健</h3>
+          <p data-en="Censoring makes the data <b>incomplete</b> (&quot;downgraded&quot;). <b>IPCW</b> re-weights the people we did observe by their chance of <i>not</i> being censored, rebuilding what the full picture would have looked like. <b>Doubly-robust</b> adds a second safety net — an outcome model (Cox or AFT) — so the answer stays unbiased as long as <i>either</i> the censoring model or the outcome model is right.">
+            設限讓資料變得<b>不完整</b>（「降階」）。<b>IPCW</b> 依「<b>沒被設限的機率</b>」把觀察到的人重新加權，
+            還原本來完整的樣子；<b>雙重穩健</b>再多加一道保險——一個結果模型（Cox 或 AFT）——
+            只要「設限模型」或「結果模型」其中一個是對的，答案就不偏。
+          </p>
+        </div>
+      </div>
+
       <p data-en="If the outcome is <b>time to a major health event</b> (some people are still event-free when follow-up ends — &quot;censored&quot;), a plain RD on the observed time is biased downward. The outcome is <b>log(event time)</b>; we correct censoring with <b>IPCW</b> (re-weight by the chance of not being censored) plus a <b>doubly-robust</b> augmentation that adds an outcome model (Cox or AFT) for E[log T | T &gt; T_j, covariates] — consistent if <i>either</i> model is right. The resulting pseudo-outcomes go through the same local-linear RD.">
         如果結果是「<b>到重大健康事件的時間</b>」（有些人追蹤結束時還沒發生事件——稱為「設限」），
         直接對觀察到的時間做 RD 會低估。這裡的結果取 <b>log（事件時間）</b>；我們用 <b>IPCW</b>
@@ -896,7 +927,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=8"></script>
-<script src="app.js?v=8"></script>
+<script src="i18n.js?v=9"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

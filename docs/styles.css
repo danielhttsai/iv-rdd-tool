@@ -85,6 +85,9 @@ main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
 .card.info { border-left: 4px solid var(--info); }
 .card.scene { border-left: 4px solid var(--teal, #0d9488); background: linear-gradient(180deg, rgba(13,148,136,0.045), transparent 60%); }
 .card.scene h3 { color: var(--teal, #0d9488); }
+/* scene mini-charts sit flush on the tinted card (no inner white box, shorter,
+   so the data fills the frame instead of floating in a big empty grid) */
+.card.scene .chart { height: 280px; background: transparent; border: none; box-shadow: none; margin: .5rem 0 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 .cards .card { margin: 0; }
 

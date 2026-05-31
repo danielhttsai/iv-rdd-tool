@@ -253,7 +253,7 @@ function randn(rng) {
 }
 const SCENE_CFG = { displayModeBar: false, responsive: true };
 const sceneLayout = (extra) => Object.assign({
-  margin: { t: 28, r: 16, b: 42, l: 48 }, height: 240, showlegend: false,
+  margin: { t: 26, r: 16, b: 40, l: 50 }, height: 280, showlegend: false,
   font: { size: 11 }, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
 }, extra || {});
 
@@ -262,20 +262,21 @@ function drawSceneWeak() {
   if (!document.getElementById("sceneWeak")) return;
   const rng = mulberry32(101);
   const x0 = [], y0 = [], x1 = [], y1 = [];
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 150; i++) {
     const nudged = rng() < 0.5 ? 1 : 0;
     // weak: nudged only nudges shot probability a little
     const p = nudged ? 0.55 : 0.45;
     const shot = rng() < p ? 1 : 0;
-    const xv = nudged + randn(rng) * 0.06;
-    const yv = shot + randn(rng) * 0.06;
+    // spread each cloud out so the two bands read as fat clouds, not thin lines
+    const xv = nudged + randn(rng) * 0.11;
+    const yv = shot + randn(rng) * 0.12;
     if (nudged) { x1.push(xv); y1.push(yv); } else { x0.push(xv); y0.push(yv); }
   }
   const mk = (x, y, c) => ({ x, y, mode: "markers", type: "scatter",
-    marker: { color: c, size: 6, opacity: 0.55 } });
+    marker: { color: c, size: 7, opacity: 0.6 } });
   Plotly.react("sceneWeak", [mk(x0, y0, INK), mk(x1, y1, TEAL)], sceneLayout({
-    xaxis: { tickvals: [0, 1], ticktext: [tr("沒被推", "not nudged"), tr("有被推", "nudged")], range: [-0.4, 1.4] },
-    yaxis: { tickvals: [0, 1], ticktext: [tr("沒打針", "no shot"), tr("有打針", "got shot")], range: [-0.4, 1.4] },
+    xaxis: { tickvals: [0, 1], ticktext: [tr("沒被推", "not nudged"), tr("有被推", "nudged")], range: [-0.55, 1.55] },
+    yaxis: { tickvals: [0, 1], ticktext: [tr("沒打針", "no shot"), tr("有打針", "got shot")], range: [-0.55, 1.55] },
   }), SCENE_CFG);
 }
 
@@ -374,6 +375,40 @@ function drawSceneCensor() {
     annotations: [
       { x: 10.6, y: n - 1, text: "● " + tr("事件", "event"), showarrow: false, font: { size: 10, color: RED }, xanchor: "right" },
       { x: 10.6, y: n - 2.4, text: "| " + tr("設限", "censored"), showarrow: false, font: { size: 10, color: INK }, xanchor: "right" },
+    ],
+  }), SCENE_CFG);
+}
+
+// rddplay ② intro: what censored time-to-event data looks like (swimmer plot).
+// Each row is a person's follow-up; ● = the event happened, | = censored
+// (follow-up ended event-free). Frail people (amber) tend to be censored earlier.
+function drawSceneSurvIntro() {
+  if (!document.getElementById("sceneSurvIntro")) return;
+  const rng = mulberry32(606);
+  const traces = [], evX = [], evY = [], cX = [], cY = [], cCol = [];
+  const n = 16;
+  for (let i = 0; i < n; i++) {
+    const frail = rng() < 0.5;
+    const col = frail ? AMBER : "#7e8a98";
+    const eventTime = frail ? 2 + rng() * 5 : 4.5 + rng() * 6;
+    const censTime = frail ? 2 + rng() * 3.5 : 5 + rng() * 5.5;  // frail lost earlier
+    const observed = Math.min(eventTime, censTime, 11);
+    const isEvent = eventTime <= censTime && eventTime <= 11;
+    traces.push({ x: [0, observed], y: [i, i], mode: "lines", type: "scatter",
+      line: { color: col, width: 3 }, hoverinfo: "skip" });
+    if (isEvent) { evX.push(observed); evY.push(i); }
+    else { cX.push(observed); cY.push(i); cCol.push(col); }
+  }
+  const events = { x: evX, y: evY, mode: "markers", type: "scatter",
+    marker: { color: RED, size: 10, symbol: "circle" } };
+  const cens = { x: cX, y: cY, mode: "markers", type: "scatter",
+    marker: { color: cCol, size: 13, symbol: "line-ns-open", line: { width: 2.5 } } };
+  Plotly.react("sceneSurvIntro", traces.concat([events, cens]), sceneLayout({
+    xaxis: { title: tr("追蹤時間（年）", "follow-up time (years)"), range: [0, 11.6], zeroline: false },
+    yaxis: { showticklabels: false, range: [-1, n], title: tr("每條線＝一個人", "each line = a person") },
+    annotations: [
+      { x: 11.4, y: n - 1, text: "● " + tr("事件發生", "event"), showarrow: false, font: { size: 10, color: RED }, xanchor: "right" },
+      { x: 11.4, y: n - 2.5, text: "| " + tr("被設限", "censored"), showarrow: false, font: { size: 10, color: INK }, xanchor: "right" },
     ],
   }), SCENE_CFG);
 }
@@ -559,6 +594,7 @@ const rddBwSlider = document.getElementById("rddBwSlider");
 function initRdd() {
   if (rddReady) return;
   rddReady = true;
+  drawSceneSurvIntro();   // "what does censored time-to-event data look like"
   refreshRdd();
   // NOTE: the survival fit (IPCW/Cox/AFT) is heavy (~3s) and, on the
   // browser-only Pyodide build, runs synchronously and freezes the UI.
@@ -1162,7 +1198,7 @@ window.addEventListener("iv-lang", async () => {
   if (state.nlData) renderNonlinear(state.nlData); // ML nonlinear
   if (state.cmpDone) runMlCompare();               // ML compare (backend text)
   if (state.fbData) renderForbidden(state.fbData); // ML forbidden
-  if (rddReady) refreshRdd();                          // RDD ② interactive
+  if (rddReady) { drawSceneSurvIntro(); refreshRdd(); }  // RDD ② interactive
   if (state.rddSurv) renderRddSurvival(state.rddSurv);  // re-render cached survival (no recompute → no freeze)
   if (rddAnalyzeReady) {                                // RDD ③ data analysis
     const keepSurv = state.rddAnalyzeSurv;             // runRddAnalyze resets this
