@@ -781,18 +781,45 @@ async function runRddAnalyze() {
     runRddAssumptions(req);   // keep the ④ dashboard in sync
   } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); return; }
 
-  // optional survival RDD when both time + event columns are chosen
+  // optional survival RDD when both time + event columns are chosen.
+  // The IPCW/doubly-robust fit is ~1.4 s of *synchronous* Pyodide compute,
+  // which would freeze the whole UI the moment this tab opens. So we only
+  // reveal the block + a button here, and compute on the user's click.
   const block = document.getElementById("rddSurvBlock");
   if (req.time && req.event) {
     block.classList.remove("hidden");
-    try {
-      const s = await postJSON(`${API}/api/rdd_survival`, req);
-      renderRddAnalyzeSurv(s);
-    } catch (e) { block.classList.add("hidden"); }
+    state.rddAnalyzeSurv = null;
+    document.getElementById("rddAnalyzeSurv").innerHTML = "";
+    const b = document.getElementById("runRddAnalyzeSurv");
+    if (b) {
+      b.classList.remove("hidden");
+      b.disabled = false;
+      b.textContent = tr("跑設限校正估計（約 1.5 秒）", "Run the censoring-corrected estimate (~1.5 sec)");
+    }
   } else {
     block.classList.add("hidden");
   }
 }
+
+// Button-gated survival fit for the analysis tab (heavy synchronous Pyodide).
+document.getElementById("runRddAnalyzeSurv").addEventListener("click", async () => {
+  const req = rddState.req;
+  if (!req || !req.time || !req.event) return;
+  const b = document.getElementById("runRddAnalyzeSurv");
+  b.disabled = true;
+  b.textContent = tr("計算中…（約 1.5 秒）", "Computing… (~1.5 sec)");
+  await new Promise((r) => setTimeout(r, 30));   // let the button repaint first
+  try {
+    const s = await postJSON(`${API}/api/rdd_survival`, { ...req, lang: lang() });
+    state.rddAnalyzeSurv = s;
+    renderRddAnalyzeSurv(s);
+    b.textContent = tr("重新計算設限校正", "Re-run censoring correction");
+  } catch (e) {
+    b.textContent = tr("計算失敗，再試一次", "Failed — try again");
+  } finally {
+    b.disabled = false;
+  }
+});
 
 function renderRddAnalyze(a) {
   document.getElementById("rddAnalyzeOut").classList.remove("hidden");
@@ -1137,7 +1164,16 @@ window.addEventListener("iv-lang", async () => {
   if (state.fbData) renderForbidden(state.fbData); // ML forbidden
   if (rddReady) refreshRdd();                          // RDD ② interactive
   if (state.rddSurv) renderRddSurvival(state.rddSurv);  // re-render cached survival (no recompute → no freeze)
-  if (rddAnalyzeReady) runRddAnalyze();                 // RDD ③ data analysis
+  if (rddAnalyzeReady) {                                // RDD ③ data analysis
+    const keepSurv = state.rddAnalyzeSurv;             // runRddAnalyze resets this
+    await runRddAnalyze();                              // analyze+assumptions are light (~70 ms)
+    if (keepSurv) {                                     // re-show a previously computed survival result
+      state.rddAnalyzeSurv = keepSurv;
+      renderRddAnalyzeSurv(keepSurv);
+      const b = document.getElementById("runRddAnalyzeSurv");
+      if (b) b.textContent = tr("重新計算設限校正", "Re-run censoring correction");
+    }
+  }
   if (rddAssumeReady) runRddAssumptions(rddState.req);  // RDD ④ assumptions (backend text)
   if (rddMlReady) { drawRddScenes(); refreshRddDml(); } // RDD ⑤ scenes + DML window-robustness
   if (state.rddSurvMl) {                                // RDD ⑤ survival (backend text)

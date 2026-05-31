@@ -562,6 +562,7 @@
       <div id="rddSurvBlock" class="card warn hidden">
         <h3 data-en="Survival outcome with censoring (IPCW / doubly-robust)">帶設限的存活結果（IPCW／雙重穩健）</h3>
         <p class="caption" data-en="Outcome = log(event time); censoring handled by IPCW + a doubly-robust outcome model (Cox / AFT), then the same local-linear RD. Runs on a fixed teaching sub-sample.">結果＝log（事件時間）；用 IPCW＋雙重穩健結果模型（Cox／AFT）處理設限，再做同一套局部線性 RD。於固定教學子樣本上計算。</p>
+        <button id="runRddAnalyzeSurv" class="btn primary" data-en="Run the censoring-corrected estimate (~1.5 sec)">跑設限校正估計（約 1.5 秒）</button>
         <div class="result-cards" id="rddAnalyzeSurv"></div>
       </div>
     </div>
@@ -895,7 +896,7 @@
   </footer>
 </main>
 
-<script src="/i18n.js?v=6"></script>
-<script src="/app.js?v=6"></script>
+<script src="/i18n.js?v=7"></script>
+<script src="/app.js?v=7"></script>
 </body>
 </html>
