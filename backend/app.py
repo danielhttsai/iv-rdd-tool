@@ -453,10 +453,16 @@ def did_interactive(violation: float = 0.0, lang: str = "zh"):
     })
 
 
-@app.get("/api/did_ml")
-def did_ml_demos(seed: int = 7, lang: str = "zh"):
-    """DiD ⑤: four advanced remedies (DR/DML, staggered, universal, synthetic control)."""
-    return _clean(did_ml.boost_demos(seed=seed, lang=lang))
+@app.get("/api/did_variants")
+def did_variants(seed: int = 7, lang: str = "zh"):
+    """DiD ③ advanced VARIANTS (not AI): staggered, universal, synthetic control."""
+    return _clean(did_ml.variant_demos(seed=seed, lang=lang))
+
+
+@app.get("/api/did_dml")
+def did_dml(seed: int = 7, lang: str = "zh"):
+    """DiD ⑤: a GENUINE machine-learning estimator — double/debiased ML DiD (sklearn)."""
+    return _clean(did_ml.dml_demo(seed=seed, lang=lang))
 
 
 # ---------------------------------------------------------------------------
@@ -568,10 +574,16 @@ def its_interactive(level: float = -12.0, lang: str = "zh"):
                    "plot": out["plot"], "effect_end": out["effect_end"]})
 
 
-@app.get("/api/its_ml")
-def its_ml_demos(seed: int = 7, lang: str = "zh"):
-    """ITS ⑤: four upgrades (HAC SE, controlled/triple-diff, flexible ML counterfactual, BSTS)."""
-    return _clean(its_ml.boost_demos(seed=seed, lang=lang))
+@app.get("/api/its_variants")
+def its_variants(seed: int = 7, lang: str = "zh"):
+    """ITS ③ advanced VARIANTS (not AI): HAC SE, controlled/triple-diff, BSTS."""
+    return _clean(its_ml.variant_demos(seed=seed, lang=lang))
+
+
+@app.get("/api/its_mlcf")
+def its_mlcf(seed: int = 7, lang: str = "zh"):
+    """ITS ⑤: a GENUINE machine-learning two-stage counterfactual (sklearn)."""
+    return _clean(its_ml.mlcf_demo(seed=seed, lang=lang))
 
 
 # ---------------------------------------------------------------------------

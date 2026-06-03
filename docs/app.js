@@ -1373,7 +1373,20 @@ async function runDidAnalyze() {
     const a = await postJSON(`${API}/api/did_analyze`, req);
     renderDidAnalyze(a);
     runDidAssumptions(req);
+    renderDidVariants();   // advanced (non-AI) variants shown under ③
   } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+// advanced VARIANTS (not AI) rendered in tab ③ — light, no sklearn
+async function renderDidVariants() {
+  let d;
+  try { d = await getJSON(`${API}/api/did_variants?lang=${lang()}`); } catch (e) { return; }
+  state.didVar = d;
+  drawDidStagScene(); didBarsInto("didStagChart", d.staggered.bars);
+  document.getElementById("didStagReading").textContent = d.staggered.reading;
+  drawDidUnivScene(d.universal); didBarsInto("didUnivChart", d.universal.bars);
+  document.getElementById("didUnivReading").textContent = d.universal.reading;
+  drawDidSynth(d.synth);
+  document.getElementById("didSynthReading").textContent = d.synth.reading;
 }
 function renderDidAnalyze(a) {
   document.getElementById("didAnalyzeOut").classList.remove("hidden");
@@ -1431,37 +1444,27 @@ function renderDidAssumptions(out) {
   }).join("");
 }
 
-// ---- ⑤ boost ----
-function initDidMl() {
-  if (didMlReady) return;
-  didMlReady = true;
-  refreshDidMl();
+// ---- ⑤ boost: the ONE real-ML estimator (DML), button-gated (loads sklearn) ----
+function initDidMl() { didMlReady = true; if (state.didDml) renderDidDml(state.didDml); }
+function renderDidDml(d) {
+  document.getElementById("didDmlOut").classList.remove("hidden");
+  didBarsInto("didDmlChart", d.bars);
+  document.getElementById("didDmlReading").textContent = d.reading;
 }
-async function refreshDidMl() {
-  let d;
-  try { d = await getJSON(`${API}/api/did_ml?lang=${lang()}`); } catch (e) { return; }
-  state.didMl = d;
-  drawDidDrScene(d.dr); didBarsInto("didDrChart", d.dr.bars);
-  document.getElementById("didDrReading").textContent = d.dr.reading;
-  drawDidStagScene(); didBarsInto("didStagChart", d.staggered.bars);
-  document.getElementById("didStagReading").textContent = d.staggered.reading;
-  drawDidUnivScene(d.universal); didBarsInto("didUnivChart", d.universal.bars);
-  document.getElementById("didUnivReading").textContent = d.universal.reading;
-  drawDidSynth(d.synth);
-  document.getElementById("didSynthReading").textContent = d.synth.reading;
-}
-function drawDidDrScene(dr) {
-  if (!document.getElementById("sceneDidDr")) return;
-  const rng = mulberry32(909);
-  const strip = (xs, y0, color, name) => ({ x: xs, y: xs.map(() => y0 + (rng() - 0.5) * 0.55),
-    mode: "markers", type: "scatter", name, marker: { size: 6, opacity: 0.55, color } });
-  const ctrl = strip(dr.scene.x_control, 0, "#9aa6b2", tr("對照", "control"));
-  const treat = strip(dr.scene.x_treated, 1, TEAL, tr("介入", "treated"));
-  Plotly.react("sceneDidDr", [ctrl, treat], sceneLayout({
-    xaxis: { title: tr("共變項 X（兩組分布不同）", "covariate X (differs by group)") },
-    yaxis: { tickvals: [0, 1], ticktext: [tr("對照", "control"), tr("介入", "treated")], range: [-0.6, 1.6] },
-  }), SCENE_CFG);
-}
+const _runDidDmlBtn = document.getElementById("runDidDml");
+if (_runDidDmlBtn) _runDidDmlBtn.addEventListener("click", async () => {
+  _runDidDmlBtn.disabled = true;
+  const old = _runDidDmlBtn.textContent;
+  _runDidDmlBtn.textContent = tr("計算中…（載入 ML 套件＋訓練）", "Computing… (loading ML package + training)");
+  try {
+    const d = await getJSON(`${API}/api/did_dml?lang=${lang()}`);
+    state.didDml = d;
+    renderDidDml(d);
+    _runDidDmlBtn.textContent = tr("重新計算 DML", "Re-run DML");
+  } catch (e) {
+    _runDidDmlBtn.textContent = tr("計算失敗，再試一次", "Failed — try again");
+  } finally { _runDidDmlBtn.disabled = false; }
+});
 function drawDidStagScene() {
   if (!document.getElementById("sceneDidStag")) return;
   const cohorts = [
@@ -1840,7 +1843,17 @@ async function runItsAnalyze() {
     const a = await postJSON(`${API}/api/its_analyze`, req);
     renderItsAnalyze(a);
     runItsAssumptions(req);
+    renderItsVariants();   // advanced (non-AI) variants shown under ③
   } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+// advanced VARIANTS (not AI) rendered in tab ③ — light, no sklearn
+async function renderItsVariants() {
+  let d;
+  try { d = await getJSON(`${API}/api/its_variants?lang=${lang()}`); } catch (e) { return; }
+  state.itsVar = d;
+  drawItsHac(d.hac); document.getElementById("itsHacReading").textContent = d.hac.reading;
+  drawItsCtrl(d.controlled); document.getElementById("itsCtrlReading").textContent = d.controlled.reading;
+  drawItsBsts(d.bsts); document.getElementById("itsBstsReading").textContent = d.bsts.reading;
 }
 function renderItsAnalyze(a) {
   document.getElementById("itsAnalyzeOut").classList.remove("hidden");
@@ -1899,21 +1912,36 @@ function renderItsAssumptions(out) {
   }).join("");
 }
 
-// ---- ⑤ boost ----
-function initItsMl() {
-  if (itsMlReady) return;
-  itsMlReady = true;
-  refreshItsMl();
+// ---- ⑤ boost: the ONE real-ML estimator (ML two-stage counterfactual), button-gated ----
+function initItsMl() { itsMlReady = true; if (state.itsMlcf) renderItsMlcf(state.itsMlcf); }
+function renderItsMlcf(d) {
+  document.getElementById("itsMlcfOut").classList.remove("hidden");
+  didBarsInto("itsMlcfChart", d.bars);
+  document.getElementById("itsMlcfReading").textContent = d.reading;
+  const s = d.series;
+  const pts = { x: s.time, y: s.y, mode: "markers", type: "scatter",
+    name: tr("觀察", "observed"), marker: { color: "#9aa6b2", size: 5 } };
+  const cf = { x: s.time, y: s.cf, mode: "lines", type: "scatter",
+    name: tr("ML 反事實", "ML counterfactual"), line: { color: AMBER, width: 2.5, dash: "dash" } };
+  Plotly.react("itsMlcfSeries", [pts, cf], sceneLayout({
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    xaxis: { title: tr("期序", "period") }, yaxis: { title: tr("結果", "outcome") },
+    shapes: [_itsCutoff(s.t0)],
+  }), SCENE_CFG);
 }
-async function refreshItsMl() {
-  let d;
-  try { d = await getJSON(`${API}/api/its_ml?lang=${lang()}`); } catch (e) { return; }
-  state.itsMl = d;
-  drawItsHac(d.hac); document.getElementById("itsHacReading").textContent = d.hac.reading;
-  drawItsCtrl(d.controlled); document.getElementById("itsCtrlReading").textContent = d.controlled.reading;
-  drawItsFlex(d.flexible); document.getElementById("itsFlexReading").textContent = d.flexible.reading;
-  drawItsBsts(d.bsts); document.getElementById("itsBstsReading").textContent = d.bsts.reading;
-}
+const _runItsMlcfBtn = document.getElementById("runItsMlcf");
+if (_runItsMlcfBtn) _runItsMlcfBtn.addEventListener("click", async () => {
+  _runItsMlcfBtn.disabled = true;
+  _runItsMlcfBtn.textContent = tr("計算中…（載入 ML 套件＋訓練）", "Computing… (loading ML package + training)");
+  try {
+    const d = await getJSON(`${API}/api/its_mlcf?lang=${lang()}`);
+    state.itsMlcf = d;
+    renderItsMlcf(d);
+    _runItsMlcfBtn.textContent = tr("重新計算 ML 反事實", "Re-run ML counterfactual");
+  } catch (e) {
+    _runItsMlcfBtn.textContent = tr("計算失敗，再試一次", "Failed — try again");
+  } finally { _runItsMlcfBtn.disabled = false; }
+});
 function _itsCutoff(t0) {
   return { type: "line", x0: t0 - 0.5, x1: t0 - 0.5, y0: 0, y1: 1, yref: "paper",
     line: { color: INK, width: 1.3, dash: "dot" } };
@@ -2232,7 +2260,7 @@ window.addEventListener("iv-lang", async () => {
   if (didPlayReady) refreshDidPlay();                  // DiD ② interactive
   if (didAnalyzeReady) runDidAnalyze();                // DiD ③ analysis + dashboard
   else if (didAssumeReady) runDidAssumptions(didState.req);
-  if (didMlReady) refreshDidMl();                      // DiD ⑤ four remedies
+  if (state.didDml) renderDidDml(state.didDml);        // DiD ⑤ real DML (re-render cached)
   if (titLearnReady) drawSceneTitFan();                // TiT ① learn scene
   if (titPlayReady) refreshTitPlay();                  // TiT ② interactive
   if (titAnalyzeReady) runTitAnalyze();                // TiT ③ analysis + dashboard
@@ -2241,7 +2269,7 @@ window.addEventListener("iv-lang", async () => {
   if (itsPlayReady) refreshItsPlay();                  // ITS ② interactive
   if (itsAnalyzeReady) runItsAnalyze();                // ITS ③ analysis + dashboard
   else if (itsAssumeReady) runItsAssumptions(itsState.req);
-  if (itsMlReady) refreshItsMl();                      // ITS ⑤ four upgrades
+  if (state.itsMlcf) renderItsMlcf(state.itsMlcf);     // ITS ⑤ real ML counterfactual (re-render cached)
   if (perrLearnReady) drawScenePerr();                 // PERR ① learn scene
   if (perrPlayReady) refreshPerrPlay();                // PERR ② interactive
   if (perrAnalyzeReady) runPerrAnalyze();              // PERR ③ analysis + dashboard

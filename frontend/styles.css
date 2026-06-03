@@ -91,6 +91,15 @@ b { color: #0b1020; }
   background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
   border-radius: 12px; padding: .7rem 1rem; font-size: .92rem; margin-top: .35rem;
 }
+/* richer anchor-based design tree */
+.flow-head { font-weight: 800; color: var(--z); margin: 1rem 0 .4rem; font-size: 1rem;
+  border-bottom: 2px solid var(--z); padding-bottom: .25rem; }
+.flow-branch { margin-left: .2rem; border-left: 3px dashed var(--line); padding-left: .8rem; }
+.flow-yes.ext { background: #fff; color: var(--muted); border: 1px solid var(--line); }
+.flow-yes.tte { box-shadow: 0 0 0 2px #bfdbfe; }
+.flow-legend { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; font-size: .85rem;
+  color: var(--muted); margin: .4rem 0 1rem; }
+.flow-legend b { color: var(--ink); }
 
 main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
 .panel { display: none; animation: fade .25s; }

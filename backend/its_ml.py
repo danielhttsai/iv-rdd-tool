@@ -107,49 +107,73 @@ def controlled_demo(seed=9, lang="zh"):
 # ===========================================================================
 # 3) Flexible (ML two-stage) counterfactual vs straight-line extrapolation
 # ===========================================================================
-def flexible_demo(seed=5, lang="zh"):
+def mlcf_demo(seed=5, lang="zh"):
+    """⑤ ITS — a GENUINE machine-learning counterfactual (Dey 2025 two-stage): train
+    a model on the PRE period to predict the outcome from observed covariates, then
+    forecast the POST counterfactual. The counterfactual depends NON-LINEARLY (with an
+    interaction) on two covariates whose mix shifts after the intervention, so a linear
+    model is biased while gradient boosting recovers the true effect."""
+    from sklearn.ensemble import GradientBoostingRegressor
+    from sklearn.linear_model import LinearRegression
     rng = np.random.default_rng(seed)
-    n, t0 = 48, 24
-    time = np.arange(n); post = (time >= t0).astype(int); ts = np.clip(time - t0, 0, None) * post
-    true_level = -8.0
-    # CURVED pre-trend (decelerating). A straight line cannot extrapolate it correctly.
-    base = 60 + 6.0 * np.sqrt(time + 1)
-    y = base + true_level * post + rng.normal(0, 1.5, n)
+    n, t0 = 96, 60
+    time = np.arange(n)
+    post = (time >= t0).astype(int)
+    true_level = -10.0
+    # several observed covariates (e.g. background-illness markers) whose mix drifts
+    # modestly after the intervention; the no-intervention outcome depends on them
+    # NON-LINEARLY with interactions, so a linear adjustment is biased while gradient
+    # boosting recovers the truth. Modest in-range shift -> the ML model interpolates.
+    shift = np.where(post == 1, 0.8, 0.0)
+    X = rng.normal(0, 1, (n, 3)) + shift[:, None]
+    seas = 0.6 * np.sin(2 * np.pi * time / 12.0)
+    cf_true = (60 + seas + 2.6 * np.sin(1.6 * X[:, 0]) + 1.3 * X[:, 1] ** 2
+               + 0.9 * X[:, 0] * X[:, 1] - 1.1 * X[:, 2] + rng.normal(0, 0.8, n))
+    y = cf_true + true_level * post
 
-    # straight-line segmented regression -> biased level (mis-extrapolated counterfactual)
-    lin_level, _, _, _ = _segmented_level(time, post, ts, y)
+    ts = np.clip(time - t0, 0, None) * post
+    naive_level, _, _, _ = _segmented_level(time, post, ts, y)   # time-only -> ignores covariate drift
 
-    # flexible two-stage: fit a cubic on PRE data only, forecast counterfactual on POST
+    Z = np.column_stack([X, seas])
     pre = post == 0
-    Xp = np.column_stack([time[pre] ** k for k in range(4)])
-    bp = np.linalg.pinv(Xp.T @ Xp) @ (Xp.T @ y[pre])
-    Xall = np.column_stack([time ** k for k in range(4)])
-    cf = Xall @ bp                       # flexible counterfactual over all time
-    flex_level = float(np.mean(y[post == 1][:3]) - cf[post == 1][:3].mean())  # level at onset
+    lin = LinearRegression().fit(Z[pre], y[pre])
+    gb = GradientBoostingRegressor(n_estimators=250, max_depth=3, learning_rate=0.07).fit(Z[pre], y[pre])
+    cf_lin = lin.predict(Z)
+    cf_ml = gb.predict(Z)
+    lin_level = float(np.mean(y[post == 1] - cf_lin[post == 1]))
+    ml_level = float(np.mean(y[post == 1] - cf_ml[post == 1]))
     return {
-        "key": "flexible", "title": t(lang, "ML 兩階段彈性反事實", "ML two-stage flexible counterfactual"),
-        "true_level": true_level, "linear": lin_level, "flexible": flex_level,
+        "key": "mlcf", "title": t(lang, "ML 兩階段反事實預測（真的跑 ML）", "ML two-stage counterfactual (real ML)"),
+        "true_level": true_level, "naive": float(naive_level), "linear": lin_level, "ml": ml_level,
+        "bars": {"labels": [t(lang, "真值", "Truth"), t(lang, "天真 ITS", "Naive ITS"),
+                            t(lang, "線性反事實", "Linear CF"), t(lang, "ML 反事實", "ML CF")],
+                 "values": [true_level, float(naive_level), lin_level, ml_level]},
         "series": {"time": time.tolist(), "y": y.round(2).tolist(),
-                   "cf": cf.round(2).tolist(), "t0": t0},
+                   "cf": cf_ml.round(2).tolist(), "t0": t0},
         "plain": t(
             lang,
-            "情境：介入前的趨勢其實是<b>彎的</b>（例如逐漸趨緩）。樸素 ITS 用<b>直線</b>外推當反事實，"
-            "在彎曲的真相上一定畫歪——把本來就會發生的彎曲，誤認成介入效果。兩階段做法：只用<b>介入前</b>"
-            "資料訓練一個彈性模型（這裡用三次多項式當機器學習的替身，如 Dey 2025 的樣條／Prophet-XGBoost），"
-            "再外推到介入後當反事實，效果就估得準。關鍵紀律：模型只准看介入前、不准碰介入後。",
-            "Scenario: the pre-intervention trend is actually <b>curved</b> (e.g. decelerating). Naive ITS extrapolates a "
-            "<b>straight line</b> as the counterfactual, which must go wrong on a curved truth — mistaking the curvature "
-            "that would have happened anyway for an intervention effect. The two-stage fix: train a flexible model on "
-            "the <b>pre-intervention</b> data only (here a cubic polynomial standing in for machine learning — splines / "
-            "Prophet-XGBoost as in Dey 2025), then forecast it forward as the counterfactual. Key discipline: the model "
-            "may see only the pre-period, never the post-period.",
+            "這是這個分頁裡<b>唯一真正用到機器學習</b>的地方。情境：沒有介入時，每月的健康指標其實由幾個"
+            "<b>可觀測的共變項</b>非線性地決定（例如季節性的背景呼吸道疾病指數、以及『是否有共同流行的病毒』，"
+            "兩者還會交互作用）；而『有共同流行病毒』在介入後的那段時間剛好變多。樸素 ITS 只看時間、不看共變項，"
+            "會把這個共變項造成的變化誤當成介入效果。兩階段做法（Dey 2025）：只用<b>介入前</b>資料訓練一個模型"
+            "去學『共變項→結果』，再用介入後觀測到的共變項預測『沒介入會怎樣』的反事實。<b>線性</b>模型抓不到"
+            "交互作用、仍偏；改用<b>梯度提升</b>這種機器學習就抓得到，把效果拉回真值。模型只准看介入前、不准碰介入後。",
+            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Absent the intervention, the "
+            "monthly health index is actually driven <b>non-linearly</b> by a few observed covariates (a seasonal "
+            "background-illness index and whether a co-circulating virus is present, which also interact); and the "
+            "co-circulating virus happens to be more common during the post period. A naive ITS that looks only at time "
+            "mistakes that covariate-driven change for an intervention effect. The two-stage fix (Dey 2025): train a model "
+            "on the <b>pre</b> period to learn covariates→outcome, then use the post-period covariates to predict the "
+            "no-intervention counterfactual. A <b>linear</b> model misses the interaction and stays biased; <b>gradient "
+            "boosting</b> captures it and recovers the truth. The model may see only the pre period, never the post.",
         ),
         "reading": t(
             lang,
-            f"直線外推估的水準變化 ≈ {lin_level:.1f}（被彎曲前趨勢汙染），彈性反事實 ≈ {flex_level:.1f}，"
-            f"貼近真值 {true_level:.0f}。",
-            f"Straight-line extrapolation gives a level change ≈ {lin_level:.1f} (contaminated by the curved pre-trend); "
-            f"the flexible counterfactual ≈ {flex_level:.1f}, close to the truth {true_level:.0f}.",
+            f"天真 ITS 水準變化 ≈ {naive_level:.1f}（被共變項變化汙染）；線性反事實 ≈ {lin_level:.1f}（漏掉交互作用、仍偏）；"
+            f"ML 反事實 ≈ {ml_level:.1f}，貼回真值 {true_level:.0f}。",
+            f"Naive ITS level change ≈ {naive_level:.1f} (contaminated by the covariate shift); linear counterfactual "
+            f"≈ {lin_level:.1f} (misses the interaction, still biased); ML counterfactual ≈ {ml_level:.1f}, back at the "
+            f"truth {true_level:.0f}.",
         ),
     }
 
@@ -199,10 +223,10 @@ def bsts_demo(seed=3, lang="zh"):
     }
 
 
-def boost_demos(seed=7, lang="zh"):
+def variant_demos(seed=7, lang="zh"):
+    """The advanced ITS VARIANTS (not AI) — shown in tab ③ 資料分析. Light/no sklearn."""
     return {
         "hac": hac_demo(seed=seed, lang=lang),
         "controlled": controlled_demo(seed=seed + 2, lang=lang),
-        "flexible": flexible_demo(seed=seed + 1, lang=lang),
         "bsts": bsts_demo(seed=seed + 3, lang=lang),
     }

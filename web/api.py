@@ -425,8 +425,12 @@ def _did_interactive(q: dict) -> dict:
     }
 
 
-def _did_ml(q: dict) -> dict:
-    return did_ml.boost_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
+def _did_variants(q: dict) -> dict:
+    return did_ml.variant_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
+
+
+def _did_dml(q: dict) -> dict:
+    return did_ml.dml_demo(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
 # ---------------------------------------------------------------------------
@@ -522,8 +526,12 @@ def _its_interactive(q: dict) -> dict:
             "plot": out["plot"], "effect_end": out["effect_end"]}
 
 
-def _its_ml(q: dict) -> dict:
-    return its_ml.boost_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
+def _its_variants(q: dict) -> dict:
+    return its_ml.variant_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
+
+
+def _its_mlcf(q: dict) -> dict:
+    return its_ml.mlcf_demo(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
 # ---------------------------------------------------------------------------
@@ -615,7 +623,8 @@ _ROUTES = {
     ("POST", "/api/did_analyze"): lambda q, b: _did_analyze(b),
     ("POST", "/api/did_assumptions"): lambda q, b: _did_assumptions(b),
     ("GET", "/api/did_interactive"): lambda q, b: _did_interactive(q),
-    ("GET", "/api/did_ml"): lambda q, b: _did_ml(q),
+    ("GET", "/api/did_variants"): lambda q, b: _did_variants(q),
+    ("GET", "/api/did_dml"): lambda q, b: _did_dml(q),
     ("GET", "/api/tit_example"): lambda q, b: _tit_example(),
     ("POST", "/api/tit_analyze"): lambda q, b: _tit_analyze(b),
     ("POST", "/api/tit_assumptions"): lambda q, b: _tit_assumptions(b),
@@ -624,7 +633,8 @@ _ROUTES = {
     ("POST", "/api/its_analyze"): lambda q, b: _its_analyze(b),
     ("POST", "/api/its_assumptions"): lambda q, b: _its_assumptions(b),
     ("GET", "/api/its_interactive"): lambda q, b: _its_interactive(q),
-    ("GET", "/api/its_ml"): lambda q, b: _its_ml(q),
+    ("GET", "/api/its_variants"): lambda q, b: _its_variants(q),
+    ("GET", "/api/its_mlcf"): lambda q, b: _its_mlcf(q),
     ("GET", "/api/perr_example"): lambda q, b: _perr_example(),
     ("POST", "/api/perr_analyze"): lambda q, b: _perr_analyze(b),
     ("POST", "/api/perr_assumptions"): lambda q, b: _perr_assumptions(b),

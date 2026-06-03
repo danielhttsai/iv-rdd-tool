@@ -50,16 +50,24 @@ def test_dashboard_shape_and_statuses():
     assert bad["checks"][0]["status"] == "red"
 
 
-def test_boost_demos_recover_truths():
-    d = did_ml.boost_demos(seed=7)
-    # DR recovers the truth better than the naive DiD
-    assert abs(d["dr"]["adjusted"] - d["dr"]["true_att"]) < abs(d["dr"]["naive"] - d["dr"]["true_att"])
+def test_variant_demos():
+    d = did_ml.variant_demos(seed=7)
+    assert set(d) == {"staggered", "universal", "synth"}
     # cohort-time average beats TWFE
     assert abs(d["staggered"]["cs"] - d["staggered"]["true_att"]) < abs(d["staggered"]["twfe"] - d["staggered"]["true_att"])
     # universal DiD recovers the true odds ratio closely
     assert abs(d["universal"]["or_did"] - d["universal"]["true_or"]) < 0.2
     # synthetic control lands near the true effect
     assert abs(d["synth"]["estimate"] - d["synth"]["true_effect"]) < 1.5
+
+
+def test_dml_real_ml_beats_linear():
+    d = did_ml.dml_demo(seed=7)
+    # genuine ML (gradient boosting + cross-fitting) recovers the ATT under non-linear
+    # confounding, closer than both the naive DiD and the linear doubly-robust version
+    assert abs(d["ml"] - d["true_att"]) < abs(d["naive"] - d["true_att"])
+    assert abs(d["ml"] - d["true_att"]) < abs(d["linear"] - d["true_att"])
+    assert abs(d["ml"] - d["true_att"]) < 1.0
 
 
 def test_bilingual_interpretation():

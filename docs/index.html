@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="styles.css?v=15" />
+<link rel="stylesheet" href="styles.css?v=16" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js"></script>
@@ -885,6 +885,44 @@
       <p class="caption" data-en="The two group-average lines over time, with the policy start marked. The vertical gap that opens up after the cutoff (beyond the parallel continuation) is the DiD effect.">兩條組平均線隨時間變化，標出政策起點。斷點後拉開（超出平行延伸）的落差，就是 DiD 效果。</p>
       <div id="didAnalyzeEvent" class="chart"></div>
       <p class="caption" data-en="Event-study coefficients with 95% confidence bars: pre-policy near 0 supports parallel trends; post-policy traces the dynamic effect.">事件研究係數（含 95% 信賴棒）：政策前貼近 0 支持平行趨勢；政策後描出動態效果。</p>
+
+      <h2 data-en="Advanced variants (extensions of the design — not AI)">進階變形（設計上的延伸 —— 不是 AI）</h2>
+      <p class="lead" data-en="When the basic 2×2 DiD doesn't fit your situation, these are <b>estimator / design variants</b> of DiD (no machine learning). The genuine ML upgrade lives in tab ⑤.">
+        當基本的 2×2 DiD 不合用，這些是 DiD 的<b>估計／設計變形</b>（沒有用到機器學習）。真正的 ML 升級放在分頁 ⑤。
+      </p>
+
+      <h3 data-en="① Staggered adoption (different start times)">① 交錯採用（不同時間上路）</h3>
+      <div class="card scene">
+        <p data-en="Communities don't all start the policy together: one cohort starts early, another later, some never. The classic two-way fixed-effects regression quietly uses <b>already-treated</b> units as controls for the later ones — and when the effect grows over time, that contaminates the estimate, even flipping its sign. The cohort-by-time fix uses only <b>not-yet-treated</b> units as clean controls.">
+          社區不會同時開始政策：一個世代早開、一個晚開、有些從不開。傳統雙向固定效果迴歸會偷偷拿
+          <b>已經受處置</b>的單位當後來者的對照——當效果隨時間變大，就會被汙染、甚至估出相反方向。
+          群組-時間的修法只用<b>還沒受處置</b>的單位當乾淨對照。
+        </p>
+        <div id="sceneDidStag" class="chart"></div>
+      </div>
+      <div id="didStagChart" class="chart"></div>
+      <p class="caption" id="didStagReading"></p>
+
+      <h3 data-en="② Universal DiD for binary / count outcomes">② 二元／計數結果的 Universal DiD</h3>
+      <div class="card scene">
+        <p data-en="When the outcome is a yes/no event and the two groups start at very different baseline rates (say 17% vs 55%), even the SAME change in odds converts to a non-parallel change in risk — so additive DiD is biased. Universal DiD works on the odds-ratio scale, which suits binary / count / ordinal outcomes.">
+          當結果是是非事件、兩組基準比率差很多（例如 17% vs 55%），就算<b>相同的勝算變化</b>換算成風險差也會不平行——加法 DiD 會偏。
+          Universal DiD 在勝算比尺度上運作，適合二元／計數／順序結果。
+        </p>
+        <div id="sceneDidUniv" class="chart"></div>
+      </div>
+      <div id="didUnivChart" class="chart"></div>
+      <p class="caption" id="didUnivReading"></p>
+
+      <h3 data-en="③ Synthetic control / synthetic DiD">③ 合成控制／合成 DiD</h3>
+      <div class="card scene">
+        <p data-en="When only one (or few) unit is treated and no single control matches it, build a weighted blend of control units that tracks its pre-policy path; apply the same weights afterwards to get the counterfactual. The post-policy gap is the effect.">
+          當只有一個（或很少）單位受處置、又找不到單一條件相符的對照，就用控制單位的加權組合擬合它政策前的走勢；
+          政策後套用同一組權重得到反事實。政策後拉開的落差就是效果。
+        </p>
+        <div id="didSynthChart" class="chart"></div>
+      </div>
+      <p class="caption" id="didSynthReading"></p>
     </div>
   </section>
 
@@ -903,79 +941,29 @@
 
   <!-- ===================== DiD ⑤ 用 AI 強化 ===================== -->
   <section id="didml" class="panel">
-    <div class="banner" data-en="⚠ Every number on this page is simulated in real time from <b>purely fictional synthetic data</b>, for teaching only.">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時模擬出來的，僅供教學展示。</div>
-    <h1 data-en="How modern methods lend DiD a hand">進階方法怎麼幫「差異中的差異」一把</h1>
-    <p class="lead" data-en="Plain DiD has soft spots: the groups may differ in ways that matter, the policy may roll out at <b>different times</b>, the outcome may be <b>binary/count</b> (so additive parallel trends fail), or there may be only <b>one treated unit</b>. Here are four well-established upgrades — each with the same policy story, each showing where plain DiD breaks and how the upgrade fixes it.">
-      樸素的 DiD 有幾個痛處：兩組可能在要緊的地方就不一樣、政策可能<b>在不同時間</b>陸續上路、結果可能是
-      <b>二元／計數</b>（加法平行趨勢會失效）、或者受處置單位<b>只有一個</b>。下面是四個成熟的進階做法——
-      都用同一個政策故事，各自指出樸素 DiD 在哪裡會壞、進階版怎麼救。
+    <div class="banner" data-en="⚠ Every number on this page is computed in real time from <b>purely fictional synthetic data</b>, for teaching only.">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時計算出來的，僅供教學展示。</div>
+    <h1 data-en="The one place DiD genuinely uses machine learning">DiD 真正用到機器學習的那一個地方</h1>
+    <p class="lead" data-en="To be honest: most &quot;advanced DiD&quot; methods are estimator/design <b>variants</b> (staggered adoption, Universal DiD, synthetic control) — they are not AI, and they now live in tab ③. The genuinely machine-learning method is <b>double/debiased machine-learning DiD (DML)</b>: when who-gets-treated and the time trend depend <b>non-linearly</b> on many covariates, fit those nuisance pieces with gradient boosting and de-bias with cross-fitting. Below it really runs scikit-learn in your browser.">
+      老實說：大多數「進階 DiD」其實是估計／設計上的<b>變形</b>（交錯採用、Universal DiD、合成控制）——它們不是 AI，
+      已經移到分頁 ③。真正用到機器學習的，是<b>雙重／去偏機器學習 DiD（DML）</b>：當「誰受處置」與時間趨勢都
+      <b>非線性</b>地取決於許多共變項時，用梯度提升去估那些輔助模型、再用交叉擬合去偏。下面會<b>真的在你的瀏覽器裡跑 scikit-learn</b>。
     </p>
 
-    <div class="cards">
-      <div class="card"><h3 data-en="① Doubly-robust / DML DiD">① 雙重穩健／DML DiD</h3>
-        <p data-en="When the groups differ on covariates that also drive the trend, adjust with <b>two</b> models (propensity + outcome) and stay unbiased if <b>either</b> is right; machine learning estimates them and cross-fitting de-biases.">當兩組在「也影響趨勢」的共變項上不同，用<b>兩個</b>模型（傾向＋結果）調整，<b>其一對</b>就不偏；機器學習估這兩塊、交叉擬合去偏。</p></div>
-      <div class="card"><h3 data-en="② Staggered adoption">② 交錯採用</h3>
-        <p data-en="When units adopt the policy at <b>different times</b>, the classic two-way fixed-effects regression can be biased. Cohort-by-time methods use only not-yet-treated units as clean controls.">當各單位在<b>不同時間</b>採用政策，傳統雙向固定效果迴歸會偏。群組-時間方法只用「還沒受處置」的單位當乾淨對照。</p></div>
-      <div class="card"><h3 data-en="③ Universal DiD (binary / count)">③ Universal DiD（二元／計數）</h3>
-        <p data-en="When the outcome is yes/no or a count, additive parallel trends can fail near 0 or 1. Identify the effect on the <b>odds-ratio</b> scale instead.">當結果是是非或次數，加法平行趨勢在 0 或 1 附近會失效。改在<b>勝算比</b>尺度上辨識效果。</p></div>
-      <div class="card"><h3 data-en="④ Synthetic control / synthetic DiD">④ 合成控制／合成 DiD</h3>
-        <p data-en="When only one (or few) unit is treated, build a <b>weighted blend</b> of control units that matches its pre-policy path, and use that as the counterfactual.">當只有一個（或很少）單位受處置，用控制單位的<b>加權組合</b>擬合它政策前的走勢，當作反事實。</p></div>
+    <div class="card info">
+      <h3 data-en="Why ML here, and why &quot;double&quot;">為什麼這裡要 ML、又為什麼叫「雙重」</h3>
+      <p data-en="Doubly-robust DiD pairs a <b>propensity model</b> (who tends to be treated) with an <b>outcome model</b> (how controls would have drifted) and is unbiased if <b>either</b> is right. Fit them with <b>linear</b> models and a non-linear truth leaves bias; fit them with <b>gradient boosting</b> + <b>cross-fitting</b> (learn on other folds, predict on held-out ones) and the estimate returns to the truth. That is DML — &quot;double&quot; = two nuisance models, debiased.">
+        雙重穩健 DiD 同時配一個<b>傾向分數模型</b>（誰比較會受處置）與一個<b>結果模型</b>（對照組的自然變化），
+        只要<b>其一</b>對就不偏。用<b>線性</b>模型配非線性真相會留下偏誤；改用<b>梯度提升</b>＋<b>交叉擬合</b>
+        （用別折學、套到沒看過的折），估計就回到真值。這就是 DML——「雙重」＝兩個輔助模型、再去偏。
+      </p>
     </div>
 
-    <!-- ① DR / DML -->
-    <h2 data-en="① Doubly-robust / double-machine-learning DiD">① 雙重穩健／雙重機器學習 DiD</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? The two groups don't even start alike">資料長什麼樣子？兩組連起跑點都不一樣</h3>
-      <p data-en="Each dot is a unit's covariate X. The treated (teal) units sit at systematically higher X than the controls (grey) — and the natural over-time change depends on X. So overall the groups were never on parallel paths; a plain DiD blames the policy for a gap that X created. Adjusting for X (with two models, cross-fitted) restores the truth.">
-        每個點是一個單位的共變項 X。介入（青色）單位的 X 系統性地比對照（灰色）高——而隨時間的自然變化又跟 X 有關。
-        所以整體上兩組本來就不在平行的路上；樸素 DiD 會把 X 造成的落差怪到政策頭上。
-        把 X 調整掉（用兩個模型、交叉擬合）就能還原真相。
-      </p>
-      <div id="sceneDidDr" class="chart"></div>
+    <button id="runDidDml" class="btn primary" data-en="Run the real ML estimator (first run loads the ML package, ~5–10 sec)">跑真正的 ML 估計（首次需載入 ML 套件，約 5–10 秒）</button>
+    <div id="didDmlOut" class="hidden">
+      <div id="didDmlChart" class="chart"></div>
+      <p class="caption" id="didDmlReading"></p>
+      <p class="caption" data-en="Estimates ÷ nothing — these are on the original effect scale (truth = 3.0). Naive DiD and the linear doubly-robust version stay biased under the non-linear confounding; the gradient-boosting DML lands back near the truth.">數字是原始效果尺度（真值＝3.0）。天真 DiD 與線性雙重穩健版在非線性混淆下仍偏；梯度提升的 DML 回到真值附近。</p>
     </div>
-    <div id="didDrChart" class="chart"></div>
-    <p class="caption" id="didDrReading"></p>
-
-    <!-- ② Staggered -->
-    <h2 data-en="② Staggered adoption (different start times)">② 交錯採用（不同時間上路）</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? Cohorts switch on at different times">資料長什麼樣子？不同世代在不同時間上路</h3>
-      <p data-en="Communities don't all start the policy together: one cohort starts early, another later, some never. The classic two-way fixed-effects regression quietly uses <b>already-treated</b> units as controls for the later ones — and when the effect grows over time, that contaminates the estimate, even flipping its sign. The cohort-by-time fix uses only <b>not-yet-treated</b> units as clean controls.">
-        社區不會同時開始政策：一個世代早開、一個晚開、有些從不開。傳統雙向固定效果迴歸會偷偷拿
-        <b>已經受處置</b>的單位當後來者的對照——當效果隨時間變大，就會被汙染、甚至估出相反方向。
-        群組-時間的修法只用<b>還沒受處置</b>的單位當乾淨對照。
-      </p>
-      <div id="sceneDidStag" class="chart"></div>
-    </div>
-    <div id="didStagChart" class="chart"></div>
-    <p class="caption" id="didStagReading"></p>
-
-    <!-- ③ Universal -->
-    <h2 data-en="③ Universal DiD for binary / count outcomes">③ 二元／計數結果的 Universal DiD</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? A yes/no rate near its ceiling">資料長什麼樣子？逼近天花板的是非比率</h3>
-      <p data-en="Now the outcome is a yes/no event, and the two groups start at very different baseline rates (say 17% vs 55%). Even if time brings the SAME change in odds to both, converting to a risk DIFFERENCE squashes the group near the ceiling — so the lines look non-parallel and additive DiD is biased. Universal DiD works on the odds-ratio scale, which suits binary / count / ordinal outcomes.">
-        現在結果是是非事件，兩組的基準比率差很多（例如 17% vs 55%）。就算時間帶給兩組<b>相同的勝算變化</b>，
-        換算成<b>風險差</b>時，靠近天花板的那組被壓縮——線看起來就不平行，加法 DiD 會偏。
-        Universal DiD 在勝算比尺度上運作，適合二元／計數／順序結果。
-      </p>
-      <div id="sceneDidUniv" class="chart"></div>
-    </div>
-    <div id="didUnivChart" class="chart"></div>
-    <p class="caption" id="didUnivReading"></p>
-
-    <!-- ④ Synthetic control -->
-    <h2 data-en="④ Synthetic control / synthetic DiD">④ 合成控制／合成 DiD</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? One treated unit, many possible controls">資料長什麼樣子？一個受處置單位、許多可能的對照</h3>
-      <p data-en="Sometimes only one unit is treated and no single control matches it. Synthetic control builds a weighted blend of control units that tracks the treated unit's pre-policy path; apply the same weights afterwards and you get the counterfactual &quot;what would have happened&quot;. The gap after the policy is the effect.">
-        有時只有一個單位受處置，而且找不到單一條件相符的對照。合成控制用一堆控制單位的加權組合，
-        去擬合受處置單位在政策前的走勢；政策後套用同一組權重，就得到「假如沒政策會怎樣」的反事實。
-        政策後拉開的落差就是效果。
-      </p>
-      <div id="didSynthChart" class="chart"></div>
-    </div>
-    <p class="caption" id="didSynthReading"></p>
   </section>
 
   <!-- ===================== TiT ① 是什麼 ===================== -->
@@ -1269,6 +1257,41 @@
       <div class="result-cards" id="itsAnalyzeCards"></div>
       <div id="itsAnalyzeChart" class="chart"></div>
       <p class="caption" data-en="Observed series with the fitted pre/post segments and the extrapolated counterfactual (dashed). Confidence intervals on the effects use Newey–West (HAC) standard errors to account for autocorrelation.">觀察序列、配適的前/後段與外推反事實（虛線）。效果的信賴區間用 Newey–West（HAC）標準誤處理自相關。</p>
+
+      <h2 data-en="Advanced variants (extensions of the design — not AI)">進階變形（設計／估計上的延伸 —— 不是 AI）</h2>
+      <p class="lead" data-en="These are standard ITS <b>extensions</b> (no machine learning): an autocorrelation-robust standard error, a control series, and a Bayesian counterfactual. The genuine ML upgrade lives in tab ⑤.">
+        這些是 ITS 的標準<b>延伸</b>（沒有用到機器學習）：自相關穩健標準誤、加一條控制序列、以及貝氏反事實。真正的 ML 升級放在分頁 ⑤。
+      </p>
+
+      <h3 data-en="① Autocorrelation &amp; HAC robust standard errors">① 自相關與 HAC 穩健標準誤</h3>
+      <div class="card scene">
+        <p data-en="Months don't bounce independently — a high month tends to be followed by another (autocorrelation). The point estimate is fine, but a naive OLS confidence interval pretends months are independent and comes out too narrow; HAC (Newey–West) standard errors widen it to be honest.">
+          月份不會各自獨立跳動——高的月份後面常常又是高的（自相關）。點估計沒問題，但天真 OLS 信賴區間
+          假裝月份互相獨立、算得太窄；HAC（Newey–West）標準誤把它放寬到誠實的程度。
+        </p>
+        <div id="itsHacChart" class="chart"></div>
+      </div>
+      <p class="caption" id="itsHacReading"></p>
+
+      <h3 data-en="② Controlled ITS / triple difference">② 控制組 ITS／三重差分</h3>
+      <div class="card scene">
+        <p data-en="If another big event coincides with the intervention, it shifts both the treated series (teal) and a control series (grey) the intervention does NOT touch. An uncontrolled ITS blames the whole shared jump on the intervention; differencing treated − control cancels it and leaves the true effect.">
+          若介入同時還有另一件大事，它會讓介入序列（青色）與一條<b>介入碰不到</b>的控制序列（灰色）一起跳。
+          未控制的 ITS 會把整個共同跳變算到介入頭上；做『介入減控制』的差分就消掉它、剩下真效果。
+        </p>
+        <div id="itsCtrlChart" class="chart"></div>
+      </div>
+      <p class="caption" id="itsCtrlReading"></p>
+
+      <h3 data-en="③ Bayesian structural time series (CausalImpact)">③ 貝氏結構時間序列（CausalImpact）</h3>
+      <div class="card scene">
+        <p data-en="Instead of one rigid dashed line, a Bayesian structural time-series model (CausalImpact) gives the counterfactual a whole posterior — a shaded band that widens the further you forecast past the intervention, so the effect and its credible interval are more honest.">
+          不再是一條僵硬的虛線，貝氏結構時間序列（CausalImpact）給反事實一整條後驗——一條隨著離介入越遠而
+          <b>越寬</b>的陰影帶，讓效果與其可信區間更誠實。
+        </p>
+        <div id="itsBstsChart" class="chart"></div>
+      </div>
+      <p class="caption" id="itsBstsReading"></p>
     </div>
   </section>
 
@@ -1287,72 +1310,30 @@
 
   <!-- ===================== ITS ⑤ 用 AI 強化 ===================== -->
   <section id="itsml" class="panel">
-    <div class="banner" data-en="⚠ Every number on this page is simulated in real time from <b>purely fictional synthetic data</b>, for teaching only.">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時模擬出來的，僅供教學展示。</div>
-    <h1 data-en="How modern methods lend ITS a hand">進階方法怎麼幫「中斷時間序列」一把</h1>
-    <p class="lead" data-en="Plain ITS has soft spots: time-series data are <b>autocorrelated</b> (so naive CIs lie), <b>something else may coincide</b> with the intervention, and a <b>curved pre-trend</b> breaks straight-line extrapolation. Here are four well-established upgrades — each with the same monthly story, each showing where plain ITS breaks and how the upgrade fixes it.">
-      樸素 ITS 有幾個痛處：時間序列資料會<b>自相關</b>（天真信賴區間會騙人）、介入<b>可能同時</b>還有別的事、
-      <b>彎曲的前趨勢</b>會讓直線外推失準。下面是四個成熟的進階做法——都用同一個每月故事，各自指出樸素 ITS 在哪裡會壞、進階版怎麼救。
+    <div class="banner" data-en="⚠ Every number on this page is computed in real time from <b>purely fictional synthetic data</b>, for teaching only.">⚠ 本頁所有數字都是用<b>純屬虛構的合成資料</b>即時計算出來的，僅供教學展示。</div>
+    <h1 data-en="The one place ITS genuinely uses machine learning">ITS 真正用到機器學習的那一個地方</h1>
+    <p class="lead" data-en="To be honest: most &quot;advanced ITS&quot; methods are estimator/design <b>variants</b> (autocorrelation-robust SE, controlled ITS, Bayesian structural time series) — they are not AI, and they now live in tab ③. The genuinely machine-learning method is the <b>ML two-stage counterfactual</b> (Dey 2025): when the no-intervention outcome depends <b>non-linearly</b> on observed covariates, train a model on the pre-period to predict it, then forecast the counterfactual. Below it really runs scikit-learn in your browser.">
+      老實說：大多數「進階 ITS」其實是估計／設計上的<b>變形</b>（自相關穩健 SE、控制組 ITS、貝氏結構時間序列）——
+      它們不是 AI，已經移到分頁 ③。真正用到機器學習的，是 <b>ML 兩階段反事實</b>（Dey 2025）：當「沒介入會怎樣」
+      非線性地取決於可觀測的共變項時，用介入前資料訓練模型去預測它、再外推反事實。下面會<b>真的在你的瀏覽器裡跑 scikit-learn</b>。
     </p>
 
-    <div class="cards">
-      <div class="card"><h3 data-en="① Autocorrelation &amp; HAC SE">① 自相關與 HAC 穩健 SE</h3>
-        <p data-en="Adjacent months are correlated, so naive OLS confidence intervals are too narrow. Newey–West (HAC) standard errors fold that in for honest intervals; ARIMA goes further.">相鄰月份彼此相關，天真 OLS 信賴區間太窄。Newey–West（HAC）標準誤把它納入，給誠實的區間；ARIMA 更進一步。</p></div>
-      <div class="card"><h3 data-en="② Controlled ITS / triple difference">② 控制組 ITS／三重差分</h3>
-        <p data-en="If a contemporaneous event also hits at the intervention, add a control series unaffected by the intervention and difference it out (Linden's triple-difference).">若介入同時還有時代事件，加一條不受介入影響的控制序列、把它差分掉（Linden 三重差分）。</p></div>
-      <div class="card"><h3 data-en="③ ML two-stage counterfactual">③ ML 兩階段反事實</h3>
-        <p data-en="When the pre-trend is curved, a straight line mis-extrapolates. Train a flexible model on the pre-period only and forecast the counterfactual forward (Dey 2025).">當前趨勢是彎的，直線會外推歪掉。只用介入前資料訓練彈性模型、外推反事實（Dey 2025）。</p></div>
-      <div class="card"><h3 data-en="④ Bayesian structural time series">④ 貝氏結構時間序列</h3>
-        <p data-en="CausalImpact-style state-space models learn the whole posterior of the counterfactual, with an uncertainty band that widens over time — more honest than one straight line.">CausalImpact 式的狀態空間模型學出反事實的整條後驗，不確定帶隨時間變寬——比單一直線更誠實。</p></div>
+    <div class="card info">
+      <h3 data-en="Why ML here">為什麼這裡要 ML</h3>
+      <p data-en="The no-intervention outcome is driven non-linearly (with interactions) by several observed covariates whose mix drifts after the intervention. A naive time-only ITS misattributes that covariate-driven change to the intervention; a <b>linear</b> adjustment helps but misses the interactions; <b>gradient boosting</b> captures them and recovers the truth. The model only ever sees the pre period.">
+        「沒介入會怎樣」的結果，是由幾個可觀測的共變項<b>非線性</b>（含交互作用）地決定，而這些共變項的組合在介入後會漂移。
+        只看時間的天真 ITS 會把共變項造成的變化誤當成介入效果；<b>線性</b>調整有幫助但抓不到交互作用；
+        <b>梯度提升</b>抓得到、把效果拉回真值。模型只看得到介入前的資料。
+      </p>
     </div>
 
-    <!-- ① HAC -->
-    <h2 data-en="① Autocorrelation &amp; HAC robust standard errors">① 自相關與 HAC 穩健標準誤</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? A jagged, self-correlated series">資料長什麼樣子？一條鋸齒、自我相關的序列</h3>
-      <p data-en="Months don't bounce independently — a high month tends to be followed by another high month (autocorrelation). The level estimate is fine, but a naive OLS confidence interval pretends the months are independent and comes out too narrow. HAC standard errors widen it to be honest.">
-        月份不會各自獨立跳動——高的月份後面常常又是高的（自相關）。水準估計沒問題，但天真 OLS 信賴區間
-        假裝月份互相獨立，於是算得太窄。HAC 標準誤把它放寬到誠實的程度。
-      </p>
-      <div id="itsHacChart" class="chart"></div>
+    <button id="runItsMlcf" class="btn primary" data-en="Run the real ML estimator (first run loads the ML package, ~5–10 sec)">跑真正的 ML 估計（首次需載入 ML 套件，約 5–10 秒）</button>
+    <div id="itsMlcfOut" class="hidden">
+      <div id="itsMlcfChart" class="chart"></div>
+      <p class="caption" id="itsMlcfReading"></p>
+      <div id="itsMlcfSeries" class="chart"></div>
+      <p class="caption" data-en="The series with the ML-predicted counterfactual (dashed): trained on the pre period, forecast across the post period from the observed covariates.">序列與 ML 預測的反事實（虛線）：用介入前訓練、再依介入後觀測到的共變項外推。</p>
     </div>
-    <p class="caption" id="itsHacReading"></p>
-
-    <!-- ② Controlled -->
-    <h2 data-en="② Controlled ITS / triple difference">② 控制組 ITS／三重差分</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? Two series that jump together">資料長什麼樣子？兩條一起跳的序列</h3>
-      <p data-en="In the very month of the intervention, another big event also shifts both the treated series (teal) and a control series (grey) that the intervention does NOT touch. An uncontrolled ITS blames the whole shared jump on the intervention. Differencing treated − control cancels the shared event and leaves the true effect.">
-        就在介入的同一個月，另一件大事也讓介入序列（青色）與一條<b>介入碰不到</b>的控制序列（灰色）一起跳。
-        未控制的 ITS 會把整個共同跳變算到介入頭上。做『介入減控制』的差分，共同事件就消掉，剩下真效果。
-      </p>
-      <div id="itsCtrlChart" class="chart"></div>
-    </div>
-    <p class="caption" id="itsCtrlReading"></p>
-
-    <!-- ③ Flexible ML -->
-    <h2 data-en="③ ML two-stage flexible counterfactual">③ ML 兩階段彈性反事實</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? A curved pre-trend a straight line can't follow">資料長什麼樣子？一條直線追不上的彎曲前趨勢</h3>
-      <p data-en="The pre-intervention trend is curved (decelerating). A straight-line extrapolation overshoots the counterfactual and mistakes the natural curving for an effect. Train a flexible model (here a cubic, standing in for splines / Prophet-XGBoost) on the pre-period ONLY, then forecast it forward — the dashed counterfactual now bends correctly.">
-        介入前趨勢是彎的（逐漸趨緩）。直線外推會把反事實畫過頭，把本來就會發生的彎曲誤當成效果。
-        只用<b>介入前</b>資料訓練一個彈性模型（這裡用三次式當樣條／Prophet-XGBoost 的替身）再外推——
-        虛線反事實就正確地彎了。
-      </p>
-      <div id="itsFlexChart" class="chart"></div>
-    </div>
-    <p class="caption" id="itsFlexReading"></p>
-
-    <!-- ④ BSTS -->
-    <h2 data-en="④ Bayesian structural time series (CausalImpact)">④ 貝氏結構時間序列（CausalImpact）</h2>
-    <div class="card scene">
-      <h3 data-en="What does the data look like? A counterfactual with a widening band">資料長什麼樣子？一條帶著漸寬不確定帶的反事實</h3>
-      <p data-en="Instead of one rigid dashed line, a Bayesian structural time-series model (CausalImpact) gives the counterfactual a whole posterior — shown here as a shaded band that widens the further you forecast past the intervention. The effect and its credible interval are read off the gap between the observed series and this band.">
-        不再是一條僵硬的虛線，貝氏結構時間序列模型（CausalImpact）給反事實一整條後驗——這裡畫成一條
-        隨著離介入越遠而<b>越寬</b>的陰影帶。效果與其可信區間，就從觀察序列與這條帶之間的落差讀出。
-      </p>
-      <div id="itsBstsChart" class="chart"></div>
-    </div>
-    <p class="caption" id="itsBstsReading"></p>
   </section>
 
   <!-- ===================== PERR ① 是什麼 ===================== -->
@@ -1643,21 +1624,47 @@
       <div class="card info"><h3>PERR</h3><p data-en="You have <b>event rates before and after</b> treatment for both groups, and you believe the confounding is <b>stable over time</b>.">你有兩組<b>處置前後的事件率</b>，且相信混淆<b>隨時間穩定</b>。</p></div>
     </div>
 
-    <h2 data-en="Decision flowchart: start from what you have">決策流程圖：從你手上有什麼開始</h2>
-    <p class="caption" data-en="Walk down the questions; the first &quot;yes&quot; points to the design your data can support. (You may satisfy more than one — then run both and check they agree.)">由上往下走，第一個「是」就指向你的資料撐得起的設計。（可能不只符合一個——那就兩個都跑，看是否一致。）</p>
+    <h2 data-en="Decision tree: pick a design by your study's anchor">決策樹：依研究的「錨點」挑設計</h2>
+    <p class="caption" data-en="Following the pharmacoepidemiology &quot;anchor&quot; approach. First decide the study anchor: exposure-anchored or outcome-anchored. This puts the six toolbox methods in the wider design landscape.">參考藥物流行病學的「錨點（anchor）」取向。先決定研究的錨點：以暴露錨定、還是以結果錨定。這把本工具箱六法放進更完整的設計地圖裡。</p>
+    <div class="flow-legend">
+      <span data-en="<b>✓</b> implemented in this toolbox"><b>✓</b> 本工具箱已實作（六法）</span>
+      <span data-en="<b>↗</b> related design, not implemented here (for reference)"><b>↗</b> 延伸設計，本工具未實作（供參考）</span>
+      <span class="flow-yes tte" data-en="blue ring = can combine with target trial emulation">藍框＝可結合 target trial emulation</span>
+    </div>
+
     <div class="flow">
-      <div class="flow-q"><span data-en="① Is there an <b>external, as-good-as-random push</b> (a randomised reminder, a lottery, a genetic variant) that affects health <b>only through</b> vaccination?">① 有一個<b>外生、近似隨機的推力</b>嗎？（隨機提醒、抽籤、基因變異），且它<b>只透過</b>接種影響健康</span><span class="flow-yes">→ IV</span></div>
-      <div class="flow-no" data-en="no ↓">否 ↓</div>
-      <div class="flow-q"><span data-en="② Is eligibility set by a <b>sharp cutoff</b> on a score (age, date, an index) people can't precisely game?">② 資格是由分數上的<b>明確門檻</b>決定的嗎？（年齡 65、日期、指標），且無法被精準操弄</span><span class="flow-yes">→ RDD</span></div>
-      <div class="flow-no" data-en="no ↓">否 ↓</div>
-      <div class="flow-q"><span data-en="③ Did a policy <b>switch on for some units at a known time</b>, and do you have a <b>control group</b> with parallel pre-trends?">③ 是<b>某時點對部分單位開啟的政策</b>、且有<b>對照組</b>（前期平行）嗎？</span><span class="flow-yes">→ DiD</span></div>
-      <div class="flow-no" data-en="no ↓">否 ↓</div>
-      <div class="flow-q"><span data-en="④ A <b>single population</b>, one <b>known intervention time</b>, and <b>many time points</b> before & after (no coincident event)?">④ 是<b>單一群體</b>、一個<b>已知介入時點</b>、前後有<b>很多期</b>的時間序列嗎？（介入當下沒有別的大事）</span><span class="flow-yes">→ ITS</span></div>
-      <div class="flow-no" data-en="no ↓">否 ↓</div>
-      <div class="flow-q"><span data-en="⑤ Does vaccination <b>spread gradually over calendar time</b> at different rates across groups, with a <b>rare</b> outcome?">⑤ 接種<b>隨日曆時間逐漸普及</b>、跨族群速度不同，且結果<b>罕見</b>嗎？</span><span class="flow-yes">→ TiT</span></div>
-      <div class="flow-no" data-en="no ↓">否 ↓</div>
-      <div class="flow-q"><span data-en="⑥ Do you have <b>event rates before and after</b> treatment for both groups, with confounding you believe is <b>stable over time</b>?">⑥ 有兩組<b>處置前後的事件率</b>、且相信混淆<b>時間不變</b>嗎？</span><span class="flow-yes">→ PERR</span></div>
-      <div class="flow-end" data-en="None of the above? You probably need a randomised trial, or much stronger domain assumptions — none of these six quasi-experiments has the variation it needs.">都不符合？那你可能需要一場隨機試驗，或更強的領域假設——這六種準實驗都缺少各自需要的那種變異。</div>
+      <div class="flow-q"><span data-en="<b>Q1.</b> What is your study anchor?"><b>Q1.</b> 你的研究錨點（anchor）為何？</span></div>
+
+      <div class="flow-head" data-en="A · Exposure-anchored (one exposure, can look at multiple events)">A · 暴露錨定（一個暴露，可看多個事件）</div>
+      <div class="flow-branch">
+        <div class="flow-q"><span data-en="<b>Q2.</b> Is there a suitable active comparator drug?"><b>Q2.</b> 是否具備合適的對照藥物？</span><span class="flow-yes ext tte" data-en="yes → active comparator cohort ↗">是 → 對照藥物世代研究 ↗</span></div>
+        <div class="flow-no" data-en="no (watch for immortal time bias) ↓">否（可能有 immortal time bias）↓</div>
+        <div class="flow-q"><span data-en="<b>Q3.</b> Is there hard-to-handle but <b>time-invariant</b> confounding?"><b>Q3.</b> 是否存在難處理但<b>不隨時間變動</b>的干擾因子？</span></div>
+        <div class="flow-branch">
+          <div class="flow-q"><span data-en="<b>yes →</b> <b>Q4.</b> Is there a sharp external cutoff / policy start date?"><b>是 →</b> <b>Q4.</b> 是否有明確外部切點／政策生效日？</span><span class="flow-yes tte" data-en="yes → RDD ✓">是 → 斷點回歸 RDD ✓</span></div>
+          <div class="flow-no" data-en="　　no → self-controlled case series (SCCS) ↗">　　否 → 自我控制案例系列 SCCS ↗</div>
+          <div class="flow-q"><span data-en="<b>no →</b> <b>Q5.</b> Is the treatment strategy dynamic / time-varying?"><b>否 →</b> <b>Q5.</b> 治療策略是否動態／隨時間變化？</span><span class="flow-yes ext tte" data-en="yes → clone-censor-weight (CCW) ↗">是 → 複製人 CCW ↗</span></div>
+          <div class="flow-no" data-en="　　no (eligible at multiple time points) → sequential trial ↗">　　否（病患在多個時間點符合收案）→ 序列試驗 sequential trial ↗</div>
+        </div>
+      </div>
+
+      <div class="flow-head" data-en="B · Outcome-anchored (one outcome, can look at multiple exposures)">B · 結果錨定（一個結果，可看多個暴露）</div>
+      <div class="flow-branch">
+        <div class="flow-q"><span data-en="<b>Q6.</b> Is there hard-to-handle but time-invariant confounding?"><b>Q6.</b> 是否存在難處理但不隨時間變動的干擾因子？</span><span class="flow-yes ext" data-en="no → nested case-control ↗">否 → 巢式對照研究 ↗</span></div>
+        <div class="flow-q"><span data-en="<b>Q7.</b> Is there a time trend of exposure?"><b>Q7.</b> 是否存在 exposure 的 time trend？</span><span class="flow-yes ext" data-en="no → case-crossover ↗">否 → 案例交叉 ↗</span></div>
+        <div class="flow-no" data-en="　yes → case-time-control (CTC) / case-case-time-control (CCTC) ↗">　是 → 案例時間對照 CTC／案例-案例時間對照 CCTC ↗</div>
+      </div>
+    </div>
+
+    <h3 data-en="Where this toolbox's six methods attach (same vaccine question)">本工具箱六法掛在哪裡（同一個疫苗問題）</h3>
+    <div class="flow">
+      <div class="flow-q"><span data-en="An <b>external, as-good-as-random push</b> (random reminder / lottery / genetic variant) acting only through vaccination">有<b>外生、近似隨機的推力</b>（隨機提醒／抽籤／基因），且只透過接種影響結果</span><span class="flow-yes">→ IV ✓</span></div>
+      <div class="flow-q"><span data-en="A <b>sharp cutoff</b> on a score (= Q4 &quot;yes&quot; above: age 65 / a date)">分數上的<b>明確門檻</b>（＝上面 Q4「是」：年齡 65／日期）</span><span class="flow-yes">→ RDD ✓</span></div>
+      <div class="flow-q"><span data-en="A policy <b>switched on for some units at a known time</b> + a control group">政策<b>在某時點對部分單位開啟</b>＋有對照組</span><span class="flow-yes">→ DiD ✓</span></div>
+      <div class="flow-q"><span data-en="A <b>single population</b> + a known intervention time + many time points">一個<b>單一群體</b>＋已知介入時點＋多個時間點</span><span class="flow-yes">→ ITS ✓</span></div>
+      <div class="flow-q"><span data-en="Exposure <b>spreads over calendar time</b> at different rates across strata (a cohort cousin of Q7 / CTC-CCTC)">暴露<b>隨日曆時間逐漸普及</b>、跨層速度不同（＝ Q7 / CTC-CCTC 的世代版）</span><span class="flow-yes">→ TiT ✓</span></div>
+      <div class="flow-q"><span data-en="<b>Event rates before &amp; after</b> treatment, with time-invariant confounding"><b>處置前後的事件率</b>＋混淆時間不變</span><span class="flow-yes">→ PERR ✓</span></div>
+      <div class="flow-end" data-en="Match none, with no usable design above? You probably need a randomised trial — or target trial emulation to make the observational analysis emulate one.">上面都不符合？那你可能需要一場隨機試驗——或用 target trial emulation 讓觀察性分析去「模擬」一場試驗。</div>
     </div>
 
     <div class="card info">
@@ -1711,6 +1718,7 @@
       <li>Bruns-Smith, D. (2025). <i>Two-Stage Machine Learning for Nonparametric Instrumental Variable Regression.</i> Stanford University. <span data-en="〔bendable first stage〕">〔可彎的第一階段〕</span></li>
       <li>Peng, J. (2024). <i>Machine Learning for Instrumental Variable Regression: From Bias to Resilience.</i> University of Connecticut. SSRN 5008641. <span data-en="〔forbidden-regression bias〕">〔禁止迴歸偏誤〕</span></li>
       <li>Wu, A., Kuang, K., Xiong, R., &amp; Wu, F. (2022). <i>Instrumental Variables in Causal Inference and Machine Learning: A Survey.</i> arXiv:2212.05778. <span data-en="〔a survey of IV and machine learning〕">〔IV 與機器學習綜述〕</span></li>
+      <li>Cattaneo, M. D., Keele, L., &amp; Titiunik, R. (2023). Covariate Adjustment in Regression Discontinuity Designs. In <i>Handbook of Matching and Weighting Adjustments for Causal Inference</i> (Ch. 8). CRC Press. https://doi.org/10.1201/9781003102670-8. <span data-en="〔covariate adjustment, efficiency &amp; what covariates can/can't fix in RDD〕">〔RDD 的共變項調整、效率提升，以及共變項能不能補救 RDD〕</span></li>
       <li>Wang, Q. (n.d.). <i>The Difference Between Conventional Double Machine Learning and Sharp Regression Discontinuity Design.</i> <span data-en="〔DML for RDD; robustness to bandwidth / window choice — RDD tab ⑤ Remedy 1〕">〔RDD 的雙重機器學習；對頻寬／視窗選擇的穩健性 —— RDD 分頁⑤ 藥方一〕</span></li>
       <li>Schuessler, M., Sverdrup, E., Tibshirani, J., &amp; Wager, S. (2026). <i>Nonparametric Regression Discontinuity Designs with Survival Outcomes.</i> Stanford University. arXiv:2604.03502. <span data-en="〔doubly-robust censoring correction with flexible ML — RDD tab ⑤ Remedy 2〕">〔以彈性機器學習做雙重穩健的設限校正 —— RDD 分頁⑤ 藥方二〕</span></li>
       <li>Adeleke, M. O., Baio, G., &amp; O&#39;Keeffe, A. G. (2022). Regression discontinuity designs for time-to-event outcomes: An approach using accelerated failure time models. <i>Journal of the Royal Statistical Society: Series A, 185</i>(3), 1216. https://doi.org/10.1111/rssa.12812. <span data-en="〔purely parametric AFT approach for RDD survival — RDD tab ⑤ Remedy 2〕">〔RDD 存活的純參數 AFT 取徑 —— RDD 分頁⑤ 藥方二〕</span></li>
@@ -1741,7 +1749,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=15"></script>
-<script src="app.js?v=15"></script>
+<script src="i18n.js?v=16"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

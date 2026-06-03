@@ -42,58 +42,83 @@ def _ols(X, y):
 # ===========================================================================
 # 1) Doubly-robust / DML DiD — covariates differ between the two groups
 # ===========================================================================
-def dr_did_demo(seed=7, lang="zh"):
+def _dr_did_crossfit(dY, treated, X, ps_model_factory, out_model_factory, rng, folds=2):
+    """Sant'Anna–Zhao doubly-robust DiD with K-fold cross-fitting (nuisances
+    predicted out-of-fold). ps_model_factory / out_model_factory return fresh
+    sklearn-style estimators each call — so this works with linear OR ML nuisances."""
+    n = len(dY)
+    idx = rng.permutation(n)
+    parts = np.array_split(idx, folds)
+    m0 = np.zeros(n)
+    e = np.zeros(n)
+    for k in range(folds):
+        te = parts[k]
+        tr = np.concatenate([parts[j] for j in range(folds) if j != k])
+        ctrl = tr[treated[tr] == 0]
+        om = out_model_factory(); om.fit(X[ctrl], dY[ctrl]); m0[te] = om.predict(X[te])
+        pm = ps_model_factory(); pm.fit(X[tr], treated[tr])
+        e[te] = np.clip(pm.predict_proba(X[te])[:, 1], 0.02, 0.98)
+    w1 = treated / treated.mean()
+    w0 = (1 - treated) * e / (1 - e)
+    w0 = w0 / w0.mean()
+    return float(np.mean(w1 * (dY - m0)) - np.mean(w0 * (dY - m0)))
+
+
+def dml_demo(seed=7, lang="zh"):
+    """⑤ DiD — a GENUINE machine-learning estimator: double/debiased ML DiD with
+    gradient-boosted nuisance models and cross-fitting. The confounding here is
+    NONLINEAR in several covariates, so a linear doubly-robust version is still
+    biased, while the ML version recovers the truth."""
+    from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+    from sklearn.linear_model import LinearRegression, LogisticRegression
     rng = np.random.default_rng(seed)
-    n = 800
+    n = 1600
     true_att = 3.0
-    # one covariate X; treated units have systematically higher X
-    treated = rng.binomial(1, 0.5, n)
-    X = rng.normal(0.5 + 1.2 * treated, 1.0, n)        # X distribution differs by group
-    # The common time trend DEPENDS on X -> unconditional parallel trends FAILS,
-    # but CONDITIONAL on X it holds. dY = trend(X) + att*treated + noise.
-    dY = 1.0 + 1.3 * X + true_att * treated + rng.normal(0, 1.0, n)
+    X = rng.normal(0, 1, (n, 4))
+    # NONLINEAR propensity & trend in the covariates -> linear models are misspecified
+    g = 1.4 * np.sin(1.5 * X[:, 0]) + 0.9 * X[:, 1] ** 2 - 1.1 * X[:, 2] + 0.5 * X[:, 0] * X[:, 1]
+    ps_true = 1.0 / (1.0 + np.exp(-(g - g.mean())))
+    treated = rng.binomial(1, ps_true)
+    dY = (1.0 + 2.2 * np.sin(1.5 * X[:, 0]) + 1.1 * X[:, 1] ** 2 + 0.7 * X[:, 2]
+          + 0.6 * X[:, 0] * X[:, 1] + true_att * treated + rng.normal(0, 1.0, n))
 
     naive = float(dY[treated == 1].mean() - dY[treated == 0].mean())
-
-    # outcome model among controls: m0(X) = E[dY | treated=0, X]
-    Xc = np.column_stack([np.ones((treated == 0).sum()), X[treated == 0]])
-    b0 = _ols(Xc, dY[treated == 0])
-    m0 = b0[0] + b0[1] * X
-    # propensity e(X)=P(treated|X)
-    Xp = np.column_stack([np.ones(n), X])
-    bp = _logit_fit(Xp, treated.astype(float))
-    ps = np.clip(1.0 / (1.0 + np.exp(-(Xp @ bp))), 0.02, 0.98)
-    # Sant'Anna–Zhao DR-DID
-    w1 = treated / treated.mean()
-    w0 = (1 - treated) * ps / (1 - ps)
-    w0 = w0 / w0.mean()
-    dr = float(np.mean(w1 * (dY - m0)) - np.mean(w0 * (dY - m0)))
-
+    lin = _dr_did_crossfit(
+        dY, treated, X,
+        lambda: LogisticRegression(max_iter=200),
+        lambda: LinearRegression(), rng, folds=2)
+    mlv = _dr_did_crossfit(
+        dY, treated, X,
+        lambda: GradientBoostingClassifier(n_estimators=120, max_depth=3, learning_rate=0.1),
+        lambda: GradientBoostingRegressor(n_estimators=120, max_depth=3, learning_rate=0.1),
+        rng, folds=2)
     return {
-        "key": "dr",
-        "title": t(lang, "雙重穩健／DML DiD", "Doubly-robust / DML DiD"),
-        "true_att": true_att, "naive": naive, "adjusted": dr,
+        "key": "dml",
+        "title": t(lang, "雙重機器學習 DiD（真的跑 ML）", "Double machine-learning DiD (real ML)"),
+        "true_att": true_att, "naive": naive, "linear": lin, "ml": mlv,
         "bars": {"labels": [t(lang, "真值", "Truth"), t(lang, "天真 DiD", "Naive DiD"),
-                            t(lang, "雙重穩健 DiD", "DR DiD")],
-                 "values": [true_att, naive, dr]},
-        "scene": {"x_treated": X[treated == 1][:120].round(3).tolist(),
-                  "x_control": X[treated == 0][:120].round(3).tolist()},
+                            t(lang, "線性雙重穩健", "Linear DR"), t(lang, "DML（梯度提升）", "DML (boosting)")],
+                 "values": [true_att, naive, lin, mlv]},
         "plain": t(
             lang,
-            "情境：介入組與對照組『本來就不一樣』——例如介入社區的人普遍 X（風險體質）較高，"
-            "而隨時間的自然變化又跟 X 有關。這時整體的平行趨勢會被打破，天真 DiD 估出來會偏。"
-            "雙重穩健 DiD 同時用『傾向分數』（誰比較會進介入組）與『結果模型』（控制組的自然變化長怎樣）"
-            "兩道保險，只要其中一個對，就把偏誤校正回來；用機器學習估這兩塊、再做去偏（DML）就能處理很多共變項。",
-            "Scenario: the treated and control groups differ to begin with — e.g. treated communities have higher X "
-            "(a risk profile), and the natural over-time change depends on X. Overall parallel trends then break and a "
-            "naive DiD is biased. Doubly-robust DiD uses TWO safety nets — a propensity score (who tends to be treated) "
-            "and an outcome model (how controls would have drifted) — and stays unbiased if EITHER is right; estimating "
-            "both with machine learning and de-biasing (DML) handles many covariates.",
+            "這是這個分頁裡<b>唯一真正用到機器學習</b>的地方。情境：是否接種與隨時間的自然變化，都以<b>非線性</b>"
+            "的方式取決於好幾個共變項。雙重穩健 DiD 同時配『傾向分數模型』與『結果模型』，只要其一對就不偏；"
+            "但如果用<b>線性</b>模型去配這些非線性關係，模型設定錯，估計仍會偏。改用<b>梯度提升（gradient boosting）</b>"
+            "這種機器學習去估那兩塊、再用<b>交叉擬合</b>（用別折資料學、套到沒看過的折）去偏，就能把效果拉回真值——"
+            "這就是雙重／去偏機器學習（DML）。",
+            "This is the <b>only place in this tab that genuinely uses machine learning</b>. Here both who gets "
+            "vaccinated and the natural over-time change depend <b>non-linearly</b> on several covariates. Doubly-robust "
+            "DiD pairs a propensity model with an outcome model and is unbiased if either is right — but fit those "
+            "non-linear relationships with <b>linear</b> models and the misspecification leaves bias. Estimate the two "
+            "nuisance pieces with <b>gradient boosting</b> and de-bias with <b>cross-fitting</b> (learn on other folds, "
+            "predict on held-out ones) and the estimate returns to the truth — that is double/debiased ML (DML).",
         ),
         "reading": t(
             lang,
-            f"天真 DiD ≈ {naive:.2f}（被 X 的組間差異汙染），雙重穩健 DiD ≈ {dr:.2f}，貼近真值 {true_att:.2f}。",
-            f"Naive DiD ≈ {naive:.2f} (contaminated by the group difference in X); DR DiD ≈ {dr:.2f}, close to the truth {true_att:.2f}.",
+            f"天真 DiD ≈ {naive:.2f}；用線性模型的雙重穩健 ≈ {lin:.2f}（非線性設定錯、仍偏）；"
+            f"用梯度提升的 DML ≈ {mlv:.2f}，貼回真值 {true_att:.2f}。",
+            f"Naive DiD ≈ {naive:.2f}; linear-model DR ≈ {lin:.2f} (still biased — misspecified on non-linearity); "
+            f"gradient-boosting DML ≈ {mlv:.2f}, back at the truth {true_att:.2f}.",
         ),
     }
 
@@ -313,10 +338,9 @@ def synth_control_demo(seed=3, lang="zh"):
     }
 
 
-def boost_demos(seed=7, lang="zh"):
-    """All four ⑤ demos in one light call."""
+def variant_demos(seed=7, lang="zh"):
+    """The advanced DiD VARIANTS (not AI) — shown in tab ③ 資料分析. Light/no sklearn."""
     return {
-        "dr": dr_did_demo(seed=seed, lang=lang),
         "staggered": staggered_demo(seed=seed + 4, lang=lang),
         "universal": universal_did_demo(seed=seed + 1, lang=lang),
         "synth": synth_control_demo(seed=seed + 2, lang=lang),

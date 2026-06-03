@@ -151,8 +151,8 @@
       }
     }
 
-    if (path === "/api/ml_forbidden") {
-      setStatus && null; // sklearn 首次載入(無遮罩,由按鈕顯示「訓練中」)
+    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf") {
+      setStatus && null; // sklearn 首次載入(無遮罩,由按鈕顯示「計算中」)
       await ensureSklearn();
     }
 

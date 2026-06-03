@@ -44,17 +44,22 @@ def test_dashboard_shape_and_statuses():
     assert bad["checks"][3]["status"] == "red"
 
 
-def test_boost_demos():
-    d = its_ml.boost_demos(seed=7)
+def test_variant_demos():
+    d = its_ml.variant_demos(seed=7)
+    assert set(d) == {"hac", "controlled", "bsts"}
     # HAC SE wider than OLS SE
     assert d["hac"]["se_hac"] > d["hac"]["se_ols"]
     # controlled removes the coincident shock better than uncontrolled
     assert abs(d["controlled"]["controlled"] - d["controlled"]["true_level"]) < \
            abs(d["controlled"]["uncontrolled"] - d["controlled"]["true_level"])
-    # flexible counterfactual beats straight-line on a curved pre-trend
-    assert abs(d["flexible"]["flexible"] - d["flexible"]["true_level"]) < \
-           abs(d["flexible"]["linear"] - d["flexible"]["true_level"])
     assert d["bsts"]["concept"] is True
+
+
+def test_mlcf_real_ml_beats_naive():
+    d = its_ml.mlcf_demo(seed=7)
+    # genuine ML two-stage counterfactual recovers the level change, closer than naive ITS
+    assert abs(d["ml"] - d["true_level"]) < abs(d["naive"] - d["true_level"])
+    assert abs(d["ml"] - d["true_level"]) < 1.5
 
 
 def test_bilingual_interpretation():
