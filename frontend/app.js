@@ -1081,182 +1081,237 @@ function gotoMethod(m, sub) {
 const L = (o) => (lang() === "en" ? o.en : o.zh);
 
 // node = question {step, q:{}, opts:[{l:{}, to}]}  OR  leaf {rec:{...}}
+// One tree, faithful to the pharmacoepidemiology "anchor" decision diagram:
+// the common study designs (active comparator cohort, SCCS, CCW, sequential
+// trial, nested case-control, case-crossover, CTC/CCTC) and the toolbox's six
+// methods (IV/RDD/DiD/ITS/PERR/TiT) are all reachable endpoints. Every leaf
+// carries a concrete vaccine scenario, and the full tree pops out at the end.
 const DNODES = {
   n1: {
     step: { zh: "錨點", en: "Anchor" },
-    q: { zh: "你的研究「錨點」是什麼？", en: "What is your study's anchor?" },
+    q: { zh: "你的研究「錨點」是什麼？（這是藥物流行病學決策樹的第一個分岔）", en: "What is your study's anchor? (the first split in the pharmacoepidemiology design tree)" },
     opts: [
-      { l: { zh: "暴露錨定：先有一個暴露／介入，想知道它造成什麼結果", en: "Exposure-anchored: you have one exposure/intervention and want to know its effects" }, to: "ex1" },
-      { l: { zh: "結果錨定：先有一個結果，想回頭找是哪些暴露造成的", en: "Outcome-anchored: you have one outcome and want to find which exposures drive it" }, to: "oc1" },
-    ],
-  },
-  // ---- exposure-anchored branch ----
-  ex1: {
-    step: { zh: "外生推力？", en: "Exogenous push?" },
-    q: { zh: "你有沒有一個「外生、近似隨機」的推力，會改變人們是否接受暴露，而且這推力只透過暴露影響結果？（例：隨機寄送的提醒、抽籤、基因變異、隨機分流）",
-         en: "Is there an external, as-good-as-random push that changes whether people get the exposure, and affects the outcome only through that exposure? (e.g. a randomised reminder, a lottery, a genetic variant)" },
-    opts: [
-      { l: { zh: "有，這推力幾乎可當隨機", en: "Yes — that push is essentially random" }, to: "rIV" },
-      { l: { zh: "沒有這種推力", en: "No such push" }, to: "ex2" },
-    ],
-  },
-  ex2: {
-    step: { zh: "明確門檻？", en: "Sharp cutoff?" },
-    q: { zh: "暴露的「資格」是不是由某個分數的明確門檻決定？（年齡滿 65、某風險指標切點、某日期之後），而且你主要需要門檻附近族群的答案？",
-         en: "Is eligibility for the exposure set by a sharp cutoff on a score (age 65, a risk-index threshold, a date), and do you mainly need the answer near that cutoff?" },
-    opts: [
-      { l: { zh: "是，有明確切點", en: "Yes — there is a sharp cutoff" }, to: "rRDD" },
-      { l: { zh: "沒有明確切點", en: "No sharp cutoff" }, to: "ex3" },
-    ],
-  },
-  ex3: {
-    step: { zh: "時點開啟？", en: "Switched on?" },
-    q: { zh: "暴露／政策是不是在某個已知時點「開啟」？你有沒有一個沒被開啟的對照組，或前後很多時間點？",
-         en: "Is the exposure/policy switched on at a known time? Do you have an untreated control group, or many time points before and after?" },
-    opts: [
-      { l: { zh: "有對照組，且開啟前兩組走勢平行", en: "Yes, with a control group that moved in parallel beforehand" }, to: "rDiD" },
-      { l: { zh: "沒有乾淨對照組，但同一群體介入前後有很多時間點", en: "No clean control, but one population with many time points before & after" }, to: "rITS" },
-      { l: { zh: "不是「某時點開啟」這種情境", en: "Not a switched-on-at-a-time situation" }, to: "ex4" },
-    ],
-  },
-  ex4: {
-    step: { zh: "逐漸普及？", en: "Gradual uptake?" },
-    q: { zh: "暴露是不是隨日曆時間逐漸普及，且不同族群普及速度不同；同時你的結果相當罕見？",
-         en: "Does the exposure spread gradually over calendar time at different rates across groups, while the outcome is fairly rare?" },
-    opts: [
-      { l: { zh: "是，有逐漸普及的趨勢、結果罕見", en: "Yes — a gradual uptake trend, rare outcome" }, to: "rTiT" },
-      { l: { zh: "否", en: "No" }, to: "ex5" },
-    ],
-  },
-  ex5: {
-    step: { zh: "事前／事後率？", en: "Before/after rates?" },
-    q: { zh: "你能不能拿到兩組（暴露 vs 未暴露）在「暴露前」期與「暴露後」期各自的事件率，且相信兩組間的混淆隨時間穩定（乘法、時間不變）？",
-         en: "Can you get event rates for both groups (exposed vs not) in a pre-exposure period and a post period, and do you believe the between-group confounding is stable over time (multiplicative, time-invariant)?" },
-    opts: [
-      { l: { zh: "能，且混淆大致時間不變", en: "Yes, and confounding is roughly time-invariant" }, to: "rPERR" },
-      { l: { zh: "不能／混淆會隨時間變", en: "No / confounding shifts over time" }, to: "ex6" },
-    ],
-  },
-  ex6: {
-    step: { zh: "外部設計", en: "External designs" },
-    q: { zh: "本工具箱六法都不完全符合。以下哪個最接近你的情況？",
-         en: "None of the toolbox's six fits cleanly. Which of these is closest to your situation?" },
-    opts: [
-      { l: { zh: "有一個藥理相近的對照藥物可比較", en: "There is a pharmacologically similar comparator drug" }, to: "rACC" },
-      { l: { zh: "結果是急性、短暫事件，且每個人可當自己的對照", en: "The outcome is acute/transient and each person can be their own control" }, to: "rSCCS" },
-      { l: { zh: "治療策略是動態／隨時間調整的（易有 immortal time bias）", en: "The treatment strategy is dynamic / time-varying (prone to immortal-time bias)" }, to: "rCCW" },
-      { l: { zh: "病人在多個時間點陸續符合收案資格", en: "Patients become eligible at several different time points" }, to: "rSEQ" },
-      { l: { zh: "以上都不行", en: "None of the above works" }, to: "rTTE" },
-    ],
-  },
-  // ---- outcome-anchored branch ----
-  oc1: {
-    step: { zh: "個案抽樣？", en: "Case sampling?" },
-    q: { zh: "你的結果罕見，想從「已發病的個案」回頭抽樣、找出哪些暴露相關嗎？",
-         en: "Your outcome is rare — do you want to sample from cases (people who already had the event) and look back for associated exposures?" },
-    opts: [
-      { l: { zh: "是，想用個案／對照抽樣", en: "Yes — case/control sampling" }, to: "oc2" },
-      { l: { zh: "其實我有完整世代資料、暴露隨時間普及", en: "Actually I have full cohort data with exposure spreading over time" }, to: "rTiT" },
-    ],
-  },
-  oc2: {
-    step: { zh: "暴露時間趨勢？", en: "Exposure time-trend?" },
-    q: { zh: "暴露會不會隨日曆時間有趨勢（例如新藥逐漸普及、用量逐年上升）？你想怎麼取對照？",
-         en: "Does the exposure have a calendar-time trend (e.g. a new drug spreading, rising use)? How do you want to take controls?" },
-    opts: [
-      { l: { zh: "暴露大致穩定，想用個人自身近期當對照", en: "Exposure is roughly stable; use the person's own recent past as control" }, to: "rCCO" },
-      { l: { zh: "暴露有時間趨勢，需要扣掉趨勢", en: "Exposure has a time trend that must be netted out" }, to: "rCTC" },
-      { l: { zh: "想在大世代裡用配對對照做巢式抽樣", en: "Sample matched controls nested within a large cohort" }, to: "rNCC" },
+      { l: { zh: "暴露錨定：先固定一個暴露／介入，看它造成什麼結果", en: "Exposure-anchored: fix one exposure/intervention, study its effects" }, to: "aEx" },
+      { l: { zh: "結果錨定：先固定一個結果，回頭找是哪些暴露造成的", en: "Outcome-anchored: fix one outcome, look back for the exposures behind it" }, to: "aOut" },
     ],
   },
 
-  // ====== recommendations (leaves) ======
+  // ================= A · exposure-anchored =================
+  aEx: {
+    step: { zh: "A 暴露錨定 · 有外生工具？", en: "A Exposure-anchored · an instrument?" },
+    q: { zh: "你有沒有一個「外生、近似隨機」的工具，會改變人們是否接受暴露，而且只透過暴露影響結果？（隨機寄送的提醒、抽籤、政策樂透、基因變異）",
+         en: "Do you have an external, near-random instrument that changes whether people get the exposure and affects the outcome only through it? (a randomised reminder, a lottery, a policy lottery, a genetic variant)" },
+    opts: [
+      { l: { zh: "有，這工具幾乎可當隨機", en: "Yes — that instrument is essentially random" }, to: "rIV" },
+      { l: { zh: "沒有這種工具，繼續往下", en: "No such instrument — continue" }, to: "aEx2" },
+    ],
+  },
+  aEx2: {
+    step: { zh: "有活性對照藥物？", en: "Active comparator?" },
+    q: { zh: "你有沒有一個「藥理／適應症相近」的活性對照，可以拿來比較（也就是比「打 A 對 B」，而不是直接比「打 vs 不打」）？",
+         en: "Is there a pharmacologically / indication-similar active comparator to compare against (i.e. 'A vs B', not 'treated vs untreated')?" },
+    opts: [
+      { l: { zh: "有合適的活性對照藥物", en: "Yes — a suitable active comparator" }, to: "rACC" },
+      { l: { zh: "沒有（直接比『用 vs 不用』易有 immortal time bias）", en: "No (a treated-vs-untreated comparison risks immortal-time bias)" }, to: "aEx3" },
+    ],
+  },
+  aEx3: {
+    step: { zh: "干擾隨不隨時間變？", en: "Time-invariant confounding?" },
+    q: { zh: "你最頭痛、難測量的干擾因子，比較像哪一種？（這是決策樹的關鍵分岔）",
+         en: "Your hardest-to-measure confounding is more like which? (the key split in the tree)" },
+    opts: [
+      { l: { zh: "難處理，但大致「不隨時間變動」（體質、基因、長期習慣）", en: "Hard, but roughly time-invariant (constitution, genetics, long-run habits)" }, to: "aEx4" },
+      { l: { zh: "會「隨時間變動」，或治療策略本身就是動態的", en: "It shifts over time, or the strategy itself is dynamic" }, to: "aEx5" },
+    ],
+  },
+  aEx4: {
+    step: { zh: "借哪種準隨機結構？", en: "Which quasi-random structure?" },
+    q: { zh: "在「干擾不隨時間變」之下，你的資料裡有哪種可借來當準隨機的結構？（選最接近的一個）",
+         en: "Under time-invariant confounding, which quasi-random structure do you have in your data? (pick the closest one)" },
+    opts: [
+      { l: { zh: "暴露由分數上的明確門檻決定（年齡 65／風險指標切點）", en: "Exposure set by a sharp cutoff on a score (age 65 / a risk-index threshold)" }, to: "rRDD" },
+      { l: { zh: "政策在已知時點開啟，且有沒被開啟的對照組（面板資料）", en: "Policy switched on at a known time, with an untreated control group (panel data)" }, to: "rDiD" },
+      { l: { zh: "介入在已知時點，但只有單一群體、前後有許多時間點", en: "Intervention at a known time, but a single population with many time points" }, to: "rITS" },
+      { l: { zh: "你有兩組「暴露前 vs 暴露後」的事件率，混淆乘法穩定", en: "Both groups' before-vs-after event rates, with stable multiplicative confounding" }, to: "rPERR" },
+      { l: { zh: "沒有明確切點，但結果急性短暫、可用個人自身當對照", en: "No sharp cutoff, but an acute transient outcome — person as own control" }, to: "rSCCS" },
+    ],
+  },
+  aEx5: {
+    step: { zh: "時間變動／動態策略", en: "Time-varying / dynamic" },
+    q: { zh: "在「干擾隨時間變／策略動態」之下，哪一種最接近你的情況？",
+         en: "Under time-varying confounding / dynamic strategies, which is closest to your case?" },
+    opts: [
+      { l: { zh: "治療策略動態、隨時間調整（誰算暴露會隨時間改變）", en: "A dynamic, time-varying strategy (who counts as exposed changes over time)" }, to: "rCCW" },
+      { l: { zh: "病人在多個時間點陸續符合收案資格", en: "Patients become eligible at several time points" }, to: "rSEQ" },
+      { l: { zh: "暴露隨日曆時間逐漸普及、跨族群速度不同，且結果罕見", en: "Exposure spreads over calendar time at different rates across groups; rare outcome" }, to: "rTiT" },
+      { l: { zh: "以上皆非——想直接把分析設計成模擬一場試驗", en: "None of the above — design the analysis to emulate a trial" }, to: "rTTE" },
+    ],
+  },
+
+  // ================= B · outcome-anchored =================
+  aOut: {
+    step: { zh: "B 結果錨定 · 怎麼取對照？", en: "B Outcome-anchored · how to take controls?" },
+    q: { zh: "你想從「已發生結果的個案」回看暴露——打算怎麼取對照？",
+         en: "You will look back from cases (people who had the outcome) — how do you want to take controls?" },
+    opts: [
+      { l: { zh: "在大世代裡用「配對的對照」、巢式抽樣（省暴露測量成本）", en: "Matched controls sampled within a large cohort (saves exposure-measurement cost)" }, to: "rNCC" },
+      { l: { zh: "用「個人自身近期」當對照，且暴露沒有明顯時間趨勢", en: "The person's own recent past as control, with no clear exposure time-trend" }, to: "rCCO" },
+      { l: { zh: "用個人自身對照，但暴露本身有日曆時間趨勢、需扣掉", en: "Person-as-own-control, but the exposure has a calendar trend that must be netted out" }, to: "rCTC" },
+    ],
+  },
+
+  // ====== recommendations (leaves) — each carries a vaccine scenario ======
   rIV: { rec: { kind: "toolbox", method: "iv", badge: "IV ✓",
     title: { zh: "最適合：工具變數 IV", en: "Best fit: Instrumental Variables (IV)" },
-    why: { zh: "你手上有一個近似隨機、只透過暴露影響結果的外生推力——這正是 IV 的引擎。用它把「被推動的順從者」的因果效果（LATE）撬出來。",
-           en: "You have a near-random, exclusion-respecting external push — exactly IV's engine. Use it to recover the causal effect for the compliers it moves (the LATE)." },
-    watch: { zh: "最關鍵、不可檢驗的是<b>排除限制</b>（推力只透過暴露影響結果）。請到 IV 的 ④ 假設檢驗跑一遍，特別看工具強度 F&gt;10。",
-             en: "The key untestable assumption is <b>exclusion</b> (the push affects the outcome only through the exposure). Run IV's ④ dashboard — and check instrument strength F&gt;10." } } },
+    why: { zh: "你手上有一個近似隨機、只透過暴露影響結果的外生工具——這正是 IV 的引擎。用它把「被推動的順從者」的因果效果（LATE）撬出來。",
+           en: "You have a near-random, exclusion-respecting external instrument — exactly IV's engine. Use it to recover the causal effect for the compliers it moves (the LATE)." },
+    scenario: { zh: "疫苗情境：衛生局「隨機」寄出接種提醒，推了一部分人去打疫苗。用『有沒有收到提醒』當工具，估接種對健康的真正效果。",
+                en: "Vaccine scenario: the health authority mails reminders at random, nudging some people to get vaccinated. Use 'got a reminder?' as the instrument to estimate vaccination's true effect on health." },
+    watch: { zh: "最關鍵、不可檢驗的是<b>排除限制</b>（工具只透過暴露影響結果）。到 IV 的 ④ 跑一遍，特別看工具強度 F&gt;10。",
+             en: "The key untestable assumption is <b>exclusion</b> (the instrument affects the outcome only through the exposure). Run IV's ④ dashboard — check instrument strength F&gt;10." } } },
   rRDD: { rec: { kind: "toolbox", method: "rdd", badge: "RDD ✓",
     title: { zh: "最適合：斷點回歸 RDD", en: "Best fit: Regression Discontinuity (RDD)" },
     why: { zh: "暴露資格由分數上的明確門檻決定，門檻上下的人其他條件相近——把門檻兩側各配一條線、量切點的跳幅，就是 RDD。",
            en: "Eligibility is set by a sharp cutoff and people just above/below are otherwise alike — fit a line on each side and read the jump at the cutoff. That's RDD." },
+    scenario: { zh: "疫苗情境：免費疫苗只開放給「滿 65 歲」的人。比較剛滿 65 與還差幾天的人，量門檻處健康指標的跳幅。",
+                en: "Vaccine scenario: free vaccination is offered only at age 65+. Compare those just over 65 with those just under, and read the jump in the health outcome at the cutoff." },
     watch: { zh: "最關鍵的是<b>連續性</b>（剛好門檻上下的人本來就相像、且無法精準操弄分數）。小提醒：模糊 RDD 其實是「把門檻當工具」的局部 IV。",
              en: "The key assumption is <b>continuity</b> (people right at the cutoff are comparable and can't precisely game the score). Note: a fuzzy RDD is really a local IV with the cutoff as the instrument." } } },
   rDiD: { rec: { kind: "toolbox", method: "did", badge: "DiD ✓",
     title: { zh: "最適合：差異中的差異 DiD", en: "Best fit: Difference-in-Differences (DiD)" },
     why: { zh: "政策在已知時點對部分單位開啟、你又有對照組，且開啟前走勢平行——比較兩組「前→後變化的差」，消掉固定組差與共同時間趨勢。",
            en: "A policy switches on for some units at a known time, you have a control group, and pre-trends were parallel — difference the two before/after changes to cancel fixed group gaps and common time trends." },
+    scenario: { zh: "疫苗情境：某些縣市在某月開啟接種推廣、其他縣市沒有。比較兩組「推廣前→後」健康變化的差。",
+                en: "Vaccine scenario: some counties switch on a vaccination drive in a given month, others don't. Compare the difference in each group's before→after change in health." },
     watch: { zh: "最關鍵、後期不可檢驗的是<b>平行趨勢</b>（沒政策時兩組會一起變）。用 ④ 的事件研究檢查前期趨勢。",
              en: "The key (post-period untestable) assumption is <b>parallel trends</b>. Use the event-study in ④ to check pre-trends." } } },
   rITS: { rec: { kind: "toolbox", method: "its", badge: "ITS ✓",
     title: { zh: "最適合：中斷時間序列 ITS", en: "Best fit: Interrupted Time Series (ITS)" },
     why: { zh: "只有單一群體、但介入前後有許多時間點——用介入前趨勢外推當反事實，量介入處的水準與斜率跳變。",
-           en: "A single population with many points before & after — extrapolate the pre-intervention trend as the counterfactual and read the level & slope change at the interruption." },
+           en: "A single population with many points before and after — extrapolate the pre-intervention trend as the counterfactual and read the level & slope change at the interruption." },
+    scenario: { zh: "疫苗情境：某縣市在已知月份推出接種計畫，逐月追蹤健康指標。用推出前的趨勢外推當「沒推會怎樣」，量斷裂處的跳變。",
+                en: "Vaccine scenario: a county launches a vaccination programme in a known month and tracks a monthly health indicator. Extrapolate the pre-launch trend as 'what if no launch' and read the break." },
     watch: { zh: "最關鍵的是<b>介入的同時沒有別的大事</b>一起發生；另要處理殘差自相關（④ 會檢 HAC）。若其實有對照序列，控制組 ITS／DiD 會更穩。",
              en: "The key assumption is <b>no coincident event</b> at the interruption; also handle residual autocorrelation (④ checks HAC). If a control series exists, controlled-ITS/DiD is stronger." } } },
   rTiT: { rec: { kind: "toolbox", method: "tit", badge: "TiT ✓",
     title: { zh: "最適合：趨勢中的趨勢 TiT", en: "Best fit: Trend-in-Trend (TiT)" },
     why: { zh: "暴露隨日曆時間逐漸普及、跨族群速度不同，且結果罕見——看「結果率的趨勢」是否跟著「暴露率的趨勢」走。它是案例-時間對照（CTC/CCTC）的世代版。",
            en: "Exposure spreads over calendar time at different rates across strata and the outcome is rare — check whether the outcome-rate trend tracks the exposure-rate trend. It is the cohort cousin of case-time-control (CTC/CCTC)." },
+    scenario: { zh: "疫苗情境：一支新疫苗的接種率隨季逐漸上升、不同縣市快慢不同。看「事件率的趨勢」是否跟著「接種率的趨勢」一起走。",
+                en: "Vaccine scenario: a new vaccine's uptake climbs over quarters, faster in some counties. Check whether the event-rate trend moves in step with the uptake trend." },
     watch: { zh: "最關鍵、不可檢驗的是<b>沒有與接種趨勢同步的未測混淆趨勢</b>。",
              en: "The key untestable assumption is <b>no unmeasured confounder trend that moves in step with uptake</b>." } } },
   rPERR: { rec: { kind: "toolbox", method: "perr", badge: "PERR ✓",
     title: { zh: "最適合：事前事件率比 PERR", en: "Best fit: Prior Event Rate Ratio (PERR)" },
     why: { zh: "你有兩組在「暴露前」與「暴露後」的事件率，且相信混淆隨時間穩定——用同一群人「暴露前」的率比當混淆基準除掉。",
            en: "You have both groups' event rates in a pre- and a post-exposure window and believe confounding is stable — divide out the same people's pre-exposure ratio as the confounding benchmark." },
+    scenario: { zh: "疫苗情境：高風險者較常被接種。比較接種 vs 未接種者在「接種前」與「接種後」的事件率比，用事前率比扣掉體質差異。",
+                en: "Vaccine scenario: higher-risk people get vaccinated more. Compare vaccinated vs unvaccinated rate ratios in a pre- and a post-window, dividing out the prior ratio as the confounding benchmark." },
     watch: { zh: "最關鍵的是<b>混淆時間不變且為乘法尺度</b>（P1）；事前期事件數要夠多，否則基準不穩。",
              en: "The key assumption is <b>time-invariant, multiplicative confounding</b> (P1); the prior window needs enough events or the benchmark is unstable." } } },
-  // external designs (reference)
+  // common / external designs (reference)
   rACC: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：對照藥物世代研究（active comparator cohort）↗", en: "Suggested: active comparator cohort ↗" },
-    why: { zh: "你有藥理相近的對照藥物可比，用「新使用者＋活性對照」設計能大幅降低適應症混淆與 immortal time bias。",
+    why: { zh: "你有藥理相近的對照可比，用「新使用者＋活性對照」設計能大幅降低適應症混淆與 immortal time bias。",
            en: "With a pharmacologically similar comparator, a new-user active-comparator design sharply cuts confounding by indication and immortal-time bias." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。常可結合 <b>target trial emulation</b> 把分析設計成模擬一場試驗。",
-             en: "↗ Not implemented here; for reference. Often combined with <b>target trial emulation</b>." } } },
+    scenario: { zh: "疫苗情境：不用「打 vs 不打」比，而是比「打 A 廠牌 vs 打 B 廠牌」的新接種者——兩組都願意接種、體質較接近。",
+                en: "Vaccine scenario: instead of 'vaccinated vs not', compare new recipients of brand A vs brand B — both groups chose to vaccinate, so they're more alike." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。常可結合 <b>target trial emulation</b> 把分析設計成模擬一場試驗。",
+             en: "↗ A common design, not implemented here. Often combined with <b>target trial emulation</b>." } } },
   rSCCS: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：自我控制案例系列 SCCS ↗", en: "Suggested: self-controlled case series (SCCS) ↗" },
     why: { zh: "結果是急性、短暫事件、暴露有明確時窗——SCCS 用「個人自身」當對照，自動消掉所有不隨時間變的混淆。",
            en: "For acute, transient outcomes with well-defined exposure windows, SCCS uses each person as their own control, cancelling all time-invariant confounding." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。需假設事件不影響後續暴露機率、且事件不致命/可復發。",
-             en: "↗ Not implemented here. Assumes events don't alter later exposure probability and aren't censoring/fatal." } } },
+    scenario: { zh: "疫苗情境：只取「接種後曾發生不良事件」的人，比較他們在「接種後風險期 vs 自己其他時間」的事件率——每個人當自己的對照。",
+                en: "Vaccine scenario: take only people who had an adverse event, and compare their event rate in the post-vaccination risk window vs their own other time — each person is their own control." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。需假設事件不影響後續暴露機率、且事件不致命／可復發。",
+             en: "↗ A common design, not implemented here. Assumes events don't alter later exposure probability and aren't censoring/fatal." } } },
   rCCW: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：複製-設限-加權 clone-censor-weight ↗", en: "Suggested: clone-censor-weight (CCW) ↗" },
     why: { zh: "治療策略動態／隨時間調整，直接分組會有 immortal time bias——CCW 在時間零點複製每個人到各策略、依偏離設限、再用權重校正。",
            en: "For dynamic, time-varying strategies, naive grouping creates immortal-time bias — CCW clones each person into each strategy at time zero, censors on deviation, and reweights." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。是 <b>target trial emulation</b> 的常見實作之一。",
-             en: "↗ Not implemented here. A common way to implement <b>target trial emulation</b>." } } },
+    scenario: { zh: "疫苗情境：研究「接種後是否按時打追加劑」這種隨時間調整的策略。把每個人複製到各策略、依偏離設限再加權，避免 immortal time bias。",
+                en: "Vaccine scenario: study a strategy like 'get booster doses on schedule after vaccination'. Clone each person into each strategy, censor on deviation, then reweight — avoiding immortal-time bias." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。是 <b>target trial emulation</b> 的常見實作之一。",
+             en: "↗ A common design, not implemented here. A common way to implement <b>target trial emulation</b>." } } },
   rSEQ: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：序列（巢式）試驗 sequential trial ↗", en: "Suggested: sequential (nested) trials ↗" },
     why: { zh: "病人在多個時間點陸續符合收案——在每個符合點各開一場「迷你試驗」、對齊時間零點再合併估計。",
            en: "When patients become eligible at many time points, open a 'mini-trial' at each eligibility point, align time zero, then pool." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。也屬 <b>target trial emulation</b> 家族。",
-             en: "↗ Not implemented here. Also part of the <b>target trial emulation</b> family." } } },
+    scenario: { zh: "疫苗情境：每個月把「當月剛符合接種資格的人」開一場迷你試驗（打 vs 暫不打），再把多場合併估計。",
+                en: "Vaccine scenario: each month, open a mini-trial among people who just became eligible (vaccinate vs not yet), then pool across months." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。也屬 <b>target trial emulation</b> 家族。",
+             en: "↗ A common design, not implemented here. Also part of the <b>target trial emulation</b> family." } } },
   rCCO: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：案例交叉 case-crossover ↗", en: "Suggested: case-crossover ↗" },
     why: { zh: "暴露短暫、會波動，想用個人自身近期當對照——比較發病前 vs 較早時段的暴露，自我控制掉穩定特徵。",
            en: "For transient, fluctuating exposures, compare exposure just before the event vs an earlier reference window in the same person." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。若暴露本身有時間趨勢，需改用 CTC/CCTC 扣掉趨勢。",
-             en: "↗ Not implemented here. If the exposure itself trends over time, switch to CTC/CCTC." } } },
+    scenario: { zh: "疫苗情境：對「接種後當天就醫」這種急性事件，比較事件前幾天 vs 更早一段時間的接種暴露（個人自身近期當對照）。",
+                en: "Vaccine scenario: for an acute event like an ER visit on the day of vaccination, compare exposure in the days before vs an earlier reference window in the same person." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。若暴露本身有時間趨勢，需改用 CTC/CCTC 扣掉趨勢。",
+             en: "↗ A common design, not implemented here. If the exposure itself trends over time, switch to CTC/CCTC." } } },
   rCTC: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：案例-時間對照 CTC／案例-案例-時間對照 CCTC ↗", en: "Suggested: case-time-control (CTC) / case-case-time-control (CCTC) ↗" },
     why: { zh: "案例交叉但暴露有時間趨勢會造成偏誤——CTC/CCTC 用對照族群的時間變化把趨勢扣掉。其「世代版」正是本工具箱的 TiT。",
            en: "Case-crossover is biased when exposure trends over time — CTC/CCTC use a control group's time change to net out the trend. Its cohort version is this toolbox's TiT." },
-    watch: { zh: "↗ 外部設計；若你有世代資料，可直接用本工具箱的 <b>TiT ✓</b>。",
-             en: "↗ External design; with cohort data you can use this toolbox's <b>TiT ✓</b> directly." },
+    scenario: { zh: "疫苗情境：同案例交叉，但全國接種率本身逐年上升。用未發病的對照族群把這個時間趨勢扣掉。",
+                en: "Vaccine scenario: like case-crossover, but national uptake itself rises year on year. Use a non-case control group to net out that time trend." },
+    watch: { zh: "↗ 常見研究設計（外部）；若你有世代資料，可直接用本工具箱的 <b>TiT ✓</b>。",
+             en: "↗ A common (external) design; with cohort data you can use this toolbox's <b>TiT ✓</b> directly." },
     altMethod: "tit", altLabel: { zh: "改用世代版 TiT →", en: "Use the cohort version: TiT →" } } },
   rNCC: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：巢式對照研究 nested case-control ↗", en: "Suggested: nested case-control ↗" },
     why: { zh: "想在大世代裡省力——巢式對照只對個案與抽樣對照測量暴露，效率高、結果≈完整世代分析。",
            en: "To save effort in a large cohort, measure exposure only for cases and sampled controls — efficient, with results ≈ the full-cohort analysis." },
-    watch: { zh: "↗ 本工具箱未實作，供參考。仍需處理測量到的混淆（配對／調整）。",
-             en: "↗ Not implemented here. Still needs to handle measured confounding (matching/adjustment)." } } },
+    scenario: { zh: "疫苗情境：在百萬人接種世代裡，只對「得到該疾病的個案」與隨機抽樣的對照查接種史，省下對全體測量的成本。",
+                en: "Vaccine scenario: in a cohort of a million, check vaccination history only for disease cases and a random sample of controls, saving the cost of measuring everyone." },
+    watch: { zh: "↗ 常見研究設計，本工具箱未實作。仍需處理測量到的混淆（配對／調整）。",
+             en: "↗ A common design, not implemented here. Still needs to handle measured confounding (matching/adjustment)." } } },
   rTTE: { rec: { kind: "fallback", badge: "★",
     title: { zh: "建議：target trial emulation（或直接做隨機試驗）", en: "Suggested: target trial emulation (or run a randomised trial)" },
     why: { zh: "上面的設計都不完全符合——那就明確地把觀察性分析「設計成在模擬一場理想的隨機試驗」：先寫清楚收案、時間零點、暴露策略、結果與分析，再照著做。能隨機時，隨機試驗仍是黃金標準。",
            en: "If none of the designs fits, explicitly design your observational analysis to emulate an ideal randomised trial: specify eligibility, time zero, exposure strategies, outcome and analysis, then follow it. When you can randomise, a trial is still the gold standard." },
-    watch: { zh: "這是把上面所有設計綁在一起的<b>總框架</b>。前述多個外部設計（CCW、序列試驗、對照藥物世代）都是它的具體實作。",
-             en: "This is the <b>umbrella framework</b> tying the others together; several external designs above (CCW, sequential trials, active-comparator cohorts) are concrete ways to implement it." } } },
+    scenario: { zh: "疫苗情境：先寫下一場理想試驗——「誰能納入、何時算時間零點、打 vs 不打、追蹤什麼結果、怎麼分析」，再用健保資料照這張藍圖去模擬。",
+                en: "Vaccine scenario: first write down an ideal trial — who's eligible, when time zero is, vaccinate vs not, what to follow, how to analyse — then emulate that blueprint with claims data." },
+    watch: { zh: "這是把上面所有設計綁在一起的<b>總框架</b>。前述多個常見設計（CCW、序列試驗、對照藥物世代）都是它的具體實作。",
+             en: "This is the <b>umbrella framework</b> tying the others together; several common designs above (CCW, sequential trials, active-comparator cohorts) are concrete ways to implement it." } } },
+};
+
+// the whole tree as a static map — shown at a leaf, with the reached design lit
+const FULLMAP = {
+  title: { zh: "完整決策樹（你剛走到的設計會被標亮）", en: "The full decision tree (your endpoint is highlighted)" },
+  branches: [
+    { head: { zh: "A · 暴露錨定（先固定暴露／介入 → 看它造成的結果）", en: "A · Exposure-anchored (fix the exposure → study its effects)" },
+      groups: [
+        { rows: [
+          { cond: { zh: "有外生、近似隨機的工具（隨機推力）", en: "an external, near-random instrument" }, key: "rIV", tag: "IV ✓", kind: "tb" },
+          { cond: { zh: "有藥理相近的活性對照藥物", en: "a similar active comparator drug" }, key: "rACC", tag: "對照藥物世代 active comparator cohort ↗", kind: "ex" },
+        ] },
+        { sub: { zh: "干擾因子難處理、但不隨時間變動", en: "hard confounding, but time-invariant" }, rows: [
+          { cond: { zh: "分數上的明確門檻（年齡 65／指標切點）", en: "a sharp cutoff on a score (age 65 / index)" }, key: "rRDD", tag: "RDD ✓", kind: "tb" },
+          { cond: { zh: "政策在已知時點開啟＋有對照組", en: "policy at a known time + control group" }, key: "rDiD", tag: "DiD ✓", kind: "tb" },
+          { cond: { zh: "已知時點＋單一群體＋前後多時點", en: "known time + single population + many points" }, key: "rITS", tag: "ITS ✓", kind: "tb" },
+          { cond: { zh: "暴露前／後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, key: "rPERR", tag: "PERR ✓", kind: "tb" },
+          { cond: { zh: "急性短暫事件、可用個人自身當對照", en: "acute transient event, person as own control" }, key: "rSCCS", tag: "SCCS ↗", kind: "ex" },
+        ] },
+        { sub: { zh: "干擾會隨時間變動／治療策略本身動態", en: "time-varying confounding / dynamic strategy" }, rows: [
+          { cond: { zh: "治療策略動態、隨時間調整", en: "dynamic, time-varying strategy" }, key: "rCCW", tag: "clone-censor-weight CCW ↗", kind: "ex" },
+          { cond: { zh: "病人在多個時間點陸續符合收案", en: "eligible at multiple time points" }, key: "rSEQ", tag: "序列試驗 sequential trial ↗", kind: "ex" },
+          { cond: { zh: "暴露隨日曆逐漸普及、跨族群速度不同、結果罕見", en: "exposure spreads over calendar time, rare outcome" }, key: "rTiT", tag: "TiT ✓", kind: "tb" },
+        ] },
+      ] },
+    { head: { zh: "B · 結果錨定（先固定結果 → 回頭找暴露）", en: "B · Outcome-anchored (fix the outcome → find exposures)" },
+      groups: [
+        { rows: [
+          { cond: { zh: "在大世代裡用配對對照、巢式抽樣", en: "matched controls sampled within a cohort" }, key: "rNCC", tag: "巢式對照 nested case-control ↗", kind: "ex" },
+          { cond: { zh: "個人自身近期當對照、暴露無時間趨勢", en: "own recent past as control, no exposure trend" }, key: "rCCO", tag: "案例交叉 case-crossover ↗", kind: "ex" },
+          { cond: { zh: "同上，但暴露有日曆時間趨勢（世代版＝TiT ✓）", en: "as above, but exposure has a calendar trend (cohort version = TiT ✓)" }, key: "rCTC", tag: "CTC／CCTC ↗", kind: "ex" },
+        ] },
+      ] },
+  ],
+  end: { zh: "以上都不完全符合？把分析明確設計成在模擬一場理想隨機試驗 → target trial emulation（上面多個常見設計都是它的具體實作）。",
+         en: "Nothing fits cleanly? Explicitly design the analysis to emulate an ideal randomised trial → target trial emulation (several common designs above implement it)." },
+  endKey: "rTTE",
 };
 
 let dtreeStack = [{ id: "n1", ans: null }];
@@ -1277,6 +1332,8 @@ function renderDtree() {
   const stage = document.getElementById("dtreeStage");
   const pathEl = document.getElementById("dtreePath");
   if (!stage) return;
+  const mapBox = document.getElementById("dtreeMap");
+  if (mapBox) mapBox.hidden = true;                       // collapse the full map on any move
   const cur = dtreeStack[dtreeStack.length - 1];
   const node = DNODES[cur.id];
 
@@ -1290,16 +1347,22 @@ function renderDtree() {
     const goto = r.kind === "toolbox"
       ? `<button class="dtree-goto" data-go="${r.method}">${tr("前往「" + r.badge.replace(" ✓", "") + "」的教學 →", "Go to " + r.badge.replace(" ✓", "") + " →")}</button>`
       : (r.altMethod ? `<button class="dtree-goto" data-go="${r.altMethod}">${L(r.altLabel)}</button>` : "");
+    const scenario = r.scenario
+      ? `<div class="rec-scenario">${L(r.scenario)}</div>` : "";
     stage.innerHTML =
       `<div class="dtree-rec ${r.kind}">` +
       `<span class="rec-tag">${tr("最終建議", "Recommendation")}</span>` +
       `<h3>${L(r.title)}</h3>` +
       `<p>${L(r.why)}</p>` +
+      scenario +
       `<div class="rec-watch">${tr("⚠ 要盯住的關鍵假設：", "⚠ Key assumption to watch: ")}${L(r.watch)}</div>` +
-      goto +
-      `</div>`;
+      `<div class="rec-actions">` + goto +
+      `<button class="dtree-showmap" data-mapkey="${cur.id}">${tr("🌳 看完整決策樹（標出你的位置）", "🌳 Show the full tree (your spot marked)")}</button>` +
+      `</div></div>`;
     const gb = stage.querySelector(".dtree-goto");
     if (gb) gb.addEventListener("click", () => gotoMethod(gb.dataset.go, "learn"));
+    const mb = stage.querySelector(".dtree-showmap");
+    if (mb) mb.addEventListener("click", () => renderFullMap(mb.dataset.mapkey));
   } else {
     stage.innerHTML =
       `<div class="dtree-step">${L(node.step)}</div>` +
@@ -1319,6 +1382,27 @@ function renderDtree() {
   }
   const back = document.getElementById("dtreeBack");
   if (back) back.disabled = dtreeStack.length <= 1;
+}
+
+// build the whole tree as a static map, lighting up the reached design (hitKey)
+function renderFullMap(hitKey) {
+  const box = document.getElementById("dtreeMap");
+  if (!box) return;
+  const leaf = (r) =>
+    `<div class="map-row${r.key === hitKey ? " flow-hit" : ""}"><span class="map-cond">${L(r.cond)}</span>` +
+    `<span class="flow-leaf ${r.kind}">${r.tag}</span></div>`;
+  let html = `<h3 class="map-title">${L(FULLMAP.title)}</h3>`;
+  FULLMAP.branches.forEach((b) => {
+    html += `<div class="flow-head">${L(b.head)}</div>`;
+    b.groups.forEach((g) => {
+      if (g.sub) html += `<div class="map-sub">${L(g.sub)}</div>`;
+      html += `<div class="flow-branch">` + g.rows.map(leaf).join("") + `</div>`;
+    });
+  });
+  html += `<div class="flow-end${FULLMAP.endKey === hitKey ? " flow-hit" : ""}">${L(FULLMAP.end)}</div>`;
+  box.innerHTML = html;
+  box.hidden = false;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 // Six methods, one vaccine question. Each method's truth is on a different scale
 // (effect difference, odds ratio, rate ratio, level change…), so we plot every

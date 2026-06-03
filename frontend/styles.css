@@ -132,14 +132,42 @@ b { color: #0b1020; }
 .dtree-rec.external h3 { color: #9a3412; }
 .dtree-rec.fallback h3 { color: #1d4ed8; }
 .dtree-rec p { margin: .45rem 0; line-height: 1.7; }
+.dtree-rec .rec-scenario { background: rgba(255,255,255,.55); border-left: 3px solid currentColor;
+  border-radius: 8px; padding: .55rem .8rem; font-size: .92rem; line-height: 1.65; margin-top: .6rem; }
+.dtree-rec.toolbox .rec-scenario { color: #047857; }
+.dtree-rec.external .rec-scenario { color: #9a3412; }
+.dtree-rec.fallback .rec-scenario { color: #1d4ed8; }
+.dtree-rec .rec-scenario { color: var(--ink); }
 .dtree-rec .rec-watch { background: rgba(255,255,255,.65); border-radius: 10px; padding: .6rem .8rem;
   font-size: .9rem; margin-top: .7rem; }
 .dtree-rec .rec-watch b { color: var(--ink); }
-.dtree-goto { margin-top: .9rem; background: var(--z); color: #fff; border: none; border-radius: 999px;
+.rec-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; }
+.dtree-goto { background: var(--z); color: #fff; border: none; border-radius: 999px;
   padding: .55rem 1.2rem; font-weight: 700; font-size: .95rem; cursor: pointer; box-shadow: var(--shadow); }
 .dtree-goto:hover { filter: brightness(1.06); }
+.dtree-showmap { background: #fff; color: var(--ink); border: 1.5px solid var(--line); border-radius: 999px;
+  padding: .55rem 1.1rem; font-weight: 700; font-size: .95rem; cursor: pointer; }
+.dtree-showmap:hover { border-color: var(--z); color: var(--z); }
 .dtree-controls { display: flex; gap: .6rem; margin-top: .9rem; }
 .dtree-controls .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* the full decision-tree map that pops out at a leaf */
+.dtree-map { max-width: 760px; margin: 1rem auto 0; background: #f8fafc; border: 1px solid var(--line);
+  border-radius: 14px; padding: 1rem 1.1rem; }
+.dtree-map .map-title { margin: 0 0 .7rem; font-size: 1.05rem; }
+.dtree-map .flow-head { margin: .9rem 0 .4rem; font-size: .98rem; }
+.dtree-map .map-sub { font-weight: 700; color: var(--muted); font-size: .85rem; margin: .5rem 0 .3rem; }
+.dtree-map .flow-branch { border-left: 3px dashed var(--line); padding-left: .8rem; margin-left: .2rem; }
+.map-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: .5rem .7rem; margin: .35rem 0;
+  font-size: .9rem; }
+.map-row .map-cond { flex: 1 1 60%; }
+.flow-leaf { white-space: nowrap; border-radius: 999px; padding: .25rem .7rem; font-weight: 700; font-size: .85rem; }
+.flow-leaf.tb { background: var(--z); color: #fff; }
+.flow-leaf.ex { background: #fff; color: var(--muted); border: 1px solid var(--line); }
+.map-row.flow-hit { border-color: #34d399; background: #ecfdf5; box-shadow: 0 0 0 2px #6ee7b7; }
+.map-row.flow-hit .flow-leaf.ex { border-color: #34d399; color: #047857; }
+.dtree-map .flow-end.flow-hit { box-shadow: 0 0 0 2px #93c5fd; }
 
 main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
 .panel { display: none; animation: fade .25s; }
