@@ -1404,39 +1404,61 @@ const DNODES = {
 
 // the whole tree as a static map — shown at a leaf, with the reached design lit
 const FULLMAP = {
-  title: { zh: "完整決策樹（你剛走到的設計會被標亮）", en: "The full decision tree (your endpoint is highlighted)" },
-  branches: [
-    { head: { zh: "A · 暴露錨定（先固定暴露／介入 → 看它造成的結果）", en: "A · Exposure-anchored (fix the exposure → study its effects)" },
-      groups: [
-        { rows: [
-          { cond: { zh: "有外生、近似隨機的工具（隨機推力）", en: "an external, near-random instrument" }, key: "rIV", tag: "IV ✓", kind: "tb" },
-          { cond: { zh: "有藥理相近的活性對照藥物", en: "a similar active comparator drug" }, key: "rACC", tag: "對照藥物世代 active comparator cohort ↗", kind: "ex" },
-        ] },
-        { sub: { zh: "干擾因子難處理、但不隨時間變動", en: "hard confounding, but time-invariant" }, rows: [
-          { cond: { zh: "分數上的明確門檻（年齡 65／指標切點）", en: "a sharp cutoff on a score (age 65 / index)" }, key: "rRDD", tag: "RDD ✓", kind: "tb" },
-          { cond: { zh: "政策在已知時點開啟＋有對照組", en: "policy at a known time + control group" }, key: "rDiD", tag: "DiD ✓", kind: "tb" },
-          { cond: { zh: "已知時點＋單一群體＋前後多時點", en: "known time + single population + many points" }, key: "rITS", tag: "ITS ✓", kind: "tb" },
-          { cond: { zh: "暴露前／後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, key: "rPERR", tag: "PERR ✓", kind: "tb" },
-          { cond: { zh: "急性短暫事件、可用個人自身當對照", en: "acute transient event, person as own control" }, key: "rSCCS", tag: "SCCS ↗", kind: "ex" },
-        ] },
-        { sub: { zh: "干擾會隨時間變動／治療策略本身動態", en: "time-varying confounding / dynamic strategy" }, rows: [
-          { cond: { zh: "治療策略動態、隨時間調整", en: "dynamic, time-varying strategy" }, key: "rCCW", tag: "clone-censor-weight CCW ↗", kind: "ex" },
-          { cond: { zh: "病人在多個時間點陸續符合收案", en: "eligible at multiple time points" }, key: "rSEQ", tag: "序列試驗 sequential trial ↗", kind: "ex" },
-          { cond: { zh: "暴露隨日曆逐漸普及、跨族群速度不同、結果罕見", en: "exposure spreads over calendar time, rare outcome" }, key: "rTiT", tag: "TiT ✓", kind: "tb" },
-        ] },
-      ] },
-    { head: { zh: "B · 結果錨定（先固定結果 → 回頭找暴露）", en: "B · Outcome-anchored (fix the outcome → find exposures)" },
-      groups: [
-        { rows: [
-          { cond: { zh: "在大世代裡用配對對照、巢式抽樣", en: "matched controls sampled within a cohort" }, key: "rNCC", tag: "巢式對照 nested case-control ↗", kind: "ex" },
-          { cond: { zh: "個人自身近期當對照、暴露無時間趨勢", en: "own recent past as control, no exposure trend" }, key: "rCCO", tag: "案例交叉 case-crossover ↗", kind: "ex" },
-          { cond: { zh: "同上，但暴露有日曆時間趨勢（世代版＝TiT ✓）", en: "as above, but exposure has a calendar trend (cohort version = TiT ✓)" }, key: "rCTC", tag: "CTC／CCTC ↗", kind: "ex" },
-        ] },
-      ] },
+  title: { zh: "完整決策樹（流程圖；你剛走到的設計會被標亮）", en: "Full decision tree (flowchart; your endpoint is highlighted)" },
+  start: { zh: "研究錨點？", en: "Study anchor?" },
+  lanes: [
+    {
+      cls: "a",
+      edge: { zh: "暴露錨定", en: "exposure-anchored" },
+      head: { zh: "A · 暴露錨定", en: "A · Exposure-anchored" },
+      sub: { zh: "先固定暴露／介入 → 看它造成的結果", en: "fix the exposure → study its effects" },
+      steps: [
+        { q: { zh: "有外生、近似隨機的工具？", en: "An external, near-random instrument?" },
+          yes: { edge: { zh: "是（隨機提醒／抽籤／基因）", en: "yes (reminder / lottery / gene)" },
+                 leaves: [{ key: "rIV", tag: "IV ✓", kind: "tb" }] } },
+        { q: { zh: "有藥理相近的活性對照？", en: "A similar active comparator?" },
+          yes: { edge: { zh: "是", en: "yes" },
+                 leaves: [{ key: "rACC", tag: "對照藥物世代 ↗", kind: "ex" }] } },
+        { q: { zh: "難處理的干擾「不隨時間變動」嗎？", en: "Is the hard confounding time-invariant?" },
+          forks: [
+            { edge: { zh: "是 · 時間不變 → 借哪種準隨機結構？", en: "yes · time-invariant → which quasi-random structure?" },
+              leaves: [
+                { key: "rRDD", cond: { zh: "分數明確門檻", en: "sharp cutoff" }, tag: "RDD ✓", kind: "tb" },
+                { key: "rDiD", cond: { zh: "政策時點＋對照組", en: "policy time + control" }, tag: "DiD ✓", kind: "tb" },
+                { key: "rITS", cond: { zh: "已知時點＋單一群體", en: "known time + single pop." }, tag: "ITS ✓", kind: "tb" },
+                { key: "rPERR", cond: { zh: "前後事件率＋乘法穩定", en: "before/after rates, stable" }, tag: "PERR ✓", kind: "tb" },
+                { key: "rSCCS", cond: { zh: "急性短暫＋自身對照", en: "acute, own control" }, tag: "SCCS ↗", kind: "ex" },
+              ] },
+            { edge: { zh: "否 · 隨時間變／動態策略", en: "no · time-varying / dynamic" },
+              leaves: [
+                { key: "rCCW", cond: { zh: "動態治療策略", en: "dynamic strategy" }, tag: "CCW ↗", kind: "ex" },
+                { key: "rSEQ", cond: { zh: "多時點陸續收案", en: "multiple eligibility times" }, tag: "序列試驗 ↗", kind: "ex" },
+                { key: "rTiT", cond: { zh: "日曆趨勢＋結果罕見", en: "calendar trend, rare" }, tag: "TiT ✓", kind: "tb" },
+              ] },
+          ] },
+      ],
+    },
+    {
+      cls: "b",
+      edge: { zh: "結果錨定", en: "outcome-anchored" },
+      head: { zh: "B · 結果錨定", en: "B · Outcome-anchored" },
+      sub: { zh: "先固定結果 → 回頭找暴露", en: "fix the outcome → find exposures" },
+      steps: [
+        { q: { zh: "從個案回看，怎麼取對照？", en: "From cases, how to take controls?" },
+          forks: [
+            { edge: { zh: "配對、巢式抽樣", en: "matched, nested" },
+              leaves: [{ key: "rNCC", cond: { zh: "在大世代裡省成本", en: "save cost in a cohort" }, tag: "巢式對照 ↗", kind: "ex" }] },
+            { edge: { zh: "自身對照 · 暴露無趨勢", en: "own control · no trend" },
+              leaves: [{ key: "rCCO", cond: { zh: "急性、會波動的暴露", en: "acute, fluctuating" }, tag: "案例交叉 ↗", kind: "ex" }] },
+            { edge: { zh: "自身對照 · 暴露有趨勢", en: "own control · has a trend" },
+              leaves: [{ key: "rCTC", cond: { zh: "扣掉日曆趨勢（世代版＝TiT ✓）", en: "net out the trend (cohort = TiT ✓)" }, tag: "CTC／CCTC ↗", kind: "ex" }] },
+          ] },
+      ],
+    },
   ],
-  end: { zh: "以上都不完全符合？把分析明確設計成在模擬一場理想隨機試驗 → target trial emulation（上面多個常見設計都是它的具體實作）。",
-         en: "Nothing fits cleanly? Explicitly design the analysis to emulate an ideal randomised trial → target trial emulation (several common designs above implement it)." },
-  endKey: "rTTE",
+  end: { key: "rTTE",
+         zh: "以上都不完全符合 → target trial emulation（明確模擬一場理想隨機試驗；上面多個常見設計都是它的實作）",
+         en: "Nothing fits cleanly → target trial emulation (emulate an ideal randomised trial; many common designs above implement it)" },
 };
 
 let dtreeStack = [{ id: "n1", ans: null }];
@@ -1509,23 +1531,39 @@ function renderDtree() {
   if (back) back.disabled = dtreeStack.length <= 1;
 }
 
-// build the whole tree as a static map, lighting up the reached design (hitKey)
+// the whole tree as a top-down FLOWCHART (start → two anchor lanes → decision
+// boxes → branch-labelled connectors → colour-coded terminal boxes), with the
+// reached design lit up (hitKey).
 function renderFullMap(hitKey) {
   const box = document.getElementById("dtreeMap");
   if (!box) return;
-  const leaf = (r) =>
-    `<div class="map-row${r.key === hitKey ? " flow-hit" : ""}"><span class="map-cond">${L(r.cond)}</span>` +
-    `<span class="flow-leaf ${r.kind}">${r.tag}</span></div>`;
-  let html = `<h3 class="map-title">${L(FULLMAP.title)}</h3>`;
-  FULLMAP.branches.forEach((b) => {
-    html += `<div class="flow-head">${L(b.head)}</div>`;
-    b.groups.forEach((g) => {
-      if (g.sub) html += `<div class="map-sub">${L(g.sub)}</div>`;
-      html += `<div class="flow-branch">` + g.rows.map(leaf).join("") + `</div>`;
-    });
-  });
-  html += `<div class="flow-end${FULLMAP.endKey === hitKey ? " flow-hit" : ""}">${L(FULLMAP.end)}</div>`;
-  box.innerHTML = html;
+  const link = (label) => `<div class="fc-link">${label ? `<span class="fc-elabel">${label}</span>` : ""}</div>`;
+  const leafBox = (lf) => {
+    const cond = lf.cond ? `<span class="fc-cond">${L(lf.cond)}</span>` : "";
+    return `<div class="fc-leaf ${lf.kind}${lf.key === hitKey ? " fc-hit" : ""}">${cond}` +
+           `<span class="fc-badge ${lf.kind}">${lf.tag}</span></div>`;
+  };
+  const outGroup = (o) =>
+    link(L(o.edge)) + (o.leaves.length > 1 ? `<div class="fc-leaves">${o.leaves.map(leafBox).join("")}</div>` : leafBox(o.leaves[0]));
+  const laneHtml = (lane) =>
+    `<div class="fc-lane">` +
+    link(L(lane.edge)) +
+    `<div class="fc-head ${lane.cls}">${L(lane.head)}<small>${L(lane.sub)}</small></div>` +
+    lane.steps.map((s) => {
+      let h = link("") + `<div class="fc-q">${L(s.q)}</div>`;
+      if (s.yes) h += outGroup(s.yes);
+      if (s.forks) h += s.forks.map(outGroup).join("");
+      return h;
+    }).join("") +
+    `</div>`;
+  box.innerHTML =
+    `<h3 class="fc-title">${L(FULLMAP.title)}</h3>` +
+    `<div class="fc">` +
+    `<div class="fc-start">${L(FULLMAP.start)}</div>` +
+    `<div class="fc-lanes">${FULLMAP.lanes.map(laneHtml).join("")}</div>` +
+    link("") +
+    `<div class="fc-end${FULLMAP.end.key === hitKey ? " fc-hit" : ""}">${L(FULLMAP.end)}</div>` +
+    `</div>`;
   box.hidden = false;
   box.scrollIntoView({ behavior: "smooth", block: "start" });
 }
