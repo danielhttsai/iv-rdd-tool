@@ -63,6 +63,17 @@ b { color: #0b1020; }
 .tabs .tab-group:first-child { padding-left: 0; }
 .tab.tab-sep { margin-left: .5rem; border-style: dashed; }
 
+/* method dropdown + sub-tabs (replaces the long 31-button row) */
+.method-pick { display: flex; align-items: center; gap: .45rem; font-weight: 800;
+  font-size: .82rem; letter-spacing: .5px; color: var(--z); }
+.method-pick select {
+  padding: .42rem .8rem; border: 1.5px solid var(--z); border-radius: 999px;
+  font-size: .95rem; font-weight: 700; color: var(--z); background: #fff; cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.subtabs { display: flex; gap: .4rem; flex-wrap: wrap; }
+.tab.subtab { font-weight: 600; }
+
 main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
 .panel { display: none; animation: fade .25s; }
 .panel.active { display: block; }

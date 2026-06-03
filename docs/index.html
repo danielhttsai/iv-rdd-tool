@@ -14,43 +14,24 @@
 <header class="topbar">
   <div class="brand"><span data-en="Quasi-experimental toolbox">準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>TiT</span> · <span>ITS</span> · <span>PERR</span></div>
   <nav class="tabs">
-    <span class="tab-group">IV</span>
-    <button class="tab active" data-tab="learn" data-en="① What is IV">① IV 是什麼</button>
-    <button class="tab" data-tab="play" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="analyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="assume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="ml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <span class="tab-group">RDD</span>
-    <button class="tab" data-tab="rddlearn" data-en="① What is RDD">① RDD 是什麼</button>
-    <button class="tab" data-tab="rddplay" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="rddanalyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="rddassume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="rddml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <span class="tab-group">DiD</span>
-    <button class="tab" data-tab="didlearn" data-en="① What is DiD">① DiD 是什麼</button>
-    <button class="tab" data-tab="didplay" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="didanalyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="didassume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="didml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <span class="tab-group">TiT</span>
-    <button class="tab" data-tab="titlearn" data-en="① What is TiT">① TiT 是什麼</button>
-    <button class="tab" data-tab="titplay" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="titanalyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="titassume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="titml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <span class="tab-group">ITS</span>
-    <button class="tab" data-tab="itslearn" data-en="① What is ITS">① ITS 是什麼</button>
-    <button class="tab" data-tab="itsplay" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="itsanalyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="itsassume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="itsml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <span class="tab-group">PERR</span>
-    <button class="tab" data-tab="perrlearn" data-en="① What is PERR">① PERR 是什麼</button>
-    <button class="tab" data-tab="perrplay" data-en="② Interactive">② 互動講解</button>
-    <button class="tab" data-tab="perranalyze" data-en="③ Analyse data">③ 資料分析</button>
-    <button class="tab" data-tab="perrassume" data-en="④ Assumptions">④ 假設檢驗</button>
-    <button class="tab" data-tab="perrml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
-    <button class="tab tab-sep" data-tab="choose" data-en="IV vs RDD">怎麼選</button>
+    <label class="method-pick"><span data-en="Method">方法</span>
+      <select id="methodSelect">
+        <option value="iv" data-en="IV · Instrumental variables">IV · 工具變數</option>
+        <option value="rdd" data-en="RDD · Regression discontinuity">RDD · 斷點回歸</option>
+        <option value="did" data-en="DiD · Difference-in-differences">DiD · 差異中的差異</option>
+        <option value="tit" data-en="TiT · Trend-in-trend">TiT · 趨勢中的趨勢</option>
+        <option value="its" data-en="ITS · Interrupted time series">ITS · 中斷時間序列</option>
+        <option value="perr" data-en="PERR · Prior event rate ratio">PERR · 事前事件率比</option>
+      </select>
+    </label>
+    <div class="subtabs">
+      <button class="tab subtab active" data-sub="learn" data-en="① What is it">① 是什麼</button>
+      <button class="tab subtab" data-sub="play" data-en="② Interactive">② 互動講解</button>
+      <button class="tab subtab" data-sub="analyze" data-en="③ Analyse data">③ 資料分析</button>
+      <button class="tab subtab" data-sub="assume" data-en="④ Assumptions">④ 假設檢驗</button>
+      <button class="tab subtab" data-sub="ml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
+    </div>
+    <button class="tab tab-sep" id="chooseTab" data-en="Compare all six">六法怎麼選</button>
   </nav>
   <button id="langToggle" class="lang-toggle" type="button" title="切換中／英文" aria-label="Language">EN</button>
 </header>
@@ -1000,30 +981,30 @@
   <!-- ===================== TiT ① 是什麼 ===================== -->
   <section id="titlearn" class="panel">
     <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
-    <h1 data-en="A fourth trick: ride the rising tide of a new drug (Trend-in-trend)">第四種招式：搭上一個新藥逐漸普及的浪潮（趨勢中的趨勢）</h1>
-    <p class="lead" data-en="Suppose a new drug is gradually adopted over several years. Some kinds of people start taking it sooner and faster than others. Trend-in-trend asks: if the drug truly causes a (rare) adverse event, then the event rate should rise faster in exactly the groups whose drug uptake rises faster. That co-movement of two trends — uptake and outcome — is the signal.">
-      假設一個新藥在好幾年間逐漸普及。某些人比其他人更早、更快開始用它。趨勢中的趨勢問：
-      如果這個藥真的會引發某個（罕見）不良事件，那麼<b>事件率上升得最快的，應該正好是用藥率上升得最快的那群人</b>。
-      這「兩個趨勢一起動」——用藥率與結果率——就是訊號。
+    <h1 data-en="A fourth trick: ride the rising tide of a new vaccine (Trend-in-trend)">第四種招式：搭上一個新疫苗逐漸普及的浪潮（趨勢中的趨勢）</h1>
+    <p class="lead" data-en="Suppose a new vaccine is gradually adopted over several years. Some kinds of people start taking it sooner and faster than others. Trend-in-trend asks: if the vaccine truly causes a (rare) adverse event, then the event rate should rise faster in exactly the groups whose vaccine uptake rises faster. That co-movement of two trends — uptake and outcome — is the signal.">
+      假設一個新疫苗在好幾年間逐漸普及。某些人比其他人更早、更快開始用它。趨勢中的趨勢問：
+      如果這支疫苗真的會引發某個（罕見）不良事件，那麼<b>事件率上升得最快的，應該正好是接種率上升得最快的那群人</b>。
+      這「兩個趨勢一起動」——接種率與結果率——就是訊號。
     </p>
 
     <div class="card info">
       <h3 data-en="The plain-language idea">先用白話想一遍</h3>
-      <p data-en="People who take a new drug are usually different from those who don't — often sicker to begin with (that's why they were prescribed it). So directly comparing users vs non-users makes the drug look more harmful than it is — classic confounding by indication. Trend-in-trend sidesteps this: instead of comparing people, it compares <b>time trends</b>. First it scores everyone by how likely they are to ever take the drug (the &quot;CPE&quot;) and sorts them into strata. The drug spreads through the high-score strata faster. If the outcome also climbs faster there — in lock-step with uptake — that lock-step is hard to fake with fixed background differences, because those differences don't suddenly start trending.">
-        會去用新藥的人，通常和不用的人本來就不一樣——常常是本來就比較病重（所以才被開這個藥）。
-        於是直接比較「用藥 vs 不用藥」，會讓藥看起來比實際更有害——這是典型的<b>適應症混淆</b>。
+      <p data-en="People who take a new vaccine are usually different from those who don't — often sicker to begin with (that's why they were prescribed it). So directly comparing users vs non-users makes the vaccine look more harmful than it is — classic confounding by indication. Trend-in-trend sidesteps this: instead of comparing people, it compares <b>time trends</b>. First it scores everyone by how likely they are to ever take the vaccine (the &quot;CPE&quot;) and sorts them into strata. The vaccine spreads through the high-score strata faster. If the outcome also climbs faster there — in lock-step with uptake — that lock-step is hard to fake with fixed background differences, because those differences don't suddenly start trending.">
+        會去接種新疫苗的人，通常和沒接種的人本來就不一樣——常常是本來就風險較高（所以才被優先接種）。
+        於是直接比較「接種 vs 不接種」，會讓疫苗看起來比實際更有害——這是典型的<b>適應症混淆</b>。
         趨勢中的趨勢繞過它：它不是比較人，而是比較<b>時間趨勢</b>。先用基線特徵幫每個人打一個
-        「會不會用這個藥」的分數（CPE），照分數分層。藥會在高分層普及得比較快。如果結果率也在那裡
-        爬得比較快、和用藥率<b>同步</b>，這種同步很難用「固定不變的背景差異」假裝出來——因為那些差異不會突然開始有趨勢。
+        「會不會去接種」的分數（CPE），照分數分層。疫苗會在高分層普及得比較快。如果結果率也在那裡
+        爬得比較快、和接種率<b>同步</b>，這種同步很難用「固定不變的背景差異」假裝出來——因為那些差異不會突然開始有趨勢。
       </p>
     </div>
 
     <div class="card scene">
-      <h3 data-en="What does the data look like? Uptake fans out across strata over time">資料長什麼樣子？各層的用藥率隨時間「扇形」散開</h3>
-      <p data-en="Each line is one CPE stratum's drug-uptake rate over calendar time. They all start low, then fan out — the high-propensity strata (teal) climb steeply, the low ones (grey) stay flat. Trend-in-trend reads the causal effect from whether the outcome rate fans out in the SAME pattern. The whole method needs this fanning-out to be strong; a flat, non-trending drug gives it nothing to work with.">
-        每條線是一個 CPE 層的用藥率隨日曆時間的變化。它們都從低點出發，然後<b>扇形</b>散開——高傾向層（青色）
+      <h3 data-en="What does the data look like? Uptake fans out across strata over time">資料長什麼樣子？各層的接種率隨時間「扇形」散開</h3>
+      <p data-en="Each line is one CPE stratum's vaccine-uptake rate over calendar time. They all start low, then fan out — the high-propensity strata (teal) climb steeply, the low ones (grey) stay flat. Trend-in-trend reads the causal effect from whether the outcome rate fans out in the SAME pattern. The whole method needs this fanning-out to be strong; a flat, non-trending vaccine gives it nothing to work with.">
+        每條線是一個 CPE 層的接種率隨日曆時間的變化。它們都從低點出發，然後<b>扇形</b>散開——高傾向層（青色）
         陡升、低傾向層（灰色）幾乎不動。趨勢中的趨勢就看『結果率是否以<b>相同的扇形</b>散開』來讀因果效果。
-        整個方法都需要這個扇形夠明顯；一個平平、沒有趨勢的藥，它就無從下手。
+        整個方法都需要這個扇形夠明顯；一支平平、沒有趨勢的疫苗，它就無從下手。
       </p>
       <div id="sceneTitFan" class="chart"></div>
     </div>
@@ -1038,8 +1019,8 @@
       <div class="card">
         <h3 data-en="Why it can beat a cohort study">為什麼可能勝過世代研究</h3>
         <p data-en="The scenarios that bias trend-in-trend (an unmeasured factor that <b>also trends over time</b>, in step with uptake) are a <b>subset</b> of those that bias a cohort study (any unmeasured confounder). So it is more robust — at the cost of needing a strong uptake trend.">
-          會讓趨勢中的趨勢出錯的情境（一個未測因素<b>也隨時間變化</b>、剛好和用藥潮同步）是會讓世代研究出錯情境的
-          <b>子集</b>。所以它更穩——代價是需要一個夠強的用藥趨勢。
+          會讓趨勢中的趨勢出錯的情境（一個未測因素<b>也隨時間變化</b>、剛好和接種潮同步）是會讓世代研究出錯情境的
+          <b>子集</b>。所以它更穩——代價是需要一個夠強的接種趨勢。
         </p>
       </div>
     </div>
@@ -1058,8 +1039,8 @@
   <section id="titplay" class="panel">
     <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
     <h1 data-en="Interactive TiT: weaken the trend and watch the method run out of signal">互動式 TiT：把趨勢調弱，看方法怎麼「沒訊號」</h1>
-    <p class="lead" data-en="Trend-in-trend lives entirely on the strength of the exposure trend. Drag the slider to make the drug spread more slowly. Watch the uptake curves flatten, and watch the estimate lose its grip — the confidence interval blows up and the point estimate wanders away from the true OR of 2.0. That is assumption A1 (and statistical power) in action.">
-      趨勢中的趨勢完全靠暴露趨勢的強度活著。拉動滑桿，讓藥普及得更慢。看用藥率曲線變平，
+    <p class="lead" data-en="Trend-in-trend lives entirely on the strength of the exposure trend. Drag the slider to make the vaccine spread more slowly. Watch the uptake curves flatten, and watch the estimate lose its grip — the confidence interval blows up and the point estimate wanders away from the true OR of 2.0. That is assumption A1 (and statistical power) in action.">
+      趨勢中的趨勢完全靠暴露趨勢的強度活著。拉動滑桿，讓疫苗普及得更慢。看接種率曲線變平，
       也看估計失去著力點——信賴區間爆開、點估計從真值 OR=2.0 飄走。這就是假設 A1（與檢定力）的現場示範。
     </p>
 
@@ -1067,7 +1048,7 @@
       <label>
         <span data-en="Strength of the exposure time-trend:">暴露時間趨勢的強度：</span><b id="titTrendVal">1.0</b>
         <input type="range" id="titTrendSlider" min="0.2" max="1.5" value="1.0" step="0.1" />
-        <small data-en="1.0 = the default strong adoption wave (TiT works well). Turn it down and uptake barely trends, so trend-in-trend has almost no signal — the estimate becomes unstable.">1.0＝預設的強採用浪潮（TiT 運作良好）。調低後用藥率幾乎沒有趨勢，趨勢中的趨勢幾乎沒有訊號——估計變得不穩。</small>
+        <small data-en="1.0 = the default strong adoption wave (TiT works well). Turn it down and uptake barely trends, so trend-in-trend has almost no signal — the estimate becomes unstable.">1.0＝預設的強採用浪潮（TiT 運作良好）。調低後接種率幾乎沒有趨勢，趨勢中的趨勢幾乎沒有訊號——估計變得不穩。</small>
       </label>
     </div>
 
@@ -1078,25 +1059,25 @@
     </div>
 
     <div id="titExpoChart" class="chart"></div>
-    <p class="caption" data-en="Drug-uptake rate by CPE stratum over time. With the slider at 1.0 the strata fan out strongly; turn it down and they flatten — and the trend-in-trend estimate above loses precision.">
-      各 CPE 層的用藥率隨時間變化。滑桿在 1.0 時各層強烈扇形散開；調低後變平——上方的趨勢中的趨勢估計也跟著失準。
+    <p class="caption" data-en="Vaccine-uptake rate by CPE stratum over time. With the slider at 1.0 the strata fan out strongly; turn it down and they flatten — and the trend-in-trend estimate above loses precision.">
+      各 CPE 層的接種率隨時間變化。滑桿在 1.0 時各層強烈扇形散開；調低後變平——上方的趨勢中的趨勢估計也跟著失準。
     </p>
     <div id="titOutChart" class="chart"></div>
     <p class="caption" data-en="Outcome (adverse-event) rate by the same strata. Trend-in-trend asks whether this fans out in the same pattern as uptake; the more both trends move together, the sharper the estimate.">
-      同樣各層的結果（不良事件）率。趨勢中的趨勢看它是否以和用藥率相同的扇形散開；兩個趨勢越同步，估計越鋭利。
+      同樣各層的結果（不良事件）率。趨勢中的趨勢看它是否以和接種率相同的扇形散開；兩個趨勢越同步，估計越鋭利。
     </p>
   </section>
 
   <!-- ===================== TiT ③ 資料分析 ===================== -->
   <section id="titanalyze" class="panel">
     <h1 data-en="Data analysis: run a full trend-in-trend">資料分析：跑一次完整的趨勢中的趨勢</h1>
-    <p class="lead" data-en="Load the built-in drug-uptake example (or upload a long CSV with pid / period / exposed / outcome columns plus baseline covariates). The tool builds the CPE strata, aggregates the period × stratum cells, fits the trend-in-trend likelihood, and reports the causal odds ratio against the naive cohort comparison.">
-      載入內建的用藥普及範例（或上傳一份長格式 CSV，含 pid／period／exposed／outcome 欄位與基線共變項）。
+    <p class="lead" data-en="Load the built-in vaccine-uptake example (or upload a long CSV with pid / period / exposed / outcome columns plus baseline covariates). The tool builds the CPE strata, aggregates the period × stratum cells, fits the trend-in-trend likelihood, and reports the causal odds ratio against the naive cohort comparison.">
+      載入內建的接種普及範例（或上傳一份長格式 CSV，含 pid／period／exposed／outcome 欄位與基線共變項）。
       工具會建立 CPE 分層、聚合「期別×層」格子、擬合趨勢中的趨勢概似，並把因果勝算比與天真世代比較並列。
     </p>
 
     <div class="datasource">
-      <button id="useTitExample" class="btn primary" data-en="Load built-in drug-uptake example">載入內建用藥普及範例</button>
+      <button id="useTitExample" class="btn primary" data-en="Load built-in vaccine-uptake example">載入內建接種普及範例</button>
       <span class="or" data-en="or">或</span>
       <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="titFileInput" accept=".csv" hidden /></label>
       <span id="titDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
@@ -1112,9 +1093,9 @@
       <h2 data-en="Trend-in-trend estimate">趨勢中的趨勢估計</h2>
       <div class="result-cards" id="titAnalyzeCards"></div>
       <div id="titAnalyzeExpo" class="chart"></div>
-      <p class="caption" data-en="Drug-uptake rate by CPE stratum over time — the fanning-out trend the method exploits.">各 CPE 層的用藥率隨時間變化——方法所利用的扇形趨勢。</p>
+      <p class="caption" data-en="Vaccine-uptake rate by CPE stratum over time — the fanning-out trend the method exploits.">各 CPE 層的接種率隨時間變化——方法所利用的扇形趨勢。</p>
       <div id="titAnalyzeOut2" class="chart"></div>
-      <p class="caption" data-en="Outcome rate by the same strata. The causal OR is identified from whether this tracks the uptake fan-out.">同樣各層的結果率。因果 OR 由它是否跟隨用藥率扇形來識別。</p>
+      <p class="caption" data-en="Outcome rate by the same strata. The causal OR is identified from whether this tracks the uptake fan-out.">同樣各層的結果率。因果 OR 由它是否跟隨接種率扇形來識別。</p>
     </div>
   </section>
 
@@ -1123,7 +1104,7 @@
     <h1 data-en="Can we trust this TiT? Five checks">這個 TiT 可不可信？五道體檢</h1>
     <p class="lead" data-en="Trend-in-trend rests on a strong exposure trend, a rare outcome, stable measured characteristics, and — the key, untestable one — no unmeasured factor that trends over calendar time in step with uptake across strata. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
       趨勢中的趨勢依賴：暴露趨勢夠強、結果夠罕見、可測特徵不隨時間漂、以及——關鍵且不可檢驗的——
-      沒有未測因素隨日曆時間、跨層地與用藥潮同步變化。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+      沒有未測因素隨日曆時間、跨層地與接種潮同步變化。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
     </p>
     <div id="titOverall" class="overall hidden"></div>
     <div id="titAssumeCards" class="assume-cards"></div>
@@ -1378,27 +1359,27 @@
   <section id="perrlearn" class="panel">
     <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
     <h1 data-en="A sixth trick: subtract the confounding you can see in the past (Prior Event Rate Ratio)">第六種招式：把過去看得到的混淆減掉（事前事件率比）</h1>
-    <p class="lead" data-en="People put on a drug are usually different from those who aren't — often sicker (that's why they got it). So directly comparing their event rates after treatment is confounded. PERR's trick: also compare the two groups <b>before</b> anyone was treated. Whatever rate-ratio gap shows up in that prior period is pure confounding — so divide it out of the post-period ratio: <b>PERR = (rate ratio after) ÷ (rate ratio before)</b>.">
-      會被開某個藥的人，通常和沒被開的人不一樣——常常是比較病重（所以才被開）。所以直接比較他們用藥後的
-      事件率會被混淆。PERR 的招式：也比較兩組在<b>還沒有人用藥之前</b>的事件率。事前期出現的任何率比落差
+    <p class="lead" data-en="People put on a vaccine are usually different from those who aren't — often sicker (that's why they got it). So directly comparing their event rates after treatment is confounded. PERR's trick: also compare the two groups <b>before</b> anyone was treated. Whatever rate-ratio gap shows up in that prior period is pure confounding — so divide it out of the post-period ratio: <b>PERR = (rate ratio after) ÷ (rate ratio before)</b>.">
+      會被接種的人，通常和沒接種的人不一樣——常常是風險較高（所以才被優先接種）。所以直接比較他們接種後的
+      事件率會被混淆。PERR 的招式：也比較兩組在<b>還沒有人接種之前</b>的事件率。事前期出現的任何率比落差
       都是純混淆——把它從事後期率比中除掉：<b>PERR ＝（事後率比）÷（事前率比）</b>。
     </p>
 
     <div class="card info">
       <h3 data-en="The plain-language idea">先用白話想一遍</h3>
-      <p data-en="Imagine the treated group has 1.4× the event rate of controls <b>before</b> the drug — but nobody is on the drug yet, so that 1.4 is <b>nothing but confounding</b> (the treated are sicker). After the drug, the ratio might look like ~1.0 — seemingly no effect. But that's the protective drug pushing <b>against</b> the 1.4 confounding. Divide: 1.0 ÷ 1.4 ≈ 0.72 — the drug actually cut the rate by ~28%. PERR found the benefit the naive comparison hid. The catch: this only works if the confounding is the <b>same</b> in both periods.">
-        想像處置組在<b>用藥前</b>的事件率是對照組的 1.4 倍——但這時還沒有人用藥，所以那個 1.4
-        <b>純粹是混淆</b>（處置組比較病重）。用藥後，率比可能看起來約 1.0——好像沒效。但那其實是有保護力的藥
-        在<b>對抗</b>那個 1.4 的混淆。一除：1.0 ÷ 1.4 ≈ 0.72——藥其實把事件率降了約 28%。PERR 找出了天真比較
+      <p data-en="Imagine the treated group has 1.4× the event rate of controls <b>before</b> the vaccine — but nobody is on the vaccine yet, so that 1.4 is <b>nothing but confounding</b> (the treated are sicker). After the vaccine, the ratio might look like ~1.0 — seemingly no effect. But that's the protective vaccine pushing <b>against</b> the 1.4 confounding. Divide: 1.0 ÷ 1.4 ≈ 0.72 — the vaccine actually cut the rate by ~28%. PERR found the benefit the naive comparison hid. The catch: this only works if the confounding is the <b>same</b> in both periods.">
+        想像處置組在<b>接種前</b>的事件率是對照組的 1.4 倍——但這時還沒有人接種，所以那個 1.4
+        <b>純粹是混淆</b>（處置組比較病重）。接種後，率比可能看起來約 1.0——好像沒效。但那其實是有保護力的疫苗
+        在<b>對抗</b>那個 1.4 的混淆。一除：1.0 ÷ 1.4 ≈ 0.72——疫苗其實把事件率降了約 28%。PERR 找出了天真比較
         藏起來的好處。前提是：這個混淆在兩段期間要<b>一樣</b>。
       </p>
     </div>
 
     <div class="card scene">
       <h3 data-en="What does the data look like? A confounding gap before, a real effect after">資料長什麼樣子？事前一道混淆落差、事後一個真效果</h3>
-      <p data-en="Four event rates: treated vs control, in the prior period and the post period. In the <b>prior</b> period (nobody treated yet) the teal bar already sits above the grey one — that gap is the confounding fingerprint. In the <b>post</b> period the drug pulls the treated rate down, closing the gap. PERR reads the effect from how that gap <b>changes</b>, not from the post gap alone.">
-        四個事件率：處置 vs 對照，分事前期與事後期。在<b>事前期</b>（還沒有人用藥），青色棒就已經高過灰色棒
-        ——那道落差就是混淆的指紋。在<b>事後期</b>，藥把處置組的率往下拉、把落差縮小。PERR 從這道落差怎麼
+      <p data-en="Four event rates: treated vs control, in the prior period and the post period. In the <b>prior</b> period (nobody treated yet) the teal bar already sits above the grey one — that gap is the confounding fingerprint. In the <b>post</b> period the vaccine pulls the treated rate down, closing the gap. PERR reads the effect from how that gap <b>changes</b>, not from the post gap alone.">
+        四個事件率：處置 vs 對照，分事前期與事後期。在<b>事前期</b>（還沒有人接種），青色棒就已經高過灰色棒
+        ——那道落差就是混淆的指紋。在<b>事後期</b>，疫苗把處置組的率往下拉、把落差縮小。PERR 從這道落差怎麼
         <b>改變</b>讀出效果，而不是只看事後的落差。
       </p>
       <div id="perrScene" class="chart"></div>
@@ -1425,7 +1406,7 @@
       <p data-en="PERR is a close cousin of DiD — both subtract a 'before' difference from an 'after' difference. The difference: DiD works on the outcome <b>level</b> (means), while PERR works on the <b>event rate ratio</b> (counts per person-time), which suits rare events and survival-style data; and PERR's 'before' is the <b>same people</b> in a pre-treatment window, so it leans hard on the confounding being time-invariant. If that fails, PERR is biased — which is exactly what tab ② lets you feel.">
         PERR 是 DiD 的近親——兩者都把『事前的差異』從『事後的差異』裡減掉。差別：DiD 作用在結果的<b>水準</b>
         （平均），PERR 作用在<b>事件率比</b>（每人時的次數），適合罕見事件與存活型資料；而且 PERR 的『事前』
-        是<b>同一群人</b>在用藥前的窗，所以非常依賴混淆時間不變。一旦這點不成立，PERR 就會有偏——這正是分頁 ②
+        是<b>同一群人</b>在接種前的窗，所以非常依賴混淆時間不變。一旦這點不成立，PERR 就會有偏——這正是分頁 ②
         讓你親手體會的。
       </p>
     </details>
@@ -1437,7 +1418,7 @@
     <h1 data-en="Interactive PERR: break the time-invariant assumption and watch it bend">互動式 PERR：弄壞「時間不變」假設，看它怎麼歪掉</h1>
     <p class="lead" data-en="PERR only works if the confounding is the <b>same</b> in the prior and post periods. Drag the slider to let the confounder's effect <b>drift</b> over time (e.g. frailty resolves after treatment). At 0, PERR recovers the true rate ratio of 0.70. Turn it up, and the prior period no longer captures the post confounding — so PERR drifts away from the truth, even though the naive comparison was wrong all along.">
       PERR 只有在混淆於事前、事後<b>一樣</b>時才成立。拉動滑桿，讓混淆因子的效果隨時間<b>漂移</b>
-      （例如體弱在用藥後好轉）。在 0 時，PERR 還原真實率比 0.70。往上調，事前期就不再能代表事後的混淆——
+      （例如體弱在接種後好轉）。在 0 時，PERR 還原真實率比 0.70。往上調，事前期就不再能代表事後的混淆——
       PERR 便偏離真值，儘管天真比較從頭到尾都是錯的。
     </p>
 
@@ -1560,98 +1541,106 @@
 
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
-    <h1 data-en="IV vs RDD: two designs for the same question — which to use?">IV 與 RDD：回答同一問題的兩種設計，該用哪個？</h1>
-    <p class="lead" data-en="Throughout this tool we asked one causal question — <b>does the vaccine really improve health?</b> — and answered it two ways. Both recover the <b>same hidden truth (1.80)</b> for compliers, but they borrow their &quot;as-good-as-random&quot; variation from <b>completely different places</b>. Understanding that difference tells you which design fits your problem.">
-      整個工具我們只問一個因果問題——<b>疫苗真的能改善健康嗎？</b>——並用兩種方法回答。
-      兩者都抓到<b>同一個藏起來的真值（1.80）</b>，但「近似隨機」的來源<b>完全不同</b>。
-      看懂這個差別，就知道自己的問題該用哪一種。
+    <h1 data-en="Six designs, one vaccine question — which to use?">六法怎麼選：同一個疫苗問題，六種攻法</h1>
+    <p class="lead" data-en="Throughout this whole toolbox we asked <b>one</b> causal question — <b>does the vaccine actually improve health / prevent the event?</b> The honest way would be a randomised trial, but often we can't run one. So six <b>quasi-experimental</b> designs each borrow a bit of &quot;as-good-as-random&quot; variation from a <b>different place</b> to answer it. Here they are side by side, so you can pick the one your data can support.">
+      整個工具箱我們只問<b>一個</b>因果問題——<b>疫苗真的能改善健康／預防那個事件嗎？</b>
+      最誠實的做法是隨機試驗，但我們常常做不到。於是六種<b>準實驗</b>設計，各自從<b>不同的地方</b>「借」一點
+      近似隨機的變異來回答。這裡把六個並排，幫你挑出你的資料撐得起的那一個。
     </p>
 
-    <div class="card warn">
-      <h3 data-en="First: why we did NOT make the IV use the age-65 cutoff">先講：為什麼 IV 不改用「滿 65 歲」當工具</h3>
-      <p data-en="An instrument must be <b>excludable</b> — it may affect the outcome <b>only through</b> the treatment. The random reminder qualifies. But <b>age itself directly affects health</b> (older = higher risk), so &quot;age ≥ 65&quot; is <b>not a valid instrument</b>. Age works for RDD only because RDD compares people <b>right next to the cutoff</b>, who are alike in age — that local comparison cancels age's direct effect. So the two tabs deliberately use <b>different identification sources for the same question</b>; swapping one for the other would break it.">
-        工具變數必須<b>可排除</b>——只能<b>透過處置</b>影響結果。隨機提醒符合；
-        但<b>年齡本身會直接影響健康</b>（越老風險越高），所以「年齡 ≥ 65」<b>不是合格的工具</b>。
-        年齡能用在 RDD，只因為 RDD <b>比較斷點旁邊</b>、年齡幾乎一樣的人，這個局部比較把年齡的直接影響抵消掉了。
-        因此兩個分頁是<b>對同一問題刻意採用不同的識別來源</b>；互換會破壞識別。
+    <div class="card scene">
+      <h3 data-en="All six correct their naive bias back to the truth">六種設計，各自把「天真偏誤」修回真值</h3>
+      <p data-en="Each method's truth is on a <b>different scale</b> (an effect difference, an odds ratio, a rate ratio, a level change…), so here every estimate is divided by <b>its own truth</b>: 1.0 means perfectly recovered. <b>Amber</b> = the naive comparison (pulled off 1.0 by confounding); <b>teal</b> = the method's corrected estimate (back near 1.0). Same story, six different ways of borrowing randomness — all landing near the truth.">
+        每種方法的真值在<b>不同的尺度</b>上（效果差、勝算比、率比、水準變化……），所以這裡把每個估計都除以
+        <b>它自己的真值</b>：1.0＝完全命中。<b>琥珀色</b>＝天真比較（被混淆從 1.0 帶偏）；<b>青色</b>＝該方法校正後
+        （貼回 1.0 附近）。同一個故事、六種借隨機的方式——最後都落在真值附近。
       </p>
+      <div id="chooseChart" class="chart"></div>
     </div>
 
-    <h2 data-en="Both correct their naive bias to the same truth">兩種設計都把各自的「天真偏誤」修正到同一個真值</h2>
-    <div id="chooseChart" class="chart"></div>
-    <p class="caption" data-en="Each design starts from a biased naive comparison (red) and recovers the true 1.80 (green dashed line) — IV via a random instrument, RDD via the age cutoff. Same destination, different road.">
-      每種設計都從有偏的天真比較（紅）出發，最後抓回真值 1.80（綠虛線）——IV 靠隨機工具、RDD 靠年齡斷點。
-      終點相同，路徑不同。
-    </p>
-
-    <h2 data-en="First, three things they actually share">先看三個其實一樣的地方</h2>
+    <h2 data-en="Three things all six share">六個其實都一樣的地方</h2>
     <div class="card scene">
       <h3 data-en="Same family, same logic">同一家族、同一套邏輯</h3>
-      <p data-en="Before the differences, notice how alike they are — both are <b>quasi-experiments</b> that can't get a real randomised trial, so each borrows &quot;as-good-as-random&quot; variation from somewhere and leans on it.">
-        在看差別之前，先注意它們有多像——兩者都是<b>準實驗</b>：拿不到真正的隨機試驗，
-        於是各自從某處「借」一點近似隨機的變異，再靠它撐起因果推論。
-      </p>
       <ul>
-        <li data-en="<b>Both fake a randomised trial.</b> Neither truly randomises treatment; each finds a source of variation that is <b>as good as random</b> and uses it as a stand-in.">
-          <b>都在「假裝」做隨機試驗。</b>兩者都沒有真的隨機分派處置，而是找到一段<b>近似隨機</b>的變異來頂替。
+        <li data-en="<b>All six fake a randomised trial.</b> None truly randomises who gets the vaccine; each finds a source of variation that is <b>as good as random</b> and uses it as a stand-in.">
+          <b>六種都在「假裝」做隨機試驗。</b>沒有一個真的隨機分派誰接種，而是各自找到一段<b>近似隨機</b>的變異來頂替。
         </li>
-        <li data-en="<b>Both answer the same kind of question — a LATE for compliers.</b> Not the whole-population average (ATE), only the effect on the people actually moved (by the instrument / by crossing the cutoff).">
-          <b>都回答同一種問題——順從者的 LATE。</b>不是全體平均效果（ATE），只是<b>真正被推動的那群人</b>
-          （被工具推動／剛好跨過門檻）的局部效果。
+        <li data-en="<b>All hinge on one untestable core assumption.</b> Exclusion, continuity, parallel trends, no-synchronised-confounder-trend, no-coincident-event, time-invariant confounding — each design rests on one thing you can't prove from data, plus testable supports. So every method has a ④ dashboard you must run.">
+          <b>都押在一條不可檢驗的核心假設上。</b>排除限制、連續性、平行趨勢、無同步混淆趨勢、無同時代事件、
+          時間不變混淆——每種設計都靠一條無法用資料證明的前提，外加可檢驗的佐證。所以每個方法都配一個 ④ 假設儀表板，一定要跑。
         </li>
-        <li data-en="<b>Both hinge on one untestable assumption plus testable supporting checks.</b> So both come with a dashboard (tabs ④ and ⑦) you must run.">
-          <b>都押在一條不可檢驗的核心假設＋一堆可檢驗的佐證上。</b>所以兩者都配一個假設檢驗儀表板
-          （分頁 ④ 與 ⑦），一定要跑。
-        </li>
-        <li data-en="<b>Both can be boosted by the same ML ideas (tab ⑤).</b> Flexible models for the nuisance pieces, cross-fitting as the safety belt.">
-          <b>都能用同一套 ML 想法強化（分頁 ⑤）。</b>用彈性模型處理輔助部分、用交叉擬合當安全帶。
+        <li data-en="<b>Most can be boosted by the same ML ideas (tab ⑤).</b> Flexible models for the nuisance pieces, cross-fitting as the safety belt — though for TiT and PERR the literature has no AI version yet, and we say so honestly.">
+          <b>多數都能用同一套 ML 想法強化（⑤）。</b>用彈性模型處理輔助部分、用交叉擬合當安全帶——
+          不過 TiT 與 PERR 的文獻目前沒有 AI 版本，我們也誠實說明。
         </li>
       </ul>
     </div>
 
-    <h2 data-en="Side-by-side: where they differ">並排比較：不同處</h2>
+    <h2 data-en="One vaccine question, six ways to borrow randomness">同一個疫苗問題，六種「借隨機」的方式</h2>
     <div class="table-wrap">
       <table class="cmp">
-        <thead>
-          <tr>
-            <th data-en="Aspect">面向</th>
-            <th data-en="IV (instrumental variable)">IV（工具變數）</th>
-            <th data-en="RDD (regression discontinuity)">RDD（斷點回歸）</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th data-en="Method">方法</th>
+          <th data-en="Its vaccine scenario in this tool">這個工具裡的疫苗情境</th>
+          <th data-en="Where the &quot;randomness&quot; is borrowed">「隨機」從哪借</th>
+          <th data-en="The one untestable assumption">最關鍵、不可檢驗的假設</th>
+        </tr></thead>
         <tbody>
-          <tr>
-            <td data-en="Where the &quot;randomness&quot; comes from">「隨機」從哪來</td>
-            <td data-en="A genuinely exogenous instrument (here: the random reminder)">一個真正外生的工具（這裡：隨機提醒）</td>
-            <td data-en="A sharp rule at a cutoff (here: eligible at age 65)">斷點上的明確規則（這裡：滿 65 歲才有資格）</td>
-          </tr>
-          <tr>
-            <td data-en="The one untestable core assumption">最關鍵、不可檢驗的假設</td>
-            <td data-en="Exclusion: the instrument affects the outcome only through treatment">排除限制：工具只能透過處置影響結果</td>
-            <td data-en="Continuity: people just below vs. above the cutoff are otherwise alike">連續性：斷點上下方的人其他條件相同</td>
-          </tr>
-          <tr>
-            <td data-en="Testable supporting checks">可檢驗的佐證</td>
-            <td data-en="Instrument strength (F), balance, monotonicity, falsification">工具強度（F）、平衡、單調性、否證檢定</td>
-            <td data-en="No manipulation (density), covariate balance, first-stage jump, bandwidth">無操弄（密度）、共變項平衡、第一階段跳躍、頻寬敏感度</td>
-          </tr>
-          <tr>
-            <td data-en="Who the answer is about (estimand)">答案是關於誰（估計對象）</td>
-            <td data-en="LATE for compliers — those moved by the instrument">順從者的 LATE——被工具推動的那群人</td>
-            <td data-en="LATE for compliers right at the cutoff — local to age 65">斷點處順從者的 LATE——侷限在 65 歲附近</td>
-          </tr>
-          <tr>
-            <td data-en="External validity (who it generalises to)">外推性（能推論到誰）</td>
-            <td data-en="Depends on who the instrument moves; can be broader">看工具推動了誰；可能比較廣</td>
-            <td data-en="Only people near the cutoff; narrow but very credible there">只限斷點附近的人；範圍窄但在那裡很可信</td>
-          </tr>
-          <tr>
-            <td data-en="What you need in the data">資料裡需要有什麼</td>
-            <td data-en="A valid instrument variable (often the hard part)">一個合格的工具變數（通常最難找）</td>
-            <td data-en="A running variable with a sharp eligibility rule">一個帶明確資格規則的跑分變數</td>
-          </tr>
+          <tr><td>IV</td>
+            <td data-en="A randomly mailed reminder nudged some people to get vaccinated">隨機寄出的接種提醒，推了一部分人去打疫苗</td>
+            <td data-en="A genuinely exogenous instrument (the random reminder)">一個真正外生的工具（隨機提醒）</td>
+            <td data-en="Exclusion: the reminder affects health only through vaccination">排除限制：提醒只透過「接種」影響健康</td></tr>
+          <tr><td>RDD</td>
+            <td data-en="A free vaccination programme offered only at age 65+">免費接種計畫只開放給滿 65 歲的人</td>
+            <td data-en="A sharp rule at a cutoff (age 65)">分數上的明確門檻（年齡 65）</td>
+            <td data-en="Continuity: people just below vs above 65 are otherwise alike">連續性：剛好 65 歲上下的人其他條件相同</td></tr>
+          <tr><td>DiD</td>
+            <td data-en="Some communities switch on a vaccination drive at a known time">某些社區在某個時點開啟接種推廣政策</td>
+            <td data-en="Timing: a policy turned on for some groups at a known date">時間：政策在已知時點對部分社區開啟</td>
+            <td data-en="Parallel trends: absent the policy, the groups would move together">平行趨勢：沒政策時兩組會一起變</td></tr>
+          <tr><td>TiT</td>
+            <td data-en="A new vaccine's uptake rises over calendar quarters, faster in some groups">一支新疫苗的接種率隨季逐漸上升，不同族群快慢不同</td>
+            <td data-en="A differential time-trend in vaccination prevalence across strata">接種盛行率隨時間、跨層不同的趨勢</td>
+            <td data-en="No unmeasured confounder trends in step with the uptake">沒有與接種趨勢同步的未測混淆趨勢</td></tr>
+          <tr><td>ITS</td>
+            <td data-en="A county launches a vaccination programme at a known month, tracked monthly">某縣市在已知月份推出接種計畫，逐月追蹤健康指標</td>
+            <td data-en="Timing: the pre-intervention trend extrapolated as the counterfactual">時間：介入前趨勢外推當反事實</td>
+            <td data-en="No other event coincides with the launch">介入的同時沒有別的事也發生</td></tr>
+          <tr><td>PERR</td>
+            <td data-en="Higher-risk people get vaccinated more; compare rates before vs after">高風險者較常被接種；比較接種 vs 未接種者在接種前後的事件率</td>
+            <td data-en="The same people's pre-vaccination ratio as the confounding benchmark">同一群人「接種前」的率比當混淆基準</td>
+            <td data-en="The confounding is time-invariant and multiplicative">混淆時間不變且乘法</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <h2 data-en="What data each needs, and who the answer is about">各需要什麼資料、答案是關於誰</h2>
+    <div class="table-wrap">
+      <table class="cmp">
+        <thead><tr>
+          <th data-en="Method">方法</th>
+          <th data-en="What you need in the data">資料裡需要有什麼</th>
+          <th data-en="Who the answer is about (estimand)">答案是關於誰（估計對象）</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>IV</td><td data-en="A valid instrument (often the hard part)">一個合格的工具變數（通常最難找）</td><td data-en="LATE for compliers moved by the instrument">被工具推動的順從者 LATE</td></tr>
+          <tr><td>RDD</td><td data-en="A running score with a sharp eligibility rule">一個帶明確資格規則的跑分變數</td><td data-en="LATE for compliers right at the cutoff (near 65)">斷點附近（65 歲）的順從者 LATE</td></tr>
+          <tr><td>DiD</td><td data-en="A panel of units × periods, with a control group">單位×期別的面板，含對照組</td><td data-en="ATT — the effect on the treated communities">介入社區的平均處置效果（ATT）</td></tr>
+          <tr><td>TiT</td><td data-en="Individual data over many periods, a rare outcome, a strong uptake trend">多期個體資料、罕見結果、夠強的接種趨勢</td><td data-en="A population causal odds ratio (≈ relative risk)">母體層級的因果勝算比（≈相對風險）</td></tr>
+          <tr><td>ITS</td><td data-en="One series with many points before & after a known interruption">一條序列、介入前後都有許多時間點</td><td data-en="Level &amp; slope change for the treated population">該母體的水準與斜率變化</td></tr>
+          <tr><td>PERR</td><td data-en="Event counts & person-time for a prior and a post period, by group">分組的事前/事後期事件數與人時</td><td data-en="A causal rate ratio for the treated">處置者的因果率比</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 data-en="A one-page decision guide: reach for…">一頁決策指南：什麼時候用哪個</h2>
+    <div class="cards">
+      <div class="card info"><h3>IV</h3><p data-en="You have an <b>external, as-good-as-random push</b> (a randomised reminder, a lottery, a genetic variant) that affects the outcome <b>only through</b> vaccination.">你有一個<b>外部、近似隨機的推力</b>（隨機提醒、抽籤、基因變異），且它<b>只透過</b>接種影響結果。</p></div>
+      <div class="card info"><h3>RDD</h3><p data-en="Eligibility is set by a <b>sharp cutoff</b> on a score (age, date, an index) that people can't precisely game, and you only need an answer <b>near the cutoff</b>.">資格由分數上的<b>明確門檻</b>決定（年齡、日期、指標），人無法精準操弄，且你只需<b>門檻附近</b>的答案。</p></div>
+      <div class="card info"><h3>DiD</h3><p data-en="A policy <b>switches on for some groups at a known time</b>, you have a <b>control group</b>, and the groups looked parallel before.">政策在<b>某時點對部分群開啟</b>，你有<b>對照組</b>，且兩組在政策前走勢平行。</p></div>
+      <div class="card info"><h3>TiT</h3><p data-en="Vaccination <b>spreads gradually over calendar time</b> at different rates across groups, and the outcome is <b>rare</b>.">接種<b>隨日曆時間逐漸普及</b>、跨族群速度不同，且結果<b>罕見</b>。</p></div>
+      <div class="card info"><h3>ITS</h3><p data-en="A <b>single population</b>, a <b>known intervention time</b>, and <b>many time points</b> before and after — and no other big event at that moment."><b>單一群體</b>、一個<b>已知介入時點</b>、前後有<b>許多時間點</b>，且那一刻沒有別的大事。</p></div>
+      <div class="card info"><h3>PERR</h3><p data-en="You have <b>event rates before and after</b> treatment for both groups, and you believe the confounding is <b>stable over time</b>.">你有兩組<b>處置前後的事件率</b>，且相信混淆<b>隨時間穩定</b>。</p></div>
     </div>
 
     <div class="card info">
@@ -1674,32 +1663,13 @@
       </p>
     </div>
 
-    <h2 data-en="A simple rule of thumb: when to use which">簡單的判斷原則：什麼時候用哪個</h2>
-    <div class="rdd-twocol">
-      <div class="card info">
-        <h3 data-en="Reach for IV when…">這些情況用 IV</h3>
-        <p data-en="• You have an <b>external, as-good-as-random push</b> — a randomised policy, a lottery, a natural random event, or a genetic variant (Mendelian randomisation).<br />• You believe that push affects the outcome <b>only through</b> the treatment.<br />• There is <b>no sharp threshold rule</b> assigning treatment.">
-          • 你手上有一個<b>外部、近似隨機的推力</b>——隨機分派的政策、抽籤、自然隨機事件，或基因變異（孟德爾隨機化）。<br />
-          • 你相信這個推力<b>只透過</b>處置影響結果。<br />
-          • 處置的分派<b>沒有明確的門檻規則</b>。
-        </p>
-      </div>
-      <div class="card info">
-        <h3 data-en="Reach for RDD when…">這些情況用 RDD</h3>
-        <p data-en="• Treatment or eligibility is decided by a <b>sharp cutoff</b> on a continuous score — age, test score, a date, an index, a clinical threshold.<br />• People <b>cannot precisely manipulate</b> which side they land on.<br />• You only need a credible answer <b>near that cutoff</b>, and you have enough data around it.">
-          • 處置或資格是由連續分數上的<b>明確門檻</b>決定的——年齡、考試分數、日期、指標、臨床閾值。<br />
-          • 人們<b>無法精準操弄</b>自己落在門檻哪一側。<br />
-          • 你只需要<b>門檻附近</b>的可信答案，而且那附近資料夠多。
-        </p>
-      </div>
-    </div>
-
     <div class="card">
       <h3 data-en="The one-line summary">一句話總結</h3>
-      <p data-en="<b>IV needs a valid instrument; RDD needs a sharp rule.</b> Both hand you a LATE for compliers and both lean on one assumption you can't fully test — so always run the supporting checks (tabs ④ and ⑦) and, where possible, see whether two different designs <b>agree</b>. When they both point to ~1.80, you can be a lot more confident.">
-        <b>IV 要有合格的工具；RDD 要有明確的規則。</b>兩者都給你「順從者的 LATE」，
-        也都依賴一條無法完全檢驗的假設——所以一定要跑佐證檢查（分頁 ④ 與 ⑦），
-        並盡量看<b>兩種不同設計是否一致</b>。當它們都指向約 1.80，你就能更有信心。
+      <p data-en="<b>All six fake a randomised trial, each borrowing &quot;as-good-as-random&quot; variation from a different place</b> — a random push (IV), a sharp cutoff (RDD), policy timing (DiD &amp; ITS), a calendar-time uptake trend (TiT), or a clean pre-treatment period (PERR). Each leans on one assumption you can't fully test, so always run its ④ dashboard. What you <b>have</b> — an instrument, a cutoff, a control group, a time series, a rising uptake, a prior period — decides which you <b>can</b> use. And when two or three different designs point to the <b>same</b> answer, you can be a lot more confident.">
+        <b>六種都在「假裝」做隨機試驗，各自從不同的地方借近似隨機</b>——一個隨機推力（IV）、一條明確門檻（RDD）、
+        政策的時點（DiD 與 ITS）、隨日曆時間的採用趨勢（TiT），或一段乾淨的處置前期（PERR）。每種都依賴一條
+        無法完全檢驗的假設，所以一定要跑它的 ④ 儀表板。你<b>手上有什麼</b>——工具、門檻、對照組、時間序列、
+        上升的接種率、事前期——就決定你<b>能用</b>哪一種。而當兩三種不同設計都指向<b>同一個</b>答案時，你就能更有信心。
       </p>
     </div>
   </section>
@@ -1736,7 +1706,7 @@
       <li>Abadie, A., Diamond, A., &amp; Hainmueller, J. (2010). Synthetic Control Methods for Comparative Case Studies. <i>Journal of the American Statistical Association, 105</i>(490), 493–505. <span data-en="〔synthetic control / synthetic DiD — DiD tab ⑤ remedy ④〕">〔合成控制／合成 DiD —— DiD 分頁⑤ 進階④〕</span></li>
       <li>Ji, X., Small, D. S., Leonard, C. E., &amp; Hennessy, S. (2017). The Trend-in-trend Research Design for Causal Inference. <i>Epidemiology, 28</i>(4), 529–536. https://doi.org/10.1097/EDE.0000000000000579. <span data-en="〔the trend-in-trend method &amp; likelihood — TiT tabs ①–④〕">〔趨勢中的趨勢方法與概似 —— TiT 分頁 ①–④〕</span></li>
       <li>Ertefaie, A., Small, D. S., Flory, J. H., &amp; Hennessy, S. (2018). Statistical Power for Trend-in-trend Design. <i>Epidemiology, 29</i>(3), e21–e23. <span data-en="〔drivers of statistical power — TiT tab ② / A1〕">〔統計檢定力的驅動因素 —— TiT 分頁② / A1〕</span></li>
-      <li>Dasgupta, N., et al. (2019). Causal inference for evaluating prescription opioid abuse using trend-in-trend design. <i>Pharmacoepidemiology and Drug Safety, 28</i>(5), 716–725. https://doi.org/10.1002/pds.4736. <span data-en="〔applied example〕">〔應用範例〕</span></li>
+      <li>Dasgupta, N., et al. (2019). Causal inference for evaluating prescription opioid abuse using trend-in-trend design. <i>Pharmacoepidemiology and Vaccine Safety, 28</i>(5), 716–725. https://doi.org/10.1002/pds.4736. <span data-en="〔applied example〕">〔應用範例〕</span></li>
       <li>Collin, L. J., et al. (2024). The population-level effect of adjuvant therapies on breast-cancer recurrence: application of the trend-in-trend design. <i>Epidemiology, 35</i>(5), 660–666. https://doi.org/10.1097/EDE.0000000000001753. <span data-en="〔applied example〕">〔應用範例〕</span></li>
       <li>Bernal, J. L., Cummins, S., &amp; Gasparrini, A. (2017). Interrupted time series regression for the evaluation of public health interventions: a tutorial. <i>International Journal of Epidemiology, 46</i>(1), 348–355. https://doi.org/10.1093/ije/dyw098. <span data-en="〔segmented regression, HAC SE — ITS tabs ①–④〕">〔分段迴歸、HAC 標準誤 —— ITS 分頁 ①–④〕</span></li>
       <li>Schaffer, A. L., Dobbins, T. A., &amp; Pearson, S-A. (2021). Interrupted time series analysis using ARIMA models. <i>BMC Medical Research Methodology, 21</i>, 58. https://doi.org/10.1186/s12874-021-01235-8. <span data-en="〔ARIMA / autocorrelation — ITS tab ⑤ ①〕">〔ARIMA／自相關 —— ITS 分頁⑤ ①〕</span></li>
@@ -1744,8 +1714,8 @@
       <li>Dey, A. K., et al. (2025). Two-stage interrupted time series analysis with machine learning. <i>American Journal of Epidemiology, 194</i>(10), 2936–2944. https://doi.org/10.1093/aje/kwaf147. <span data-en="〔ML two-stage counterfactual — ITS tab ⑤ ③〕">〔ML 兩階段反事實 —— ITS 分頁⑤ ③〕</span></li>
       <li>Romanowski, K., et al. (2023). Healthcare Utilization After Respiratory Tuberculosis: A Controlled Interrupted Time Series Analysis. <i>Clinical Infectious Diseases, 77</i>(6), 883–891. <span data-en="〔applied controlled ITS〕">〔控制組 ITS 應用範例〕</span></li>
       <li>Brodersen, K. H., et al. (2015). Inferring causal impact using Bayesian structural time-series models. <i>Annals of Applied Statistics, 9</i>(1), 247–274. <span data-en="〔CausalImpact / BSTS — ITS tab ⑤ ④〕">〔CausalImpact／貝氏結構時間序列 —— ITS 分頁⑤ ④〕</span></li>
-      <li>Yu, M., Xie, D., Wang, X., Weiner, M. G., &amp; Tannen, R. L. (2012). Prior event rate ratio adjustment: numerical studies of a statistical method to address unrecognized confounding. <i>Pharmacoepidemiology and Drug Safety, 21</i>(S2), 60–68. https://doi.org/10.1002/pds.3235. <span data-en="〔the PERR method &amp; bias — PERR tabs ①–④〕">〔PERR 方法與偏誤 —— PERR 分頁 ①–④〕</span></li>
-      <li>Uddin, M. J., et al. (2015). Performance of prior event rate ratio adjustment method in pharmacoepidemiology: a simulation study. <i>Pharmacoepidemiology and Drug Safety, 24</i>(5), 468–477. https://doi.org/10.1002/pds.3724. <span data-en="〔failure modes〕">〔失效模式〕</span></li>
+      <li>Yu, M., Xie, D., Wang, X., Weiner, M. G., &amp; Tannen, R. L. (2012). Prior event rate ratio adjustment: numerical studies of a statistical method to address unrecognized confounding. <i>Pharmacoepidemiology and Vaccine Safety, 21</i>(S2), 60–68. https://doi.org/10.1002/pds.3235. <span data-en="〔the PERR method &amp; bias — PERR tabs ①–④〕">〔PERR 方法與偏誤 —— PERR 分頁 ①–④〕</span></li>
+      <li>Uddin, M. J., et al. (2015). Performance of prior event rate ratio adjustment method in pharmacoepidemiology: a simulation study. <i>Pharmacoepidemiology and Vaccine Safety, 24</i>(5), 468–477. https://doi.org/10.1002/pds.3724. <span data-en="〔failure modes〕">〔失效模式〕</span></li>
       <li>van Aalst, R., et al. (2021). On the Causal Interpretation of Rate-Change Methods: The Prior Event Rate Ratio and Rate Difference. <i>American Journal of Epidemiology, 190</i>(1), 142–149. https://doi.org/10.1093/aje/kwaa122. <span data-en="〔PERR vs PERD scale sensitivity — PERR tab ⑤ ②〕">〔PERR vs PERD 尺度敏感度 —— PERR 分頁⑤ ②〕</span></li>
       <li>Rogers, L. R., et al. (2020). Prior event rate ratio adjustment produced estimates consistent with randomized trial: a diabetes case study. <i>Journal of Clinical Epidemiology, 122</i>, 78–86. https://doi.org/10.1016/j.jclinepi.2020.03.009. <span data-en="〔RCT-benchmarked example〕">〔以隨機試驗對照的範例〕</span></li>
       <li>Cheung, Y. B., Ma, X., &amp; Mackenzie, G. (2024). Two assumptions of the PERR approach can be evaluated by self-controlled case series and dynamic random intercept modeling. <i>Journal of Clinical Epidemiology, 175</i>, 111511. <span data-en="〔SCCS &amp; DRIM checks — PERR tab ④ P3/P4〕">〔SCCS 與 DRIM 檢查 —— PERR 分頁④ P3/P4〕</span></li>
@@ -1754,7 +1724,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=13"></script>
-<script src="app.js?v=13"></script>
+<script src="i18n.js?v=14"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

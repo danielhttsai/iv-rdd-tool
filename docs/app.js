@@ -9,40 +9,45 @@ const state = {
 const tr = (zh, en) => window.IV.tr(zh, en);
 const lang = () => window.IV.lang;
 
-// ----- tab switching -----
-document.querySelectorAll(".tab").forEach((t) => {
-  t.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach((x) => x.classList.remove("active"));
-    t.classList.add("active");
-    document.getElementById(t.dataset.tab).classList.add("active");
-    if (t.dataset.tab === "play") refreshPlay();
-    if (t.dataset.tab === "ml") initMl();
-    if (t.dataset.tab === "rddplay") initRdd();
-    if (t.dataset.tab === "rddanalyze") initRddAnalyze();
-    if (t.dataset.tab === "rddassume") initRddAssume();
-    if (t.dataset.tab === "rddml") initRddMl();
-    if (t.dataset.tab === "didlearn") initDidLearn();
-    if (t.dataset.tab === "didplay") initDidPlay();
-    if (t.dataset.tab === "didanalyze") initDidAnalyze();
-    if (t.dataset.tab === "didassume") initDidAssume();
-    if (t.dataset.tab === "didml") initDidMl();
-    if (t.dataset.tab === "titlearn") initTitLearn();
-    if (t.dataset.tab === "titplay") initTitPlay();
-    if (t.dataset.tab === "titanalyze") initTitAnalyze();
-    if (t.dataset.tab === "titassume") initTitAssume();
-    if (t.dataset.tab === "itslearn") initItsLearn();
-    if (t.dataset.tab === "itsplay") initItsPlay();
-    if (t.dataset.tab === "itsanalyze") initItsAnalyze();
-    if (t.dataset.tab === "itsassume") initItsAssume();
-    if (t.dataset.tab === "itsml") initItsMl();
-    if (t.dataset.tab === "perrlearn") initPerrLearn();
-    if (t.dataset.tab === "perrplay") initPerrPlay();
-    if (t.dataset.tab === "perranalyze") initPerrAnalyze();
-    if (t.dataset.tab === "perrassume") initPerrAssume();
-    if (t.dataset.tab === "perrml") initPerrMl();
-    if (t.dataset.tab === "choose") initChoose();
-  });
+// ----- navigation: method dropdown + sub-tabs -----
+const METHOD_PREFIX = { iv: "", rdd: "rdd", did: "did", tit: "tit", its: "its", perr: "perr" };
+const PANEL_INIT = {
+  play: () => refreshPlay(), ml: () => initMl(),
+  rddplay: () => initRdd(), rddanalyze: () => initRddAnalyze(),
+  rddassume: () => initRddAssume(), rddml: () => initRddMl(),
+  didlearn: () => initDidLearn(), didplay: () => initDidPlay(), didanalyze: () => initDidAnalyze(),
+  didassume: () => initDidAssume(), didml: () => initDidMl(),
+  titlearn: () => initTitLearn(), titplay: () => initTitPlay(),
+  titanalyze: () => initTitAnalyze(), titassume: () => initTitAssume(),
+  itslearn: () => initItsLearn(), itsplay: () => initItsPlay(), itsanalyze: () => initItsAnalyze(),
+  itsassume: () => initItsAssume(), itsml: () => initItsMl(),
+  perrlearn: () => initPerrLearn(), perrplay: () => initPerrPlay(), perranalyze: () => initPerrAnalyze(),
+  perrassume: () => initPerrAssume(), perrml: () => initPerrMl(),
+  choose: () => initChoose(),
+};
+let curMethod = "iv", curSub = "learn";
+const methodSelect = document.getElementById("methodSelect");
+const subtabBtns = [...document.querySelectorAll(".subtab")];
+const chooseTab = document.getElementById("chooseTab");
+
+function showPanel(panelId) {
+  document.querySelectorAll(".panel").forEach((x) => x.classList.remove("active"));
+  const el = document.getElementById(panelId);
+  if (el) el.classList.add("active");
+  if (PANEL_INIT[panelId]) PANEL_INIT[panelId]();
+  window.scrollTo(0, 0);
+}
+function showMethodSub() {
+  chooseTab.classList.remove("active");
+  subtabBtns.forEach((b) => b.classList.toggle("active", b.dataset.sub === curSub));
+  showPanel(METHOD_PREFIX[curMethod] + curSub);
+}
+methodSelect.addEventListener("change", () => { curMethod = methodSelect.value; showMethodSub(); });
+subtabBtns.forEach((b) => b.addEventListener("click", () => { curSub = b.dataset.sub; showMethodSub(); }));
+chooseTab.addEventListener("click", () => {
+  subtabBtns.forEach((x) => x.classList.remove("active"));
+  chooseTab.classList.add("active");
+  showPanel("choose");
 });
 
 async function getJSON(url) {
@@ -1059,42 +1064,31 @@ let chooseReady = false;
 function initChoose() {
   if (chooseReady) return;
   chooseReady = true;
-  refreshChoose();
+  drawChooseChart();
 }
-async function refreshChoose() {
-  let iv, rd;
-  try {
-    iv = await postJSON(`${API}/api/analyze`, {
-      source: "example", outcome: "health_score_change", treatment: "vaccinated",
-      instrument: "vaccine_reminder", covariates: [], lang: lang(),
-    });
-    rd = await postJSON(`${API}/api/rdd_analyze`, { source: "example_rdd", lang: lang() });
-  } catch (e) { return; }
-  state.chooseDone = true;
-  renderChoose(iv, rd);
-}
-function renderChoose(iv, rd) {
-  const labels = [
-    tr("IV：天真", "IV: naive"), tr("IV：2SLS", "IV: 2SLS"),
-    tr("RDD：天真", "RDD: naive"), tr("RDD：模糊", "RDD: fuzzy"),
+// Six methods, one vaccine question. Each method's truth is on a different scale
+// (effect difference, odds ratio, rate ratio, level change…), so we plot every
+// estimate ÷ its OWN truth: 1.0 = perfectly recovered. Amber = the naive comparison
+// (biased, off 1.0); teal = the method's corrected estimate (back near 1.0).
+// Representative values from this tool's verified demos.
+function drawChooseChart() {
+  if (!document.getElementById("chooseChart")) return;
+  const M = [
+    ["IV", 1.83, 1.00], ["RDD", 1.83, 1.00], ["DiD", 0.52, 1.00],
+    ["TiT", 1.57, 1.08], ["ITS", 1.45, 1.00], ["PERR", 1.47, 1.06],
   ];
-  const vals = [iv.naive.estimate, iv.iv.estimate, rd.naive_difference, rd.fuzzy.estimate];
-  const colors = [RED, "#6366f1", RED, PURPLE];
-  Plotly.react("chooseChart", [{
-    x: labels, y: vals, type: "bar", marker: { color: colors },
-    text: vals.map((v) => fmt(v, 2)), textposition: "outside",
-  }], {
-    margin: { t: 30, r: 20, b: 60, l: 50 },
-    yaxis: { title: tr("估出的疫苗效果", "Estimated vaccine effect"), range: [0, 3] },
-    shapes: [
-      { type: "line", x0: -0.5, x1: 3.5, y0: 1.8, y1: 1.8,
-        line: { color: GREEN, dash: "dash", width: 2 } },
-      { type: "line", x0: 1.5, x1: 1.5, yref: "paper", y0: 0, y1: 1,
-        line: { color: "#cbd5e1", width: 1 } },
-    ],
-    annotations: [{ x: 3, y: 1.8, text: tr("真值 1.80", "truth 1.80"),
-      showarrow: false, font: { color: GREEN }, yshift: 12 }],
-  }, { displayModeBar: false, responsive: true });
+  const x = M.map((r) => r[0]);
+  const naive = { x, y: M.map((r) => r[1]), type: "bar", name: tr("天真比較（被混淆帶偏）", "naive (confounded)"),
+    marker: { color: AMBER }, text: M.map((r) => r[1].toFixed(2)), textposition: "outside" };
+  const corr = { x, y: M.map((r) => r[2]), type: "bar", name: tr("該方法校正後", "method (corrected)"),
+    marker: { color: TEAL }, text: M.map((r) => r[2].toFixed(2)), textposition: "outside" };
+  Plotly.react("chooseChart", [naive, corr], sceneLayout({
+    height: 340, barmode: "group", showlegend: true, legend: { orientation: "h", y: 1.12 },
+    yaxis: { title: tr("估計 ÷ 各自真值（1.0＝命中）", "estimate ÷ own truth (1.0 = on target)"), range: [0, 2] },
+    shapes: [{ type: "line", x0: -0.5, x1: 5.5, y0: 1, y1: 1, line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: 5, y: 1, text: tr("真值＝1.0", "truth = 1.0"), showarrow: false,
+      yshift: 10, font: { size: 10, color: GREEN } }],
+  }), SCENE_CFG);
 }
 
 // ======================================================================
@@ -1568,7 +1562,7 @@ function drawSceneTitFan() {
     });
     strata.push({ g, p });
   }
-  titCurvesInto("sceneTitFan", { periods: P, strata }, "p", tr("用藥率", "uptake rate"), true);
+  titCurvesInto("sceneTitFan", { periods: P, strata }, "p", tr("接種率", "vaccination rate"), true);
 }
 
 // ---- ② interactive ----
@@ -1597,7 +1591,7 @@ async function refreshTitPlay() {
   document.getElementById("titCiFoot").textContent = (d.ci[0] != null)
     ? tr(`${fmt(d.ci[0], 2)}～${fmt(d.ci[1], 2)}`, `${fmt(d.ci[0], 2)}–${fmt(d.ci[1], 2)}`) : "";
   document.getElementById("titNaive").textContent = fmt(d.naive_or, 2);
-  titCurvesInto("titExpoChart", d.exposure_curve, "p", tr("用藥率", "uptake rate"), true);
+  titCurvesInto("titExpoChart", d.exposure_curve, "p", tr("接種率", "vaccination rate"), true);
   titCurvesInto("titOutChart", d.outcome_curve, "q", tr("結果率", "outcome rate"), true);
 }
 
@@ -1618,8 +1612,8 @@ document.getElementById("useTitExample").addEventListener("click", async () => {
   try {
     const d = await getJSON(`${API}/api/tit_example`);
     titState.source = "example_tit"; titState.columns = d.columns;
-    st.textContent = tr(`已載入內建用藥普及範例（${d.n_people} 人 × ${Math.round(d.n_rows / d.n_people)} 期，合成虛構）`,
-                        `Loaded built-in drug-uptake example (${d.n_people} people × ${Math.round(d.n_rows / d.n_people)} periods, synthetic)`);
+    st.textContent = tr(`已載入內建疫苗普及範例（${d.n_people} 人 × ${Math.round(d.n_rows / d.n_people)} 期，合成虛構）`,
+                        `Loaded built-in vaccine-uptake example (${d.n_people} people × ${Math.round(d.n_rows / d.n_people)} periods, synthetic)`);
     titFillCov(d.columns);
     runTitAnalyze();
   } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
@@ -1661,14 +1655,14 @@ function renderTitAnalyze(a) {
   const cards = [
     [tr("趨勢中的趨勢 OR（因果）", "Trend-in-trend OR (causal)"), a.or, a.interpretation, true],
     [tr("天真世代 OR（有偏）", "Naive cohort OR (biased)"), a.naive_or,
-      tr("直接比較用藥與未用藥，被適應症混淆。", "Direct user-vs-non-user comparison, confounded by indication."), false],
+      tr("直接比較接種與未接種，被適應症混淆。", "Direct vaccinated-vs-unvaccinated comparison, confounded by indication."), false],
     [tr("CPE 分層品質（AUC）", "CPE stratification quality (AUC)"), a.cpe_auc,
       tr("越高代表分層越能拉開暴露趨勢。", "Higher = strata separate the exposure trends better."), false],
   ];
   document.getElementById("titAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
     `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${fmt(v, 2)}</div><p>${desc}</p></div>`
   ).join("");
-  titCurvesInto("titAnalyzeExpo", a.exposure_curve, "p", tr("用藥率", "uptake rate"), true);
+  titCurvesInto("titAnalyzeExpo", a.exposure_curve, "p", tr("接種率", "vaccination rate"), true);
   titCurvesInto("titAnalyzeOut2", a.outcome_curve, "q", tr("結果率", "outcome rate"), true);
 }
 
@@ -2253,7 +2247,7 @@ window.addEventListener("iv-lang", async () => {
   if (perrAnalyzeReady) runPerrAnalyze();              // PERR ③ analysis + dashboard
   else if (perrAssumeReady) runPerrAssumptions(perrState.req);
   if (perrMlReady) refreshPerrMl();                    // PERR ⑤ scale sensitivity
-  if (state.chooseDone) refreshChoose();                // IV vs RDD comparison
+  if (chooseReady) drawChooseChart();                  // six-method comparison chart
 });
 
 // initial render of interactive tab data
