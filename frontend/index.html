@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>工具變數 IV － 斷點回歸 RDD 線上工具</title>
+<title>因果推論線上工具：IV · RDD · DiD · TiT</title>
 <link rel="stylesheet" href="/styles.css" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">工具變數 <span>IV</span> － 斷點回歸 <span>RDD</span> <span data-en="Online Tool">線上工具</span></div>
+  <div class="brand"><span data-en="Causal inference">因果推論</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>TiT</span> <span data-en="Online Tool">線上工具</span></div>
   <nav class="tabs">
     <span class="tab-group">IV</span>
     <button class="tab active" data-tab="learn" data-en="① What is IV">① IV 是什麼</button>
@@ -29,6 +29,12 @@
     <button class="tab" data-tab="didanalyze" data-en="③ Analyse data">③ 資料分析</button>
     <button class="tab" data-tab="didassume" data-en="④ Assumptions">④ 假設檢驗</button>
     <button class="tab" data-tab="didml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
+    <span class="tab-group">TiT</span>
+    <button class="tab" data-tab="titlearn" data-en="① What is TiT">① TiT 是什麼</button>
+    <button class="tab" data-tab="titplay" data-en="② Interactive">② 互動講解</button>
+    <button class="tab" data-tab="titanalyze" data-en="③ Analyse data">③ 資料分析</button>
+    <button class="tab" data-tab="titassume" data-en="④ Assumptions">④ 假設檢驗</button>
+    <button class="tab" data-tab="titml" data-en="⑤ Boost with AI">⑤ 用 AI 強化</button>
     <button class="tab tab-sep" data-tab="choose" data-en="IV vs RDD">怎麼選</button>
   </nav>
   <button id="langToggle" class="lang-toggle" type="button" title="切換中／英文" aria-label="Language">EN</button>
@@ -976,6 +982,185 @@
     <p class="caption" id="didSynthReading"></p>
   </section>
 
+  <!-- ===================== TiT ① 是什麼 ===================== -->
+  <section id="titlearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="A fourth trick: ride the rising tide of a new drug (Trend-in-trend)">第四種招式：搭上一個新藥逐漸普及的浪潮（趨勢中的趨勢）</h1>
+    <p class="lead" data-en="Suppose a new drug is gradually adopted over several years. Some kinds of people start taking it sooner and faster than others. Trend-in-trend asks: if the drug truly causes a (rare) adverse event, then the event rate should rise faster in exactly the groups whose drug uptake rises faster. That co-movement of two trends — uptake and outcome — is the signal.">
+      假設一個新藥在好幾年間逐漸普及。某些人比其他人更早、更快開始用它。趨勢中的趨勢問：
+      如果這個藥真的會引發某個（罕見）不良事件，那麼<b>事件率上升得最快的，應該正好是用藥率上升得最快的那群人</b>。
+      這「兩個趨勢一起動」——用藥率與結果率——就是訊號。
+    </p>
+
+    <div class="card info">
+      <h3 data-en="The plain-language idea">先用白話想一遍</h3>
+      <p data-en="People who take a new drug are usually different from those who don't — often sicker to begin with (that's why they were prescribed it). So directly comparing users vs non-users makes the drug look more harmful than it is — classic confounding by indication. Trend-in-trend sidesteps this: instead of comparing people, it compares <b>time trends</b>. First it scores everyone by how likely they are to ever take the drug (the &quot;CPE&quot;) and sorts them into strata. The drug spreads through the high-score strata faster. If the outcome also climbs faster there — in lock-step with uptake — that lock-step is hard to fake with fixed background differences, because those differences don't suddenly start trending.">
+        會去用新藥的人，通常和不用的人本來就不一樣——常常是本來就比較病重（所以才被開這個藥）。
+        於是直接比較「用藥 vs 不用藥」，會讓藥看起來比實際更有害——這是典型的<b>適應症混淆</b>。
+        趨勢中的趨勢繞過它：它不是比較人，而是比較<b>時間趨勢</b>。先用基線特徵幫每個人打一個
+        「會不會用這個藥」的分數（CPE），照分數分層。藥會在高分層普及得比較快。如果結果率也在那裡
+        爬得比較快、和用藥率<b>同步</b>，這種同步很難用「固定不變的背景差異」假裝出來——因為那些差異不會突然開始有趨勢。
+      </p>
+    </div>
+
+    <div class="card scene">
+      <h3 data-en="What does the data look like? Uptake fans out across strata over time">資料長什麼樣子？各層的用藥率隨時間「扇形」散開</h3>
+      <p data-en="Each line is one CPE stratum's drug-uptake rate over calendar time. They all start low, then fan out — the high-propensity strata (teal) climb steeply, the low ones (grey) stay flat. Trend-in-trend reads the causal effect from whether the outcome rate fans out in the SAME pattern. The whole method needs this fanning-out to be strong; a flat, non-trending drug gives it nothing to work with.">
+        每條線是一個 CPE 層的用藥率隨日曆時間的變化。它們都從低點出發，然後<b>扇形</b>散開——高傾向層（青色）
+        陡升、低傾向層（灰色）幾乎不動。趨勢中的趨勢就看『結果率是否以<b>相同的扇形</b>散開』來讀因果效果。
+        整個方法都需要這個扇形夠明顯；一個平平、沒有趨勢的藥，它就無從下手。
+      </p>
+      <div id="sceneTitFan" class="chart"></div>
+    </div>
+
+    <div class="rdd-twocol">
+      <div class="card">
+        <h3 data-en="What it estimates">它估的是什麼</h3>
+        <p data-en="A causal <b>odds ratio</b> (≈ relative risk, since the outcome is rare) of the exposure on the outcome — recovered from the cell-level trends, not the confounded person-level comparison.">
+          暴露對結果的因果<b>勝算比</b>（因結果罕見，≈相對風險）——從格子層級的趨勢還原，而不是被混淆的個體層比較。
+        </p>
+      </div>
+      <div class="card">
+        <h3 data-en="Why it can beat a cohort study">為什麼可能勝過世代研究</h3>
+        <p data-en="The scenarios that bias trend-in-trend (an unmeasured factor that <b>also trends over time</b>, in step with uptake) are a <b>subset</b> of those that bias a cohort study (any unmeasured confounder). So it is more robust — at the cost of needing a strong uptake trend.">
+          會讓趨勢中的趨勢出錯的情境（一個未測因素<b>也隨時間變化</b>、剛好和用藥潮同步）是會讓世代研究出錯情境的
+          <b>子集</b>。所以它更穩——代價是需要一個夠強的用藥趨勢。
+        </p>
+      </div>
+    </div>
+
+    <details class="term">
+      <summary data-en="How does TiT differ from IV, RDD and DiD?">TiT 和 IV、RDD、DiD 有什麼不同？</summary>
+      <p data-en="IV borrows randomness from a random instrument; RDD from a sharp cutoff; DiD from a policy that switches on at a known time. Trend-in-trend borrows it from a <b>gradual secular trend in exposure prevalence that differs across strata</b> — no instrument, no cutoff, no single switch-on date, just the rising tide of adoption. Its key (untestable) assumption is that no unmeasured factor trends over calendar time in step with that adoption across strata.">
+        IV 從隨機工具借隨機；RDD 從明確門檻借；DiD 從某時點開啟的政策借。趨勢中的趨勢則從
+        <b>暴露盛行率隨時間、且跨層不同的逐漸趨勢</b>借——沒有工具、沒有門檻、沒有單一開關日期，
+        只有採用率上升的浪潮。它關鍵（不可檢驗）的假設是：沒有未測因素隨日曆時間、跨層地與這股採用潮同步變化。
+      </p>
+    </details>
+  </section>
+
+  <!-- ===================== TiT ② 互動講解 ===================== -->
+  <section id="titplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive TiT: weaken the trend and watch the method run out of signal">互動式 TiT：把趨勢調弱，看方法怎麼「沒訊號」</h1>
+    <p class="lead" data-en="Trend-in-trend lives entirely on the strength of the exposure trend. Drag the slider to make the drug spread more slowly. Watch the uptake curves flatten, and watch the estimate lose its grip — the confidence interval blows up and the point estimate wanders away from the true OR of 2.0. That is assumption A1 (and statistical power) in action.">
+      趨勢中的趨勢完全靠暴露趨勢的強度活著。拉動滑桿，讓藥普及得更慢。看用藥率曲線變平，
+      也看估計失去著力點——信賴區間爆開、點估計從真值 OR=2.0 飄走。這就是假設 A1（與檢定力）的現場示範。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="Strength of the exposure time-trend:">暴露時間趨勢的強度：</span><b id="titTrendVal">1.0</b>
+        <input type="range" id="titTrendSlider" min="0.2" max="1.5" value="1.0" step="0.1" />
+        <small data-en="1.0 = the default strong adoption wave (TiT works well). Turn it down and uptake barely trends, so trend-in-trend has almost no signal — the estimate becomes unstable.">1.0＝預設的強採用浪潮（TiT 運作良好）。調低後用藥率幾乎沒有趨勢，趨勢中的趨勢幾乎沒有訊號——估計變得不穩。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Trend-in-trend OR">趨勢中的趨勢 OR</div><div class="stat-num" id="titOr">–</div><div class="stat-foot" data-en="the true answer is 2.00">真正答案是 2.00</div></div>
+      <div class="stat"><div class="stat-label" data-en="95% CI width">95% 信賴區間寬度</div><div class="stat-num" id="titCiW">–</div><div class="stat-foot" id="titCiFoot"></div></div>
+      <div class="stat"><div class="stat-label" data-en="Naive cohort OR (biased)">天真世代 OR（有偏）</div><div class="stat-num" id="titNaive">–</div><div class="stat-foot" data-en="confounded by indication">被適應症混淆</div></div>
+    </div>
+
+    <div id="titExpoChart" class="chart"></div>
+    <p class="caption" data-en="Drug-uptake rate by CPE stratum over time. With the slider at 1.0 the strata fan out strongly; turn it down and they flatten — and the trend-in-trend estimate above loses precision.">
+      各 CPE 層的用藥率隨時間變化。滑桿在 1.0 時各層強烈扇形散開；調低後變平——上方的趨勢中的趨勢估計也跟著失準。
+    </p>
+    <div id="titOutChart" class="chart"></div>
+    <p class="caption" data-en="Outcome (adverse-event) rate by the same strata. Trend-in-trend asks whether this fans out in the same pattern as uptake; the more both trends move together, the sharper the estimate.">
+      同樣各層的結果（不良事件）率。趨勢中的趨勢看它是否以和用藥率相同的扇形散開；兩個趨勢越同步，估計越鋭利。
+    </p>
+  </section>
+
+  <!-- ===================== TiT ③ 資料分析 ===================== -->
+  <section id="titanalyze" class="panel">
+    <h1 data-en="Data analysis: run a full trend-in-trend">資料分析：跑一次完整的趨勢中的趨勢</h1>
+    <p class="lead" data-en="Load the built-in drug-uptake example (or upload a long CSV with pid / period / exposed / outcome columns plus baseline covariates). The tool builds the CPE strata, aggregates the period × stratum cells, fits the trend-in-trend likelihood, and reports the causal odds ratio against the naive cohort comparison.">
+      載入內建的用藥普及範例（或上傳一份長格式 CSV，含 pid／period／exposed／outcome 欄位與基線共變項）。
+      工具會建立 CPE 分層、聚合「期別×層」格子、擬合趨勢中的趨勢概似，並把因果勝算比與天真世代比較並列。
+    </p>
+
+    <div class="datasource">
+      <button id="useTitExample" class="btn primary" data-en="Load built-in drug-uptake example">載入內建用藥普及範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="titFileInput" accept=".csv" hidden /></label>
+      <span id="titDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="titColMap" class="colmap hidden">
+      <div class="field"><label data-en="Number of CPE strata (K)">CPE 層數（K）</label><input id="titSelK" type="number" step="1" min="3" max="10" value="5" /></div>
+      <div class="field wide"><label data-en="Baseline covariates for the CPE model (multi-select)">CPE 模型的基線共變項（可多選）</label><select id="titSelCov" multiple size="4"></select></div>
+      <button id="runTitAnalyze" class="btn primary" data-en="Run trend-in-trend analysis">執行趨勢中的趨勢分析</button>
+    </div>
+
+    <div id="titAnalyzeOut" class="hidden">
+      <h2 data-en="Trend-in-trend estimate">趨勢中的趨勢估計</h2>
+      <div class="result-cards" id="titAnalyzeCards"></div>
+      <div id="titAnalyzeExpo" class="chart"></div>
+      <p class="caption" data-en="Drug-uptake rate by CPE stratum over time — the fanning-out trend the method exploits.">各 CPE 層的用藥率隨時間變化——方法所利用的扇形趨勢。</p>
+      <div id="titAnalyzeOut2" class="chart"></div>
+      <p class="caption" data-en="Outcome rate by the same strata. The causal OR is identified from whether this tracks the uptake fan-out.">同樣各層的結果率。因果 OR 由它是否跟隨用藥率扇形來識別。</p>
+    </div>
+  </section>
+
+  <!-- ===================== TiT ④ 假設檢驗 ===================== -->
+  <section id="titassume" class="panel">
+    <h1 data-en="Can we trust this TiT? Five checks">這個 TiT 可不可信？五道體檢</h1>
+    <p class="lead" data-en="Trend-in-trend rests on a strong exposure trend, a rare outcome, stable measured characteristics, and — the key, untestable one — no unmeasured factor that trends over calendar time in step with uptake across strata. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      趨勢中的趨勢依賴：暴露趨勢夠強、結果夠罕見、可測特徵不隨時間漂、以及——關鍵且不可檢驗的——
+      沒有未測因素隨日曆時間、跨層地與用藥潮同步變化。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="titOverall" class="overall hidden"></div>
+    <div id="titAssumeCards" class="assume-cards"></div>
+    <p id="titAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== TiT ⑤ 用 AI 強化 ===================== -->
+  <section id="titml" class="panel">
+    <h1 data-en="Boosting TiT with AI — an honest &quot;we don't know yet&quot;">用 AI 強化 TiT —— 誠實的「目前還不知道」</h1>
+    <p class="lead" data-en="For the other three methods this tab showed concrete, published ML upgrades. For trend-in-trend we have to be honest: across the source papers we drew on, there is <b>no established machine-learning or doubly-robust version of trend-in-trend</b>. So instead of pretending, here is exactly what the literature does and does not offer — and some cautious, clearly-labelled <b>speculation</b> about where AI <i>might</i> help.">
+      在另外三個方法，這個分頁能展示具體、已發表的 ML 升級。對趨勢中的趨勢，我們必須誠實：
+      在我們依據的來源論文裡，<b>並沒有成熟的機器學習或雙重穩健版本的趨勢中的趨勢</b>。
+      所以與其假裝有，不如老實說明文獻有什麼、沒有什麼——再加上清楚標示為<b>推測</b>的、AI <i>可能</i>幫得上忙的方向。
+    </p>
+
+    <div class="card warn">
+      <h3 data-en="What the source papers actually contain">來源論文實際上有什麼</h3>
+      <p data-en="The trend-in-trend papers (Ji &amp; Small 2017; the power note by Ertefaie et al.; the opioid and adjuvant-therapy applications) use <b>classical maximum-likelihood</b> on the aggregated period × stratum tables, with a propensity-style CPE stratification. There is <b>no machine learning, no cross-fitting, no doubly-robust estimator</b> in this method's published literature as represented here. That is simply the current state — not a gap we can paper over with a slick demo.">
+        趨勢中的趨勢的論文（Ji &amp; Small 2017；Ertefaie 等人的檢定力短文；鴉片類與輔助治療的應用）在聚合的
+        「期別×層」表上用<b>古典最大概似</b>，搭配傾向分數式的 CPE 分層。在此處所代表的這個方法的已發表文獻中，
+        <b>沒有機器學習、沒有交叉擬合、沒有雙重穩健估計</b>。這就是目前的現況——不是我們能用一個漂亮的 demo 掩蓋過去的缺口。
+      </p>
+    </div>
+
+    <div class="card info">
+      <h3 data-en="So could AI help here? Honestly: we don't know — but plausibly…">那 AI 在這裡幫得上忙嗎？老實說：不知道——但有可能…</h3>
+      <p data-en="The following are <b>our cautious speculation</b>, not results from any paper. Treat them as research directions, not recommendations:">
+        以下是<b>我們謹慎的推測</b>，不是任何論文的結果。請當成研究方向，而非建議：
+      </p>
+    </div>
+
+    <div class="cards">
+      <div class="card"><h3 data-en="① A flexible CPE model（推測 / speculative）">① 更彈性的 CPE 模型（推測）</h3>
+        <p data-en="The cumulative-probability-of-exposure model is just a propensity score. In principle a machine-learning CPE (gradient boosting, etc.) could separate the strata's exposure trends more sharply, improving power — much as ML propensity scores help elsewhere. Unverified for trend-in-trend.">
+          累積暴露機率（CPE）模型其實就是一個傾向分數。原則上用機器學習估 CPE（梯度提升等）<b>或許</b>能把各層的暴露趨勢拉得更開、提升檢定力——就像 ML 傾向分數在別處的幫助。對趨勢中的趨勢尚未驗證。</p></div>
+      <div class="card"><h3 data-en="② A doubly-robust augmentation（推測 / speculative）">② 雙重穩健增廣（推測）</h3>
+        <p data-en="By analogy with DiD and RDD, one could imagine pairing the trend-in-trend likelihood with a flexible outcome model and an orthogonal (debiased) score, so a misspecified piece doesn't sink the estimate. Whether a valid orthogonal score exists for this design is, as far as these papers go, an open question.">
+          類比 DiD 與 RDD，<b>或許</b>能想像把趨勢中的趨勢概似配上一個彈性結果模型與一條正交（去偏）分數，讓某一塊設定錯了也不會拖垮估計。但就這些論文而言，這個設計是否存在有效的正交分數，仍是未解的問題。</p></div>
+      <div class="card"><h3 data-en="③ Heterogeneity &amp; sensitivity（推測 / speculative）">③ 異質性與敏感度（推測）</h3>
+        <p data-en="Causal forests might probe whether the effect varies across subgroups; and an E-value-style sensitivity analysis could quantify how strong an exposure-synchronised secular confounder (the A4 threat) would need to be to explain away the result. Both are generic tools, not validated for this design.">
+          因果森林<b>或許</b>能探討效果是否隨次群體而異；E-value 式的敏感度分析<b>或許</b>能量化：一個與暴露同步的時代混淆（A4 的威脅）要多強，才能把結果解釋掉。兩者都是通用工具，未針對此設計驗證。</p></div>
+    </div>
+
+    <div class="card">
+      <h3 data-en="The honest bottom line">誠實的結論</h3>
+      <p data-en="Until someone develops and validates these ideas, the right move for trend-in-trend is the classical estimator in tabs ②–④, reported transparently with its assumptions. We would rather tell you &quot;not yet&quot; than sell you a demo the literature doesn't support.">
+        在有人把這些想法做出來並驗證之前，趨勢中的趨勢正確的做法，就是分頁 ②–④ 的古典估計，透明地連同它的假設一起報告。
+        我們寧可老實跟你說「還沒有」，也不願賣你一個文獻並不支持的 demo。
+      </p>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="IV vs RDD: two designs for the same question — which to use?">IV 與 RDD：回答同一問題的兩種設計，該用哪個？</h1>
@@ -1152,11 +1337,15 @@
       <li>Tchetgen Tchetgen, E. J., Park, C., &amp; Richardson, D. B. (2024). Universal Difference-in-Differences for Causal Inference in Epidemiology. <i>Epidemiology, 35</i>(1), 16–22. https://doi.org/10.1097/EDE.0000000000001676. <span data-en="〔odds-ratio-scale DiD for binary/count outcomes — DiD tab ⑤ remedy ③〕">〔二元/計數結果的勝算比尺度 DiD —— DiD 分頁⑤ 進階③〕</span></li>
       <li>Haddad, M. F. C., Huber, M., Medina-Reyes, J. E., &amp; Zhang, L. Z. (2025). Difference-in-Differences with Time-varying Continuous Treatments Using Double/Debiased Machine Learning. <i>arXiv</i>:2410.21105. <span data-en="〔DML DiD for continuous, time-varying treatments — DiD tab ⑤〕">〔連續、時變處置的 DML DiD —— DiD 分頁⑤〕</span></li>
       <li>Abadie, A., Diamond, A., &amp; Hainmueller, J. (2010). Synthetic Control Methods for Comparative Case Studies. <i>Journal of the American Statistical Association, 105</i>(490), 493–505. <span data-en="〔synthetic control / synthetic DiD — DiD tab ⑤ remedy ④〕">〔合成控制／合成 DiD —— DiD 分頁⑤ 進階④〕</span></li>
+      <li>Ji, X., Small, D. S., Leonard, C. E., &amp; Hennessy, S. (2017). The Trend-in-trend Research Design for Causal Inference. <i>Epidemiology, 28</i>(4), 529–536. https://doi.org/10.1097/EDE.0000000000000579. <span data-en="〔the trend-in-trend method &amp; likelihood — TiT tabs ①–④〕">〔趨勢中的趨勢方法與概似 —— TiT 分頁 ①–④〕</span></li>
+      <li>Ertefaie, A., Small, D. S., Flory, J. H., &amp; Hennessy, S. (2018). Statistical Power for Trend-in-trend Design. <i>Epidemiology, 29</i>(3), e21–e23. <span data-en="〔drivers of statistical power — TiT tab ② / A1〕">〔統計檢定力的驅動因素 —— TiT 分頁② / A1〕</span></li>
+      <li>Dasgupta, N., et al. (2019). Causal inference for evaluating prescription opioid abuse using trend-in-trend design. <i>Pharmacoepidemiology and Drug Safety, 28</i>(5), 716–725. https://doi.org/10.1002/pds.4736. <span data-en="〔applied example〕">〔應用範例〕</span></li>
+      <li>Collin, L. J., et al. (2024). The population-level effect of adjuvant therapies on breast-cancer recurrence: application of the trend-in-trend design. <i>Epidemiology, 35</i>(5), 660–666. https://doi.org/10.1097/EDE.0000000000001753. <span data-en="〔applied example〕">〔應用範例〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="i18n.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

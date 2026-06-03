@@ -28,12 +28,18 @@ import did_core
 import did_gen
 import did_assumptions
 import did_ml
+import tit_core
+import tit_gen
+import tit_assumptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data", "demo_vaccine.csv")
 DATA_RDD = os.path.join(HERE, "data", "demo_rdd.csv")
 DATA_DID = os.path.join(HERE, "data", "demo_did.csv")
+DATA_TIT = os.path.join(HERE, "data", "demo_tit.csv")
 FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
+
+TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
 
 DID_DEFAULTS = {
     "unit": "unit",
@@ -438,6 +444,75 @@ def did_interactive(violation: float = 0.0, lang: str = "zh"):
 def did_ml_demos(seed: int = 7, lang: str = "zh"):
     """DiD ⑤: four advanced remedies (DR/DML, staggered, universal, synthetic control)."""
     return _clean(did_ml.boost_demos(seed=seed, lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# Trend-in-trend (TiT method) — a drug whose uptake trends over calendar time
+# ---------------------------------------------------------------------------
+class TitRequest(BaseModel):
+    source: str = "example_tit"
+    covariates: list[str] = ["x1", "x2"]
+    K: int = 5
+    lang: str = "zh"
+
+
+def _load_tit(source: str) -> pd.DataFrame:
+    if source in ("example_tit", "example"):
+        return pd.read_csv(DATA_TIT)
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/tit_example")
+def tit_example():
+    df = pd.read_csv(DATA_TIT)
+    return _clean({
+        "columns": list(df.columns),
+        "defaults": TIT_DEFAULTS,
+        "n_rows": len(df),
+        "n_people": int(df["pid"].nunique()),
+        "synthetic": True,
+        "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "pid": "pid（個體 id，跨期追蹤）",
+            "period": "period（0–9 季，新藥逐漸普及）",
+            "exposed": "exposed（當期是否用藥，二元）",
+            "outcome": "outcome（罕見不良事件，二元）",
+            "covariates": "x1, x2（基線特徵，用來算 CPE 分層）",
+        },
+    })
+
+
+@app.post("/api/tit_analyze")
+def tit_analyze(req: TitRequest):
+    df = _load_tit(req.source)
+    return _clean(tit_core.full_tit(df, covariates=tuple(req.covariates), K=req.K, lang=req.lang))
+
+
+@app.post("/api/tit_assumptions")
+def tit_assumptions_check(req: TitRequest):
+    df = _load_tit(req.source)
+    return _clean(tit_assumptions.run_dashboard(df, covariates=tuple(req.covariates), K=req.K, lang=req.lang))
+
+
+@app.get("/api/tit_interactive")
+def tit_interactive(trend: float = 1.0, lang: str = "zh"):
+    """Teaching slider: re-generate with a weaker/stronger exposure time-trend and
+    watch the trend-in-trend estimate and its confidence interval respond."""
+    trend = float(np.clip(trend, 0.2, 1.5))
+    df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
+    out = tit_core.full_tit(df, lang=lang)
+    return _clean({
+        "trend": trend,
+        "true_or": tit_gen.TRUE_OR,
+        "or": out["or"], "ci": out["ci"], "naive_or": out["naive_or"],
+        "exposure_overall": out["exposure_overall"], "exposure_slope": out["exposure_slope"],
+        "exposure_curve": out["exposure_curve"], "outcome_curve": out["outcome_curve"],
+        "n_periods": out["n_periods"],
+    })
 
 
 # ---------------------------------------------------------------------------

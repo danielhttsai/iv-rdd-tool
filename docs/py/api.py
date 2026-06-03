@@ -26,6 +26,9 @@ import did_core
 import did_gen
 import did_assumptions
 import did_ml
+import tit_core
+import tit_gen
+import tit_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -53,12 +56,15 @@ DID_DEFAULTS = {
     "covariates": ["urban", "baseline_burden"],
 }
 
+TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
+
 DISCLAIMER = "⚠ 純屬虛構的合成示範資料,非真實病人/個資,僅供教學展示。"
 
 _UPLOADS: dict[str, pd.DataFrame] = {}
 _DEMO: pd.DataFrame | None = None
 _DEMO_RDD: pd.DataFrame | None = None
 _DEMO_DID: pd.DataFrame | None = None
+_DEMO_TIT: pd.DataFrame | None = None
 
 
 def _demo() -> pd.DataFrame:
@@ -80,6 +86,13 @@ def _demo_did() -> pd.DataFrame:
     if _DEMO_DID is None:
         _DEMO_DID = did_gen.generate()
     return _DEMO_DID
+
+
+def _demo_tit() -> pd.DataFrame:
+    global _DEMO_TIT
+    if _DEMO_TIT is None:
+        _DEMO_TIT = tit_gen.generate()
+    return _DEMO_TIT
 
 
 def _clean(obj):
@@ -390,6 +403,63 @@ def _did_ml(q: dict) -> dict:
     return did_ml.boost_demos(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Trend-in-trend endpoints (TiT method)
+# ---------------------------------------------------------------------------
+def _load_tit(source: str) -> pd.DataFrame:
+    if source in ("example_tit", "example"):
+        return _demo_tit()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _tit_example() -> dict:
+    df = _demo_tit()
+    return {
+        "columns": list(df.columns),
+        "defaults": TIT_DEFAULTS,
+        "n_rows": len(df),
+        "n_people": int(df["pid"].nunique()),
+        "synthetic": True,
+        "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "pid": "pid（個體 id，跨期追蹤）",
+            "period": "period（0–9 季，新藥逐漸普及）",
+            "exposed": "exposed（當期是否用藥，二元）",
+            "outcome": "outcome（罕見不良事件，二元）",
+            "covariates": "x1, x2（基線特徵，用來算 CPE 分層）",
+        },
+    }
+
+
+def _tit_analyze(req: dict) -> dict:
+    df = _load_tit(req.get("source", "example_tit"))
+    return tit_core.full_tit(df, covariates=tuple(req.get("covariates", TIT_DEFAULTS["covariates"])),
+                             K=int(req.get("K", 5)), lang=req.get("lang", "zh"))
+
+
+def _tit_assumptions(req: dict) -> dict:
+    df = _load_tit(req.get("source", "example_tit"))
+    return tit_assumptions.run_dashboard(df, covariates=tuple(req.get("covariates", TIT_DEFAULTS["covariates"])),
+                                         K=int(req.get("K", 5)), lang=req.get("lang", "zh"))
+
+
+def _tit_interactive(q: dict) -> dict:
+    trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
+    df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
+    out = tit_core.full_tit(df, lang=q.get("lang", "zh"))
+    return {
+        "trend": trend, "true_or": tit_gen.TRUE_OR,
+        "or": out["or"], "ci": out["ci"], "naive_or": out["naive_or"],
+        "exposure_overall": out["exposure_overall"], "exposure_slope": out["exposure_slope"],
+        "exposure_curve": out["exposure_curve"], "outcome_curve": out["outcome_curve"],
+        "n_periods": out["n_periods"],
+    }
+
+
 _ROUTES = {
     ("GET", "/api/example"): lambda q, b: _example(),
     ("POST", "/api/upload"): lambda q, b: _upload(b.get("_csv_text", "")),
@@ -412,6 +482,10 @@ _ROUTES = {
     ("POST", "/api/did_assumptions"): lambda q, b: _did_assumptions(b),
     ("GET", "/api/did_interactive"): lambda q, b: _did_interactive(q),
     ("GET", "/api/did_ml"): lambda q, b: _did_ml(q),
+    ("GET", "/api/tit_example"): lambda q, b: _tit_example(),
+    ("POST", "/api/tit_analyze"): lambda q, b: _tit_analyze(b),
+    ("POST", "/api/tit_assumptions"): lambda q, b: _tit_assumptions(b),
+    ("GET", "/api/tit_interactive"): lambda q, b: _tit_interactive(q),
 }
 
 

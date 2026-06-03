@@ -24,7 +24,8 @@ PYODIDE_SCRIPT = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"
 BACKEND_PY = ["i18n.py", "iv_core.py", "assumptions.py", "ml_iv.py", "gen_data.py",
               "rdd_core.py", "rdd_survival.py", "rdd_assumptions.py", "rdd_gen.py",
               "rdd_ml.py",
-              "did_core.py", "did_gen.py", "did_assumptions.py", "did_ml.py"]
+              "did_core.py", "did_gen.py", "did_assumptions.py", "did_ml.py",
+              "tit_core.py", "tit_gen.py", "tit_assumptions.py"]
 
 
 def _clean_docs():

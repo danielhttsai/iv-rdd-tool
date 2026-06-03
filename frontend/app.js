@@ -27,6 +27,10 @@ document.querySelectorAll(".tab").forEach((t) => {
     if (t.dataset.tab === "didanalyze") initDidAnalyze();
     if (t.dataset.tab === "didassume") initDidAssume();
     if (t.dataset.tab === "didml") initDidMl();
+    if (t.dataset.tab === "titlearn") initTitLearn();
+    if (t.dataset.tab === "titplay") initTitPlay();
+    if (t.dataset.tab === "titanalyze") initTitAnalyze();
+    if (t.dataset.tab === "titassume") initTitAssume();
     if (t.dataset.tab === "choose") initChoose();
   });
 });
@@ -1508,6 +1512,197 @@ function drawDidSynth(s) {
 }
 
 // ======================================================================
+// Trend-in-trend (TiT method) — tabs ①–④ (⑤ is static honest-unknown HTML)
+// ======================================================================
+const titState = { source: null, columns: [], req: null };
+let titLearnReady = false, titPlayReady = false, titAnalyzeReady = false, titAssumeReady = false;
+
+function titColor(g, K) {
+  const f = K > 1 ? g / (K - 1) : 0;
+  const c0 = [154, 166, 178], c1 = [13, 148, 136];   // grey -> teal
+  const c = c0.map((v, i) => Math.round(v + (c1[i] - v) * f));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function titCurvesInto(elId, curve, key, yTitle, pct) {
+  if (!document.getElementById(elId)) return;
+  const P = curve.periods, K = curve.strata.length;
+  const traces = curve.strata.map((s) => ({
+    x: P, y: s[key], mode: "lines+markers", type: "scatter",
+    name: tr(`第 ${s.g + 1} 層`, `stratum ${s.g + 1}`),
+    line: { color: titColor(s.g, K), width: 2.5 }, marker: { size: 5 },
+  }));
+  Plotly.react(elId, traces, sceneLayout({
+    height: 320, showlegend: true, legend: { orientation: "h", y: 1.12, font: { size: 9 } },
+    xaxis: { title: tr("期別（季）", "period (quarter)"), dtick: 1 },
+    yaxis: Object.assign({ title: yTitle }, pct ? { tickformat: ".0%" } : {}),
+  }), SCENE_CFG);
+}
+
+// ---- ① learn ----
+function initTitLearn() {
+  if (titLearnReady) return;
+  titLearnReady = true;
+  drawSceneTitFan();
+}
+function drawSceneTitFan() {
+  if (!document.getElementById("sceneTitFan")) return;
+  const rng = mulberry32(717);
+  const P = Array.from({ length: 10 }, (_, i) => i), K = 5;
+  const strata = [];
+  for (let g = 0; g < K; g++) {
+    const slope = 0.05 + 0.12 * g;
+    const p = P.map((tp) => {
+      const lo = -4.0 + slope * tp;
+      const pr = 1 / (1 + Math.exp(-lo));
+      return Math.max(0, pr + (rng() - 0.5) * 0.012);
+    });
+    strata.push({ g, p });
+  }
+  titCurvesInto("sceneTitFan", { periods: P, strata }, "p", tr("用藥率", "uptake rate"), true);
+}
+
+// ---- ② interactive ----
+const titTrendSlider = document.getElementById("titTrendSlider");
+let titPlayTimer = null;
+function initTitPlay() {
+  if (titPlayReady) return;
+  titPlayReady = true;
+  refreshTitPlay();
+}
+function scheduleTitPlay() {
+  document.getElementById("titTrendVal").textContent = Number(titTrendSlider.value).toFixed(1);
+  clearTimeout(titPlayTimer);
+  titPlayTimer = setTimeout(refreshTitPlay, 180);
+}
+if (titTrendSlider) titTrendSlider.addEventListener("input", scheduleTitPlay);
+async function refreshTitPlay() {
+  const tv = titTrendSlider ? Number(titTrendSlider.value) : 1.0;
+  let d;
+  try { d = await getJSON(`${API}/api/tit_interactive?trend=${tv}&lang=${lang()}`); }
+  catch (e) { return; }
+  state.titPlay = d;
+  document.getElementById("titOr").textContent = fmt(d.or, 2);
+  const w = (d.ci[0] != null && d.ci[1] != null) ? d.ci[1] - d.ci[0] : null;
+  document.getElementById("titCiW").textContent = w != null ? fmt(w, 2) : "–";
+  document.getElementById("titCiFoot").textContent = (d.ci[0] != null)
+    ? tr(`${fmt(d.ci[0], 2)}～${fmt(d.ci[1], 2)}`, `${fmt(d.ci[0], 2)}–${fmt(d.ci[1], 2)}`) : "";
+  document.getElementById("titNaive").textContent = fmt(d.naive_or, 2);
+  titCurvesInto("titExpoChart", d.exposure_curve, "p", tr("用藥率", "uptake rate"), true);
+  titCurvesInto("titOutChart", d.outcome_curve, "q", tr("結果率", "outcome rate"), true);
+}
+
+// ---- ③ analyze ----
+function initTitAnalyze() {
+  if (titAnalyzeReady) return;
+  titAnalyzeReady = true;
+  document.getElementById("useTitExample").click();
+}
+function titFillCov(cols) {
+  const cov = cols.filter((c) => !["pid", "period", "exposed", "outcome"].includes(c));
+  document.getElementById("titSelCov").innerHTML =
+    cov.map((c) => `<option value="${c}" selected>${c}</option>`).join("");
+  document.getElementById("titColMap").classList.remove("hidden");
+}
+document.getElementById("useTitExample").addEventListener("click", async () => {
+  const st = document.getElementById("titDataStatus");
+  try {
+    const d = await getJSON(`${API}/api/tit_example`);
+    titState.source = "example_tit"; titState.columns = d.columns;
+    st.textContent = tr(`已載入內建用藥普及範例（${d.n_people} 人 × ${Math.round(d.n_rows / d.n_people)} 期，合成虛構）`,
+                        `Loaded built-in drug-uptake example (${d.n_people} people × ${Math.round(d.n_rows / d.n_people)} periods, synthetic)`);
+    titFillCov(d.columns);
+    runTitAnalyze();
+  } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
+});
+document.getElementById("titFileInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const st = document.getElementById("titDataStatus"); st.textContent = tr("上傳中…", "Uploading…");
+  try {
+    const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    titState.source = d.token; titState.columns = d.columns;
+    st.textContent = tr(`已上傳「${file.name}」（${d.n} 列）`, `Uploaded "${file.name}" (${d.n} rows)`);
+    titFillCov(d.columns);
+  } catch (e) { st.textContent = tr("上傳失敗：", "Upload failed: ") + e.message; }
+});
+function titCurrentMapping() {
+  return {
+    source: titState.source,
+    K: Number(document.getElementById("titSelK").value),
+    covariates: [...document.getElementById("titSelCov").selectedOptions].map((o) => o.value),
+    lang: lang(),
+  };
+}
+document.getElementById("runTitAnalyze").addEventListener("click", runTitAnalyze);
+async function runTitAnalyze() {
+  const req = titCurrentMapping();
+  if (!req.source) return;
+  titState.req = req;
+  try {
+    const a = await postJSON(`${API}/api/tit_analyze`, req);
+    renderTitAnalyze(a);
+    runTitAssumptions(req);
+  } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+function renderTitAnalyze(a) {
+  document.getElementById("titAnalyzeOut").classList.remove("hidden");
+  const cards = [
+    [tr("趨勢中的趨勢 OR（因果）", "Trend-in-trend OR (causal)"), a.or, a.interpretation, true],
+    [tr("天真世代 OR（有偏）", "Naive cohort OR (biased)"), a.naive_or,
+      tr("直接比較用藥與未用藥，被適應症混淆。", "Direct user-vs-non-user comparison, confounded by indication."), false],
+    [tr("CPE 分層品質（AUC）", "CPE stratification quality (AUC)"), a.cpe_auc,
+      tr("越高代表分層越能拉開暴露趨勢。", "Higher = strata separate the exposure trends better."), false],
+  ];
+  document.getElementById("titAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${fmt(v, 2)}</div><p>${desc}</p></div>`
+  ).join("");
+  titCurvesInto("titAnalyzeExpo", a.exposure_curve, "p", tr("用藥率", "uptake rate"), true);
+  titCurvesInto("titAnalyzeOut2", a.outcome_curve, "q", tr("結果率", "outcome rate"), true);
+}
+
+// ---- ④ assumptions ----
+function initTitAssume() {
+  if (titAssumeReady) return;
+  titAssumeReady = true;
+  runTitAssumptions(titState.req || { source: "example_tit", lang: lang() });
+}
+async function runTitAssumptions(req) {
+  const body = req ? { ...req, lang: lang() } : { source: "example_tit", lang: lang() };
+  let out;
+  try { out = await postJSON(`${API}/api/tit_assumptions`, body); } catch (e) { return; }
+  state.titDash = out;
+  renderTitAssumptions(out);
+}
+function renderTitAssumptions(out) {
+  document.getElementById("titAssumeHint").classList.add("hidden");
+  const ov = document.getElementById("titOverall");
+  const worst = worstStatus(out.checks);
+  const head = {
+    green: tr("各項佐證都通過，這個 TiT 看起來可信。", "All checks pass — this TiT looks credible."),
+    amber: tr("有項目需要留意，請展開卡片細看。", "Some items need attention — expand the cards."),
+    red: tr("有項目不符，TiT 結果要保守看待。", "Some items fail — interpret the TiT with caution."),
+    info: tr("關鍵假設需靠領域知識判斷，請看各卡片說明。", "The key assumption needs domain judgement — see each card."),
+  }[worst];
+  ov.classList.remove("hidden");
+  ov.className = `overall st-${worst}`; ov.style.background = "#fff";
+  ov.innerHTML = `<span class="dot bg-${worst}"></span> ${head}`;
+  document.getElementById("titAssumeCards").innerHTML = out.checks.map((c) => {
+    const metrics = c.metrics.map((m) =>
+      `<li>${m.name}<b>${m.value === null ? "–" : m.value}</b><span>${m.note || ""}</span></li>`).join("");
+    return `<div class="acard st-${c.status}">
+      <h3><span class="dot bg-${c.status}"></span>${c.title}
+        <span class="badge bg-${c.status}">${statusText(c.status)}</span></h3>
+      <p class="headline"><b>${c.headline}</b></p>
+      <p class="plain">${c.plain}</p>
+      <ul class="metrics">${metrics}</ul>
+      <details class="term"><summary>${tr("看專有名詞解釋", "Show term explanation")}</summary><p>${c.term}</p></details>
+    </div>`;
+  }).join("");
+}
+
+// ======================================================================
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
@@ -1551,6 +1746,10 @@ window.addEventListener("iv-lang", async () => {
   if (didAnalyzeReady) runDidAnalyze();                // DiD ③ analysis + dashboard
   else if (didAssumeReady) runDidAssumptions(didState.req);
   if (didMlReady) refreshDidMl();                      // DiD ⑤ four remedies
+  if (titLearnReady) drawSceneTitFan();                // TiT ① learn scene
+  if (titPlayReady) refreshTitPlay();                  // TiT ② interactive
+  if (titAnalyzeReady) runTitAnalyze();                // TiT ③ analysis + dashboard
+  else if (titAssumeReady) runTitAssumptions(titState.req);
   if (state.chooseDone) refreshChoose();                // IV vs RDD comparison
 });
 
