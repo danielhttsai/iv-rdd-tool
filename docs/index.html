@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="styles.css?v=39" />
+<link rel="stylesheet" href="styles.css?v=40" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -1725,7 +1725,7 @@
         </tr></thead>
         <tbody>
           <tr><td>IV</td><td data-en="A valid instrument (often the hard part)">一個合格的工具變數（通常最難找）</td><td data-en="LATE for compliers moved by the instrument">被工具推動的順從者 LATE</td></tr>
-          <tr><td>RDD</td><td data-en="A running score with a sharp eligibility rule">一個帶明確資格規則的跑分變數</td><td data-en="LATE for compliers right at the cutoff (near 65)">斷點附近（65 歲）的順從者 LATE</td></tr>
+          <tr><td>RDD</td><td data-en="A running score with a sharp eligibility rule">一個帶明確資格規則的跑分變數</td><td data-en="Sharp: LATE at the cutoff; Fuzzy: complier LATE at the cutoff">Sharp：斷點處 LATE；Fuzzy：斷點處順從者 LATE</td></tr>
           <tr><td>DiD</td><td data-en="A panel of units × periods, with a control group">單位×期別的面板，含對照組</td><td data-en="ATT — the effect on the treated communities">介入社區的平均處置效果（ATT）</td></tr>
           <tr><td>TiT</td><td data-en="Individual data over many periods, a rare outcome, a strong uptake trend">多期個體資料、罕見結果、夠強的接種趨勢</td><td data-en="A population causal odds ratio (≈ relative risk)">母體層級的因果勝算比（≈相對風險）</td></tr>
           <tr><td>ITS</td><td data-en="One series with many points before & after a known interruption">一條序列、介入前後都有許多時間點</td><td data-en="Level &amp; slope change for the treated population">該母體的水準與斜率變化</td></tr>
@@ -1843,7 +1843,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=39"></script>
-<script src="app.js?v=39"></script>
+<script src="i18n.js?v=40"></script>
+<script src="app.js?v=40"></script>
 </body>
 </html>
