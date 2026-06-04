@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="/styles.css?v=34" />
+<link rel="stylesheet" href="/styles.css?v=35" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -1161,6 +1161,21 @@
     <div id="titOverall" class="overall hidden"></div>
     <div id="titAssumeCards" class="assume-cards"></div>
     <p id="titAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+
+    <div class="card warn">
+      <h3 data-en="Honest limitations &amp; how this tool differs from the published estimator">老實說的限制，以及本工具和原版估計式的差別</h3>
+      <ul>
+        <li data-en="<b>This tool uses a simplified reconstruction, not the published MLE.</b> The original <i>TrendInTrend::OR()</i> (Ji &amp; Small) fits the full 2×2 (exposed×outcome) cell counts with per-stratum latent-CPE moment parameters (C1, C2, C3) and a recursive exposure-prevalence factor h(t), via multi-start MLE with a bootstrap CI. For a fast, stable in-browser demo we fit a lighter marginal model (outcome prevalence tracking exposure prevalence across strata, with a Hessian-based CI). Same identifying idea, <b>not the same likelihood</b> — treat the number as illustrative, not as the package's output.">
+          <b>本工具用的是「簡化重建版」，不是已發表的那支 MLE。</b>原版 <i>TrendInTrend::OR()</i>（Ji &amp; Small）是在完整的 2×2（暴露×結果）格子上、用每層的潛在 CPE 動差參數（C1、C2、C3）加上一個遞迴的暴露盛行率因子 h(t)，做多起點 MLE＋自助法信賴區間。為了能在瀏覽器裡又快又穩地示範，我們改配一個較輕的邊際模型（看結果盛行率跨層怎麼跟著暴露盛行率走，信賴區間用 Hessian）。識別的想法相同，但<b>不是同一條概似</b>——這裡的數字當作示意，別當成套件的輸出。
+        </li>
+        <li data-en="<b>CPE is a propensity score — from BASELINE covariates.</b> The published design builds the cumulative-probability-of-exposure from <i>baseline</i> characteristics (as we do). Using covariates measured over the whole study period instead can leak post-exposure information and is a genuine design choice, not something to do casually.">
+          <b>CPE 其實就是傾向分數——而且是用「基線」共變項算的。</b>已發表的設計是用<i>基線</i>特徵建累積暴露機率（本工具也是）。若改用整段研究期間量到的共變項，可能漏進暴露後的資訊，這是個需要慎重的設計選擇，不能隨手換。
+        </li>
+        <li data-en="<b>It models per-period prevalence — so it fits recurrent / prevalent / acute outcomes, and does NOT natively handle time-to-event with censoring.</b> Because each (stratum × period) cell is a cross-sectional count, someone who dies (or is otherwise censored) still sits in the denominator under this framing. For a one-off fatal event with differential mortality, that biases the cell rates; a proper time-to-event / competing-risks extension is an open question for this design.">
+          <b>它建模的是「每期的盛行率」——所以適合反覆發生／盛行型／急性的結果，而<b>不</b>原生處理帶設限的存活（time-to-event）結果。</b>因為每個（層×期）格子是橫斷面的計數，一個人若死亡（或被設限），在這個框架下<b>仍然留在分母裡</b>。若是一次性、且死亡率有差異的致命事件，這會讓格子率偏掉；要正確處理存活／競爭風險，是這個設計尚待解決的問題。
+        </li>
+      </ul>
+    </div>
   </section>
 
   <!-- ===================== TiT ⑤ 用 AI 強化 ===================== -->
@@ -1813,7 +1828,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=34"></script>
-<script src="app.js?v=34"></script>
+<script src="i18n.js?v=35"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

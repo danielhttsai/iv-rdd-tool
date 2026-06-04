@@ -18,8 +18,17 @@ where
 The effect is identified from how outcome prevalence tracks exposure prevalence ACROSS
 time within strata — not from the confounded individual exposed-vs-unexposed contrast.
 
-This is a faithful teaching reconstruction of the published design's identifying logic,
-implemented independently; it is not the CRAN `TrendInTrend` package code.
+NOTE — this is a SIMPLIFIED teaching reconstruction, NOT the published estimator.
+The original `TrendInTrend::OR()` (Ji & Small) fits the full 2x2 (exposed x outcome)
+cell counts n11/n10/n01/n00 with per-stratum latent-CPE moment params C1[g],C2[g],C3[g]
+and a recursive exposure-prevalence factor h2[t], i.e.
+    P(Y=1|Z=1,g,t) = exp(b0+b1+b2*t) * C1[g]/C3[g]
+    P(Y=1|Z=0,g,t) = exp(b0+b2*t) * (C2[g]-C1[g]*h2[t]) / (1 - C3[g]*h2[t])
+via multi-start MLE + a bootstrap CI. Here we instead fit a lighter MARGINAL model
+(outcome prevalence tracking exposure prevalence across strata) with a Hessian CI, so it
+runs fast and stably under Pyodide. Same identifying idea; NOT the same likelihood — the
+returned OR is illustrative, not the package's output. (Reconstructed independently; no
+package source is copied.)
 """
 from __future__ import annotations
 
