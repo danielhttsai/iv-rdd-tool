@@ -38,6 +38,9 @@ import its_ml
 import perr_core
 import perr_gen
 import perr_assumptions
+import ccw_core
+import ccw_gen
+import ccw_assumptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data", "demo_vaccine.csv")
@@ -50,6 +53,8 @@ FRONTEND = os.path.abspath(os.path.join(HERE, "..", "frontend"))
 
 PERR_DEFAULTS = {"group": "group", "events_prior": "events_prior", "pt_prior": "pt_prior",
                  "events_post": "events_post", "pt_post": "pt_post"}
+CCW_DEFAULTS = {"vacc_time": "vacc_month", "event": "event", "futime": "futime",
+                "covariates": ["age", "frailty"], "grace": 3, "horizon": 12}
 
 TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
 ITS_DEFAULTS = {"outcome": "outcome", "time": "time", "post": "post", "t_since": "t_since"}
@@ -654,6 +659,79 @@ def perr_interactive(drift: float = 0.0, lang: str = "zh"):
 def perr_scale(seed: int = 7, lang: str = "zh"):
     """PERR ⑤: documented refinement — PERR (multiplicative) vs PERD (additive) scale sensitivity."""
     return _clean(perr_core.scale_demo(seed=seed, lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# Clone-Censor-Weight endpoints (CCW method)
+# ---------------------------------------------------------------------------
+class CcwRequest(BaseModel):
+    source: str = "example_ccw"
+    vacc_time: str = "vacc_month"
+    event: str = "event"
+    futime: str = "futime"
+    covariates: list[str] = ["age", "frailty"]
+    grace: int = 3
+    horizon: int = 12
+    n_boot: int = 0
+    lang: str = "zh"
+
+
+def _load_ccw(source: str) -> pd.DataFrame:
+    if source in ("example_ccw", "example"):
+        return ccw_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/ccw_example")
+def ccw_example():
+    df = ccw_gen.generate()
+    return _clean({
+        "columns": list(df.columns), "defaults": CCW_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "vacc_month": "vacc_month（診斷後第幾個月接種；空白＝追蹤期內未接種）",
+            "event": "event（追蹤期內是否發生重大健康事件）／futime（事件或追蹤結束月份）",
+            "age": "age、frailty（共變項；體弱者傾向更早接種＝適應症混淆）",
+        },
+    })
+
+
+@app.post("/api/ccw_analyze")
+def ccw_analyze(req: CcwRequest):
+    df = _load_ccw(req.source)
+    return _clean(ccw_core.full_ccw(df, req.vacc_time, req.event, req.futime,
+                                    tuple(req.covariates), req.grace, req.horizon,
+                                    n_boot=req.n_boot, lang=req.lang))
+
+
+@app.post("/api/ccw_assumptions")
+def ccw_assumptions_check(req: CcwRequest):
+    df = _load_ccw(req.source)
+    return _clean(ccw_assumptions.run_dashboard(df, req.vacc_time, req.event, req.futime,
+                                                tuple(req.covariates), req.grace, req.horizon,
+                                                lang=req.lang))
+
+
+@app.get("/api/ccw_interactive")
+def ccw_interactive(timing_effect: float = 1.0, lang: str = "zh"):
+    """Teaching slider: vary the protective effect of vaccination. CCW tracks the
+    (changing) truth; the naive immortal-time contrast stays biased."""
+    te = float(np.clip(timing_effect, 0.0, 1.0))
+    df = ccw_gen.generate(n=3200, timing_effect=te)
+    out = ccw_core.full_ccw(df, true_rd=ccw_core.estimand_truth(te), lang=lang)
+    return _clean({"timing_effect": te, "true_rd": out["true_rd"], "ccw": out["ccw"],
+                   "naive": out["naive"], "curve": out["curve"],
+                   "risk_early_ccw": out["risk_early_ccw"], "risk_late_ccw": out["risk_late_ccw"]})
+
+
+@app.get("/api/ccw_grace")
+def ccw_grace(seed: int = 0, lang: str = "zh"):
+    """CCW ⑤: grace-period sensitivity — how the estimand/estimate move with g."""
+    return _clean(ccw_core.grace_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")

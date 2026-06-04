@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="/styles.css?v=42" />
+<link rel="stylesheet" href="/styles.css?v=43" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -19,6 +19,7 @@
         <option value="tit" data-en="TiT · Trend-in-trend">TiT · 趨勢中的趨勢</option>
         <option value="its" data-en="ITS · Interrupted time series">ITS · 中斷時間序列</option>
         <option value="perr" data-en="PERR · Prior event rate ratio">PERR · 事前事件率比</option>
+        <option value="ccw" data-en="CCW · Clone-censor-weight">CCW · 複製-設限-加權</option>
       </select>
     </label>
     <div class="subtabs">
@@ -2009,6 +2010,209 @@
     </div>
   </section>
 
+  <!-- ===================== CCW ① 是什麼 ===================== -->
+  <section id="ccwlearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Same vaccine, a timing question: early vs late — and the trap of immortal time (CCW)">同一支疫苗，換個「時機」問題：早接種 vs 晚接種——以及 immortal-time 的陷阱（CCW）</h1>
+    <p class="lead" data-en="So far we asked &quot;does the vaccine help?&quot;. Now ask a <b>strategy</b> question: after diagnosis, is it better to vaccinate <b>early</b> (within a grace period) or to <b>defer</b>? You cannot just compare people by what they ended up doing — to be in the &quot;early&quot; group you had to <b>survive event-free long enough to vaccinate</b>, so the early group looks healthier for free. That is <b>immortal-time bias</b>. The fix is <b>clone-censor-weight</b> (CCW): a target-trial emulation for time-varying strategies (Hernán 2018).">
+      到目前為止我們問「疫苗有沒有效？」。現在換一個<b>策略</b>問題：診斷後，是<b>早接種</b>（在寬限期內）比較好，
+      還是<b>延後</b>？你不能照「最後做了什麼」分組來比——要能被歸到「早接種組」，你必須<b>先活著、沒發生事件、
+      撐到去接種</b>，於是早接種組憑空看起來更健康。這就是 <b>immortal-time bias</b>。解法是<b>複製-設限-加權</b>
+      （clone-censor-weight, CCW）：一種針對「隨時間變動策略」的目標試驗模擬（Hernán 2018）。
+    </p>
+
+    <div class="card scene">
+      <h3 data-en="How it works — clone, censor on deviation, then weight">怎麼做 —— 複製、偏離就設限、再加權</h3>
+      <div id="ccwScene" class="chart"></div>
+    </div>
+
+    <ul class="why">
+      <li data-en="<b>Clone</b>: at time zero (diagnosis), copy every person into <b>both</b> strategy arms — &quot;early&quot; and &quot;late&quot;. During the grace period an untreated, event-free person is compatible with both.">
+        <b>複製</b>：在時間零點（診斷當下），把每個人同時複製到<b>兩個</b>策略臂——「早」與「晚」。寬限期內，一個還沒接種、也還沒發生事件的人，和兩種策略都相容。</li>
+      <li data-en="<b>Censor on deviation</b>: the moment a clone's real behaviour breaks its assigned strategy, censor it there — the early clone if it failed to vaccinate within the grace period, the late clone the moment it vaccinated. Crucially, <b>people who have the event (or die) never deviate</b>, so the event counts in both arms — that is what removes immortal time.">
+        <b>偏離就設限</b>：一旦複製品的真實行為違反了被指派的策略，就在那一刻把它設限——早臂若在寬限期內沒接種就設限、晚臂一接種就設限。關鍵在於：<b>發生事件（或死亡）的人不會偏離</b>，所以事件會計入兩臂——這正是消除 immortal time 的地方。</li>
+      <li data-en="<b>Weight</b>: this artificial censoring is not random (it depends on age/frailty), so reweight the survivors by <b>inverse probability of censoring</b> (IPCW). Then a weighted survival curve per arm gives each strategy's risk, and their difference is the causal effect.">
+        <b>加權</b>：這種人為設限不是隨機的（和年齡／體弱有關），所以用<b>反設限機率加權</b>（IPCW）把存活者重新加權。接著對每個臂做加權存活曲線，得到各策略的風險，相減就是因果效應。</li>
+    </ul>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>動態治療策略 <span class="en">dynamic / sustained treatment strategy</span></h4>
+        <p data-en="<b>Plain:</b> a rule about WHEN and whether to treat over time, not a one-off treated/untreated label.<br /><b>Definition:</b> a strategy that specifies actions at each time (e.g. &quot;initiate within g months&quot; vs &quot;defer&quot;); the contrast of two strategies is the estimand.<br /><b>Why it matters:</b> timing questions can't be answered by a fixed exposure label without inducing immortal time.<br /><b>Example:</b> &quot;vaccinate within 3 months of diagnosis&quot; vs &quot;do not&quot;.<br /><b>Origin:</b> Hernán et al. 2006 (IPW for dynamic regimes).">
+          <b>白話：</b>一個關於「何時、要不要」治療、隨時間展開的規則，而不是一次性的「有沒有治療」標籤。<br />
+          <b>定義：</b>在每個時點都指定動作的策略（如「g 個月內接種」vs「延後」）；兩個策略的對比就是估計目標。<br />
+          <b>為什麼重要：</b>時機問題若用固定的暴露標籤回答，就會引入 immortal time。<br />
+          <b>例子：</b>「診斷後 3 個月內接種」vs「不接種」。<br />
+          <b>源頭：</b>Hernán 等人 2006（動態策略的 IPW）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>不死時間偏誤 <span class="en">immortal-time bias</span></h4>
+        <p data-en="<b>Plain:</b> the &quot;early treated&quot; group had to survive event-free long enough to get treated, so it looks healthier for free.<br /><b>Definition:</b> bias from classifying follow-up by a future treatment that requires surviving a span of &quot;immortal&quot; time first.<br /><b>Why it matters:</b> it makes early/sustained treatment look protective even when it isn't; it is the central problem CCW solves.<br /><b>Example:</b> people who 'ever vaccinated early' must have lived to vaccinate — survivors are over-represented.<br /><b>Fix:</b> align time zero, eligibility and assignment; clone-censor-weight.">
+          <b>白話：</b>「早接種組」必須先活著、沒發生事件、撐到去接種，所以憑空看起來更健康。<br />
+          <b>定義：</b>用「需要先存活一段『不死時間』的未來治療」來分組追蹤所造成的偏誤。<br />
+          <b>為什麼重要：</b>它讓早／持續治療看起來保護，即使其實沒有；這是 CCW 要解決的核心問題。<br />
+          <b>例子：</b>「曾經早接種」的人一定活到了接種那刻——存活者被高估。<br />
+          <b>解法：</b>對齊時間零點、資格、指派；複製-設限-加權。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>寬限期 <span class="en">grace period</span></h4>
+        <p data-en="<b>Plain:</b> a short window after time zero during which not-yet-treated people are compatible with BOTH strategies.<br /><b>Definition:</b> the interval g within which 'early' initiation must occur; before g, an untreated event-free person is cloned into both arms.<br /><b>Why it matters:</b> it is how CCW handles the ambiguity of who belongs to which strategy; the choice of g is a key, reportable design decision.<br /><b>Example:</b> g = 3 months.<br /><b>Check:</b> sensitivity analysis over g (tab ⑤).">
+          <b>白話：</b>時間零點後的一小段窗，期間「還沒治療」的人和兩種策略都相容。<br />
+          <b>定義：</b>「早接種」必須發生的區間 g；在 g 之前，未治療、無事件者被複製到兩臂。<br />
+          <b>為什麼重要：</b>這是 CCW 處理「誰屬於哪個策略」之模糊的方法；g 的選擇是關鍵、須報告的設計決定。<br />
+          <b>例子：</b>g＝3 個月。<br />
+          <b>檢查：</b>對 g 做敏感度分析（見 ⑤）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>反設限機率加權 <span class="en">IPCW</span></h4>
+        <p data-en="<b>Plain:</b> upweight the clones that were artificially censored away, in proportion to how likely that censoring was.<br /><b>Definition:</b> inverse-probability-of-censoring weights, modelled from covariates, that make the censored pseudo-population represent the full one.<br /><b>Why it matters:</b> the artificial censoring depends on who you are (age/frailty), so without weighting CCW would be biased; stabilized weights should average ≈ 1.<br /><b>Example:</b> weight ≈ 1 ÷ P(stayed adherent | covariates).<br /><b>Check:</b> weight distribution (tab ④, C4).">
+          <b>白話：</b>把被人為設限掉的複製品，依「被設限的機率」加重補回來。<br />
+          <b>定義：</b>由共變項建模的反設限機率權重，讓被設限的偽母體能代表完整母體。<br />
+          <b>為什麼重要：</b>人為設限和「你是誰」（年齡／體弱）有關，不加權 CCW 就會偏；穩定化權重應平均 ≈ 1。<br />
+          <b>例子：</b>權重 ≈ 1 ÷ P(維持遵循 | 共變項)。<br />
+          <b>檢查：</b>權重分布（見 ④ 的 C4）。
+        </p>
+      </div>
+    </details>
+
+    <details class="term">
+      <summary data-en="How does CCW differ from the other methods?">CCW 和其他方法有什麼不同？</summary>
+      <p data-en="The other methods answer a point question (treated vs not). CCW answers a <b>timing / sustained-strategy</b> question (treat <b>early</b> vs <b>late</b>) where the naive analysis suffers <b>immortal-time bias</b>. It is a <b>target-trial emulation</b>: it explicitly builds the trial you would have run — same time zero, eligibility and assignment — then uses cloning + censoring + weighting instead of randomisation. It is the natural tool when &quot;when to start&quot; is the question (Hernán 2018; García-Albéniz et al.; the HIV when-to-start studies).">
+        其他方法回答的是「點」問題（有沒有治療）。CCW 回答的是<b>時機／持續策略</b>問題（<b>早</b>接種 vs <b>晚</b>接種），
+        而這裡天真分析會中 <b>immortal-time bias</b>。它是一種<b>目標試驗模擬</b>：明確地把「你本來會做的試驗」建出來
+        ——同樣的時間零點、資格、指派——再用複製＋設限＋加權取代隨機化。當問題是「何時開始」時，它就是最自然的工具
+        （Hernán 2018；García-Albéniz 等人；HIV 何時開始治療的研究）。
+      </p>
+    </details>
+  </section>
+
+  <!-- ===================== CCW ② 互動講解 ===================== -->
+  <section id="ccwplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive CCW: watch CCW track the truth while the naive contrast drifts">互動式 CCW：看 CCW 緊貼真值，天真比較卻飄走</h1>
+    <p class="lead" data-en="Drag the slider to change how protective the vaccine really is. <b>CCW</b> (clone-censor-weight) tracks the true risk difference at every setting; the <b>naive</b> early-vs-late comparison stays biased by immortal time and confounding. Watch the cumulative-incidence curves and the three numbers move together.">
+      拉動滑桿，改變疫苗「真正」的保護力。<b>CCW</b>（複製-設限-加權）在每個設定下都緊貼真實風險差；
+      <b>天真</b>的早 vs 晚比較則持續被 immortal-time 與混淆帶偏。看累積發生率曲線與三個數字一起變化。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="True protective effect of vaccination:">疫苗真正的保護效果：</span><b id="ccwTimingVal">1.00</b>
+        <input type="range" id="ccwTimingSlider" min="0" max="1" value="1" step="0.05" />
+        <small data-en="0 = the vaccine does nothing (risk difference ≈ 0). 1 = full protective effect. CCW recovers the truth at every setting; the naive contrast does not.">0＝疫苗無效（風險差 ≈ 0）。1＝完整保護效果。CCW 在每個設定都還原真值；天真比較不會。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="CCW (clone-censor-weight)">CCW（複製-設限-加權）</div><div class="stat-num" id="ccwEst">–</div><div class="stat-foot" data-en="should hug the truth">應緊貼真值</div></div>
+      <div class="stat"><div class="stat-label" data-en="Truth (estimand target)">真值（估計目標）</div><div class="stat-num" id="ccwTruth">–</div><div class="stat-foot" data-en="negative = early is protective">負值＝早接種較保護</div></div>
+      <div class="stat"><div class="stat-label" data-en="Naive contrast (immortal time)">天真比較（immortal time）</div><div class="stat-num" id="ccwNaiveEst">–</div><div class="stat-foot" data-en="biased away from the truth">被帶偏離真值</div></div>
+    </div>
+
+    <div id="ccwPlayChart" class="chart"></div>
+    <p class="caption" data-en="Weighted cumulative-incidence curves for the early (teal) and late (slate) strategies. The vertical gap at the end of follow-up is the CCW risk difference. As you raise the protective effect, the early curve drops further below the late curve.">
+      早策略（青色）與晚策略（灰色）的加權累積發生率曲線。追蹤結束時兩條線的垂直落差就是 CCW 風險差。
+      把保護效果調高，早策略曲線就掉得離晚策略更低。
+    </p>
+  </section>
+
+  <!-- ===================== CCW ③ 資料分析 ===================== -->
+  <section id="ccwanalyze" class="panel">
+    <h1 data-en="Data analysis: run a full clone-censor-weight">資料分析：跑一次完整的複製-設限-加權</h1>
+    <p class="lead" data-en="Load the built-in early-vs-late example (or upload a CSV with one row per person: when they vaccinated, whether/when the event happened, and baseline covariates). The tool clones each person into both strategy arms, censors on deviation, fits the inverse-probability-of-censoring weights, and reports the CCW risk difference against the immortal-time-biased naive contrast.">
+      載入內建的「早 vs 晚接種」範例（或上傳每列一個人的 CSV：何時接種、是否／何時發生事件、基線共變項）。
+      工具會把每個人複製到兩個策略臂、偏離就設限、配反設限機率權重，並把 CCW 風險差與「中 immortal-time 偏誤」
+      的天真比較並列。
+    </p>
+
+    <div class="datasource">
+      <button id="useCcwExample" class="btn primary" data-en="Load built-in early-vs-late example">載入內建早 vs 晚範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="ccwFileInput" accept=".csv" hidden /></label>
+      <span id="ccwDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="ccwColMap" class="colmap hidden">
+      <div class="field"><label data-en="Vaccination month (blank = never)">接種月份（vacc_month；空白＝未接種）</label><select id="ccwSelVacc"></select></div>
+      <div class="field"><label data-en="Event indicator">事件指標（event）</label><select id="ccwSelEvent"></select></div>
+      <div class="field"><label data-en="Follow-up time (months)">追蹤時間（futime，月）</label><select id="ccwSelFu"></select></div>
+      <div class="field wide"><label data-en="Covariates (multi-select, for the weight model)">共變項（covariates，可多選，加權模型用）</label><select id="ccwSelCov" multiple size="4"></select></div>
+      <button id="runCcwAnalyze" class="btn primary" data-en="Run CCW analysis">執行 CCW 分析</button>
+    </div>
+
+    <div id="ccwAnalyzeOut" class="hidden">
+      <h2 data-en="Early vs late: the causal risk difference">早 vs 晚：因果風險差</h2>
+      <div class="result-cards" id="ccwAnalyzeCards"></div>
+      <div id="ccwAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="Weighted cumulative-incidence curves for the early (teal) vs late (slate) strategies. The gap at the end is the CCW estimate; the naive number in the cards above ignores immortal time and is biased.">
+        早（青色）vs 晚（灰色）策略的加權累積發生率曲線。末端的落差就是 CCW 估計；上方卡片裡的天真數字忽略了 immortal time，是有偏的。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== CCW ④ 假設檢驗 ===================== -->
+  <section id="ccwassume" class="panel">
+    <h1 data-en="Can we trust this CCW? Five checks">這個 CCW 可不可信？五道體檢</h1>
+    <p class="lead" data-en="CCW's core assumptions are mostly <b>not testable from data alone</b>, so we are honest (blue cards) and surface what IS checkable. The key one: no unmeasured confounding of who follows which strategy. Others: positivity (the one clearly testable check), well-defined strategies and grace period, a reasonable weight model, and correct time-zero alignment. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      CCW 的核心假設大多<b>無法只用資料檢驗</b>，所以我們誠實（藍卡），並把可檢查的指標攤出來。最關鍵的：
+      「誰遵循哪個策略」無未測混淆。其餘：正性（最明確可檢的一項）、策略與寬限期定義清楚、權重模型合理、
+      時間零點對齊正確。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="ccwOverall" class="overall hidden"></div>
+    <div id="ccwAssumeCards" class="assume-cards"></div>
+    <p id="ccwAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== CCW ⑤ 用 AI 強化 ===================== -->
+  <section id="ccwml" class="panel">
+    <h1 data-en="Boosting CCW: honest refinements (and where ML fits)">強化 CCW：誠實的精修（以及 ML 的位置）</h1>
+    <p class="lead" data-en="The clone-censor-weight literature does not center black-box AI; its real refinements are about <b>design and the nuisance (weight) models</b>. The most important, and the most computable, is the <b>grace-period sensitivity analysis</b> — so we ship that. Below it are the other honest refinements, including where flexible/ML weight models genuinely fit.">
+      複製-設限-加權的文獻並不以黑箱 AI 為核心；它真正的精修是關於<b>設計與雜務（權重）模型</b>。其中最重要、
+      也最能計算的，就是<b>寬限期敏感度分析</b>——所以我們直接做出來。下面再列出其他誠實的精修，包括「彈性／ML
+      權重模型」真正合適的位置。
+    </p>
+
+    <div class="card info">
+      <h3 data-en="Computed: how the answer moves with the grace period">可計算：答案如何隨寬限期變動</h3>
+      <p data-en="The grace period g defines what &quot;early&quot; means, so changing g changes the estimand itself — not just noise. Re-run CCW for g = 1…5 months. CCW stays near the truth across the range; the naive (immortal-time) contrast does not. This is a mandatory sensitivity analysis for any CCW study (Hernán 2018; Gaber et al. 2024). Click to show it:">
+        寬限期 g 定義了「早」是什麼，所以改變 g 會改變<b>估計目標本身</b>，不只是雜訊。把 g 從 1 跑到 5 個月。
+        CCW 在整段範圍都貼近真值；天真（immortal-time）比較則不會。這是任何 CCW 研究都該做的敏感度分析
+        （Hernán 2018；Gaber 等人 2024）。按下面看結果：
+      </p>
+    </div>
+    <button id="runCcwGrace" class="btn primary" data-en="Run the grace-period sensitivity">跑寬限期敏感度</button>
+    <div id="ccwGraceOut" class="hidden">
+      <div id="ccwGraceChart" class="chart"></div>
+      <p class="caption" id="ccwGraceReading"></p>
+    </div>
+
+    <h2 data-en="Other honest refinements from the literature">文獻中其他誠實的精修</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Flexible / ML weight models (with cross-fitting)">① 彈性／ML 權重模型（搭配交叉擬合）</h3>
+        <p data-en="The treatment- and censoring-weight models are nuisance functions — they can be estimated with flexible/ML learners under cross-fitting, exactly as in IV ⑤ / DiD ⑤. This helps when confounders relate to timing non-linearly. The estimator (clone-censor-weight) is unchanged; only the weight model becomes data-adaptive.">處置與設限的權重模型是<b>雜務函數</b>——可以用彈性／ML 學習器搭配<b>交叉擬合</b>來估計，就像 IV ⑤／DiD ⑤ 那樣。當共變項對時機是非線性關係時特別有用。估計式（複製-設限-加權）不變，只有權重模型變成資料自適應。</p></div>
+      <div class="card"><h3 data-en="② Doubly-robust: IPW + the g-formula">② 雙重穩健：IPW ＋ g-formula</h3>
+        <p data-en="Instead of weighting alone, combine the inverse-probability weights with an <b>outcome (g-formula) model</b> into a doubly-robust estimator — consistent if <b>either</b> the weight model or the outcome model is right. Smith &amp; Hernán (2022) emulate a sustained-strategy target trial using exactly this IPW + g-formula pairing.">不要只靠加權，把反機率權重和一個<b>結果（g-formula）模型</b>結合成雙重穩健估計——只要權重模型<b>或</b>結果模型其一正確就一致。Smith &amp; Hernán（2022）正是用這套 IPW＋g-formula 來模擬持續策略的目標試驗。</p></div>
+      <div class="card"><h3 data-en="③ Pre-specify and probe the design">③ 事先講清楚並檢驗設計</h3>
+        <p data-en="The biggest gains in CCW are not from fancier models but from a <b>correctly specified target trial</b>: aligned time zero, eligibility and assignment, a pre-specified grace period, and positivity checks. Report the grace-period sensitivity (above) and the weight diagnostics (tab ④).">CCW 最大的進步不是來自更花俏的模型，而是來自<b>正確指定的目標試驗</b>：對齊的時間零點、資格、指派，事先講好的寬限期，以及正性檢查。報告寬限期敏感度（上方）與權重診斷（見 ④）。</p></div>
+    </div>
+
+    <h2 data-en="Where this method comes from — examples, split by type">這個方法的出處——依類型分的例子</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="Method &amp; tutorial">方法／教學</h3>
+        <p data-en="Hernán (2018, BMJ) — the foundational clone-censor-weight idea (&quot;dead people do not deviate from their assigned strategy&quot;). Hernán et al. (2006) — IPW for dynamic regimes. Maringe et al. (2020) &amp; Zhao, Lyu, Yoshida (2021) — immortal-time bias and the versatility of CCW. Gaber et al. (2024, Cancer Medicine + Curr Epidemiol Rep) — primers and implementation. Webster-Clark et al. (2025) — CCW for treatment-initiation windows on synthetic data (closest to this demo). Smith &amp; Hernán (2022) — sustained-strategy emulation with IPW + g-formula. Emilsson et al. (2017, JAMA Oncology) — exposing the bias.">
+          Hernán（2018, BMJ）——奠基性的複製-設限-加權想法（「死人不會偏離被指派的策略」）。Hernán 等人（2006）——動態策略的 IPW。Maringe 等人（2020）與 Zhao、Lyu、Yoshida（2021）——immortal-time bias 與 CCW 的彈性。Gaber 等人（2024, Cancer Medicine ＋ Curr Epidemiol Rep）——入門與實作。Webster-Clark 等人（2025）——用合成資料做「接種時機窗」的 CCW（最貼近本示範）。Smith &amp; Hernán（2022）——持續策略模擬，IPW＋g-formula。Emilsson 等人（2017, JAMA Oncology）——揭露偏誤。
+        </p></div>
+      <div class="card"><h3 data-en="Clinical application">臨床應用</h3>
+        <p data-en="García-Albéniz et al. — immediate vs deferred androgen-deprivation therapy in prostate cancer (early vs late). The HIV-CAUSAL Collaboration (2011, Ann Intern Med) — when to start combined antiretroviral therapy. Larochelle et al. (2022, JAMA Netw Open) — opioid tapering vs no change. Ju et al. (2024) — statins and cancer in heart failure. Chen et al. (2024) — beta-blockers in obstructive sleep apnoea. Zhang et al. (Med Care) — two anemia-management strategies in dialysis. All are target-trial emulations of a timing / sustained-treatment question.">
+          García-Albéniz 等人——前列腺癌「立即 vs 延後」雄性素剝奪治療（早 vs 晚）。HIV-CAUSAL 合作（2011, Ann Intern Med）——何時開始合併抗反轉錄病毒治療。Larochelle 等人（2022, JAMA Netw Open）——鴉片減量 vs 不變。Ju 等人（2024）——心衰竭病人 statin 與癌症。Chen 等人（2024）——睡眠呼吸中止的 β-blocker。Zhang 等人（Med Care）——透析病人兩種貧血管理策略。全部都是「時機／持續治療」問題的目標試驗模擬。
+        </p></div>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Six designs, one vaccine question — which to use?">六法怎麼選：同一個疫苗問題，六種攻法</h1>
@@ -2208,11 +2412,24 @@
       <li data-ref="perr">Rogers, L. R., et al. (2020). Prior event rate ratio adjustment produced estimates consistent with randomized trial: a diabetes case study. <i>Journal of Clinical Epidemiology, 122</i>, 78–86. https://doi.org/10.1016/j.jclinepi.2020.03.009. <span data-en="〔RCT-benchmarked example〕">〔以隨機試驗對照的範例〕</span></li>
       <li data-ref="perr">Cheung, Y. B., Ma, X., &amp; Mackenzie, G. (2024). Two assumptions of the PERR approach can be evaluated by self-controlled case series and dynamic random intercept modeling. <i>Journal of Clinical Epidemiology, 175</i>, 111511. <span data-en="〔SCCS &amp; DRIM checks — PERR tab ④ P3/P4〕">〔SCCS 與 DRIM 檢查 —— PERR 分頁④ P3/P4〕</span></li>
       <li data-ref="perr">Cheung, Y. B., &amp; Ma, X. (2025). Performance of prior event rate ratio method in the presence of differential mortality or dropout. <i>arXiv</i>:2505.20757. <span data-en="〔PERR-Comp under dropout — PERR tab ⑤ ③〕">〔退出下的 PERR-Comp —— PERR 分頁⑤ ③〕</span></li>
+      <li data-ref="ccw"><b data-en="Method &amp; tutorial">方法／教學</b> · Hernán, M. A. (2018). How to estimate the effect of treatment duration on survival outcomes using observational data. <i>BMJ, 360</i>, k182. https://doi.org/10.1136/bmj.k182. <span data-en="〔the foundational clone-censor-weight paper — CCW tabs ①–⑤〕">〔奠基性的複製-設限-加權論文 —— CCW 分頁 ①–⑤〕</span></li>
+      <li data-ref="ccw">Hernán, M. A., Lanoy, E., Costagliola, D., &amp; Robins, J. M. (2006). Comparison of Dynamic Treatment Regimes via Inverse Probability Weighting. <i>Basic &amp; Clinical Pharmacology &amp; Toxicology, 98</i>(3), 237–242. <span data-en="〔IPW for dynamic strategies〕">〔動態策略的 IPW〕</span></li>
+      <li data-ref="ccw">Maringe, C., et al. (2020). Reflection on modern methods: trial emulation in the presence of immortal-time bias. <i>International Journal of Epidemiology, 49</i>(5), 1719–1729. https://doi.org/10.1093/ije/dyaa057. <span data-en="〔immortal-time bias — CCW tabs ①/④〕">〔immortal-time bias —— CCW 分頁 ①/④〕</span></li>
+      <li data-ref="ccw">Zhao, S. S., Lyu, H., &amp; Yoshida, K. (2021). Versatility of the clone-censor-weight approach. <i>International Journal of Epidemiology, 50</i>(3), 1054–1055. https://doi.org/10.1093/ije/dyaa223. <span data-en="〔CCW versatility〕">〔CCW 的彈性〕</span></li>
+      <li data-ref="ccw">Gaber, C. E., et al. (2024). De-Mystifying the Clone-Censor-Weight Method for Causal Research: A Primer. <i>Cancer Medicine, 13</i>, e70461. https://doi.org/10.1002/cam4.70461. <span data-en="〔primer〕">〔入門 primer〕</span></li>
+      <li data-ref="ccw">Gaber, C. E., Hanson, K. A., Kim, S., Lund, J. L., Lee, T. A., &amp; Murray, E. J. (2024). The Clone-Censor-Weight Method in Pharmacoepidemiologic Research: Foundations and Methodological Implementation. <i>Current Epidemiology Reports, 11</i>, 164–174. https://doi.org/10.1007/s40471-024-00346-2. <span data-en="〔foundations &amp; implementation〕">〔基礎與實作〕</span></li>
+      <li data-ref="ccw">Webster-Clark, M., Li, Y., Dell'Aniello, S., &amp; Platt, R. W. (2025). Demystifying Clone-Censor-Weighting to Study Treatment Initiation Windows. <i>Pharmacoepidemiology and Drug Safety, 34</i>, e70223. https://doi.org/10.1002/pds.70223. <span data-en="〔initiation windows on synthetic data — closest to this demo〕">〔合成資料上的接種時機窗 —— 最貼近本示範〕</span></li>
+      <li data-ref="ccw">Smith, L. H., García-Albéniz, X., …, &amp; Hernán, M. A. (2022). Emulation of a target trial with sustained treatment strategies: an application to prostate cancer using both inverse probability weighting and the g-formula. <i>European Journal of Epidemiology, 37</i>, 1205–1213. https://doi.org/10.1007/s10654-022-00929-7. <span data-en="〔doubly-robust IPW + g-formula — CCW tab ⑤ ②〕">〔雙重穩健 IPW＋g-formula —— CCW 分頁⑤ ②〕</span></li>
+      <li data-ref="ccw">Emilsson, L., García-Albéniz, X., Logan, R. W., Caniglia, E. C., Kalager, M., &amp; Hernán, M. A. (2017). Examining Bias in Studies of Statin Treatment and Survival in Patients With Cancer. <i>JAMA Oncology, 3</i>(8), 1108–1114. <span data-en="〔exposing immortal-time/selection bias〕">〔揭露 immortal-time／選擇偏誤〕</span></li>
+      <li data-ref="ccw"><b data-en="Clinical application">臨床應用</b> · García-Albéniz, X., et al. Immediate vs deferred initiation of androgen deprivation therapy in prostate cancer with PSA-only relapse. <span data-en="〔immediate vs deferred = early vs late〕">〔立即 vs 延後＝早 vs 晚〕</span></li>
+      <li data-ref="ccw">The HIV-CAUSAL Collaboration (2011). When to initiate combined antiretroviral therapy to reduce mortality and AIDS-defining illness in HIV-infected persons. <i>Annals of Internal Medicine, 154</i>(8), 509–515. <span data-en="〔when-to-start cART〕">〔何時開始 cART〕</span></li>
+      <li data-ref="ccw">Larochelle, M. R., et al. (2022). Comparative Effectiveness of Opioid Tapering or Abrupt Discontinuation vs No Dosage Change. <i>JAMA Network Open, 5</i>(8), e2226523. <span data-en="〔opioid tapering strategy〕">〔鴉片減量策略〕</span></li>
+      <li data-ref="ccw">Ju, C., et al. (2024). Effect of statin treatment on the risk of cancer in patients with heart failure: A target trial emulation. <i>Pharmacoepidemiology and Drug Safety</i>. <span data-en="〔statins &amp; cancer in HF〕">〔心衰竭 statin 與癌症〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=42"></script>
-<script src="app.js?v=42"></script>
+<script src="i18n.js?v=43"></script>
+<script src="app.js?v=43"></script>
 </body>
 </html>

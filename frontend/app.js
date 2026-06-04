@@ -10,7 +10,7 @@ const tr = (zh, en) => window.IV.tr(zh, en);
 const lang = () => window.IV.lang;
 
 // ----- navigation: method dropdown + sub-tabs -----
-const METHOD_PREFIX = { iv: "", rdd: "rdd", did: "did", tit: "tit", its: "its", perr: "perr" };
+const METHOD_PREFIX = { iv: "", rdd: "rdd", did: "did", tit: "tit", its: "its", perr: "perr", ccw: "ccw" };
 const PANEL_INIT = {
   play: () => refreshPlay(), ml: () => initMl(),
   rddplay: () => initRdd(), rddanalyze: () => initRddAnalyze(),
@@ -23,6 +23,8 @@ const PANEL_INIT = {
   itsassume: () => initItsAssume(), itsml: () => initItsMl(),
   perrlearn: () => initPerrLearn(), perrplay: () => initPerrPlay(), perranalyze: () => initPerrAnalyze(),
   perrassume: () => initPerrAssume(), perrml: () => initPerrMl(),
+  ccwlearn: () => initCcwLearn(), ccwplay: () => initCcwPlay(), ccwanalyze: () => initCcwAnalyze(),
+  ccwassume: () => initCcwAssume(), ccwml: () => initCcwMl(),
   choose: () => initChoose(),
 };
 let curMethod = "iv", curSub = "learn";
@@ -1528,14 +1530,14 @@ const DNODES = {
                 en: "Vaccine scenario: take only people who had an adverse event, and compare their event rate in the post-vaccination risk window vs their own other time — each person is their own control." },
     watch: { zh: "↗ 常見研究設計，本工具箱未實作。<b>同樣看不了死亡</b>——SCCS 用個人自身當對照，需假設事件<b>不致命、可復發</b>，且事件不影響後續暴露機率。",
              en: "↗ A common design, not implemented here. <b>It also cannot handle death</b> — SCCS uses each person as their own control, so events must be <b>non-fatal and recurrent</b>, and must not alter later exposure probability." } } },
-  rCCW: { rec: { kind: "external", badge: "↗",
-    title: { zh: "建議：複製-設限-加權 clone-censor-weight ↗", en: "Suggested: clone-censor-weight (CCW) ↗" },
+  rCCW: { rec: { kind: "toolbox", method: "ccw", badge: "CCW ✓",
+    title: { zh: "建議：複製-設限-加權 CCW ✓（本工具）", en: "Suggested: clone-censor-weight (CCW) ✓ (this tool)" },
     why: { zh: "CCW 適合「<b>診斷後一段時間的動態／持續策略</b>」——例如早 vs 晚開始、是否持續或密集用藥。這種隨時間調整的策略若直接分組會有 immortal time bias；CCW 在時間零點把每個人複製到各策略、依偏離設限、再加權校正。<b>好處</b>：若比較「<b>早用 vs 晚用</b>」，兩組<b>最終都會用藥（適應症相同）</b>，因此能大幅減輕「<b>因適應症而生的混淆（confounding by indication）</b>」。",
            en: "CCW fits a <b>sustained / dynamic strategy over a window after diagnosis</b> — e.g. early vs late initiation, or sustained / intensive use. Naively grouping such a time-varying strategy creates immortal-time bias; CCW clones each person into each strategy at time zero, censors on deviation, and reweights. <b>Bonus</b>: comparing <b>early vs late</b> use largely removes <b>confounding by indication</b>, because <b>both groups end up treated</b> (same indication) — only the timing differs." },
     scenario: { zh: "疫苗情境：比較「確診後<b>早接種 vs 晚接種</b>」，或「是否持續按時打追加劑」這類隨時間調整的策略。把每個人複製到各策略、依偏離設限再加權，避免 immortal time bias。",
                 en: "Vaccine scenario: compare '<b>early vs late</b> vaccination after diagnosis', or 'keep up booster doses on schedule or not' — a time-varying strategy. Clone each person into each strategy, censor on deviation, then reweight — avoiding immortal-time bias." },
-    watch: { zh: "↗ 常見研究設計，本工具箱未實作。是 <b>target trial emulation</b> 的常見實作之一。",
-             en: "↗ A common design, not implemented here. A common way to implement <b>target trial emulation</b>." } } },
+    watch: { zh: "✓ 本工具箱已實作（見 CCW 分頁 ①–⑤）。是 <b>target trial emulation</b> 的常見實作之一。",
+             en: "✓ Implemented in this toolbox (see the CCW tabs ①–⑤). A common way to implement <b>target trial emulation</b>." } } },
   rSEQ: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：序列（巢式）試驗 sequential trial ↗", en: "Suggested: sequential (nested) trials ↗" },
     why: { zh: "序列試驗適合「<b>某時點的單次（點）治療決定</b>」（不是診斷後持續調整的策略）——病人在不同時間點陸續符合資格時，在每個符合點各開一場「迷你試驗」（當下打 vs 不打）、對齊時間零點再合併。和 CCW 的差別：這裡是<b>點治療</b>，CCW 處理的是<b>診斷後一段時間的動態／持續策略</b>。<b>好處</b>：同一個人可在多個符合點被重複納入，<b>潛在能放大有效樣本數</b>。",
@@ -1625,7 +1627,7 @@ const FULLMAP = {
                 { key: "rITS", cond: { zh: "政策某時點＋單一群體、前後多時點", en: "policy at a time + single population, many points" }, tag: "ITS ✓", kind: "tb" },
                 { key: "rACC", cond: { zh: "有藥理相近的活性對照（打 A vs 打 B）", en: "a similar active comparator (A vs B)" }, tag: "對照藥物世代 ↗", kind: "ex" },
                 { key: "rPERR", cond: { zh: "前後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, tag: "PERR ✓", kind: "tb" },
-                { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy (early vs late, intensive)" }, tag: "CCW ↗", kind: "ex" },
+                { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy (early vs late, intensive)" }, tag: "CCW ✓", kind: "tb" },
                 { key: "rSEQ", cond: { zh: "點治療，但多時點陸續收案", en: "point treatment, eligible at many times" }, tag: "序列試驗 ↗", kind: "ex" },
               ] },
             { edge: { zh: "急性、會反覆又會好、非致命 → 自身對照／趨勢", en: "acute, recurrent/resolving, non-fatal → self-control / trend" },
@@ -1821,6 +1823,7 @@ const METHOD_REF = {
   tit:  { zh: "趨勢中的趨勢 TiT", en: "Trend-in-Trend (TiT)", src: "Ji, Small, Leonard & Hennessy (2017), Epidemiology" },
   its:  { zh: "中斷時間序列 ITS", en: "Interrupted Time Series (ITS)", src: "Bernal, Cummins & Gasparrini (2017), IJE; Dey et al. (2025)" },
   perr: { zh: "事前事件率比 PERR", en: "Prior Event Rate Ratio (PERR)", src: "Yu et al. (2012); van Aalst et al. (2021)" },
+  ccw:  { zh: "複製-設限-加權 CCW", en: "Clone-Censor-Weight (CCW)", src: "Hernán (2018), BMJ; Gaber et al. (2024)" },
 };
 let refsContext = "iv";   // which page's references/citation to show
 
@@ -2968,6 +2971,261 @@ function drawPerrScale(s) {
 }
 
 // ======================================================================
+// Clone-Censor-Weight (CCW method) — tabs ①–⑤
+// ======================================================================
+const ccwState = { source: null, columns: [], req: null };
+let ccwLearnReady = false, ccwPlayReady = false, ccwAnalyzeReady = false,
+    ccwAssumeReady = false, ccwMlReady = false;
+
+// cumulative-incidence curves: early (teal) vs late (slate), over months
+function ccwCurveInto(elId, curve) {
+  if (!document.getElementById(elId) || !curve) return;
+  const m = curve.months;
+  Plotly.react(elId, [
+    { x: m, y: curve.early, mode: "lines+markers", type: "scatter", line: { color: TEAL, width: 3, shape: "hv" },
+      marker: { size: 5 }, name: tr("早接種策略", "early strategy") },
+    { x: m, y: curve.late, mode: "lines+markers", type: "scatter", line: { color: SLATE, width: 3, shape: "hv" },
+      marker: { size: 5 }, name: tr("晚接種策略", "late strategy") },
+  ], sceneLayout({
+    height: 300, legend: { orientation: "h", y: 1.16 },
+    margin: { t: 28, r: 18, b: 42, l: 54 },
+    xaxis: { title: tr("診斷後月份", "months since diagnosis"), dtick: 2 },
+    yaxis: { title: tr("累積發生率", "cumulative incidence"), range: [0, Math.max(...curve.late) * 1.15 + 0.02], tickformat: ".0%" },
+  }), SCENE_CFG);
+}
+
+// ① learn: a clone-censor swimmer illustration (each person cloned into both arms,
+// censored ✂ on deviation from the assigned strategy)
+function drawSceneCcw() {
+  if (!document.getElementById("ccwScene")) return;
+  const GREY = "#9aa6b2", g = 3, XMAX = 12;
+  // two example people × two arms (early row above, late row below for each)
+  const rows = [
+    { y: 7, arm: "early", solid: 12, mark: null, who: "A" },          // A: vaccinated at 1 → adheres early
+    { y: 6, arm: "late",  solid: 1,  mark: "cens", who: "A" },        // A: late clone censored at vaccination (m=1)
+    { y: 4, arm: "early", solid: 3,  mark: "cens", who: "B" },        // B: never vaccinated by grace → early censored at g=3
+    { y: 3, arm: "late",  solid: 9,  mark: "event", who: "B" },       // B: late clone, event at 9
+  ];
+  const shapes = [{ type: "line", x0: g, x1: g, y0: 2.3, y1: 7.7, line: { color: AMBER, width: 1.2, dash: "dot" } }];
+  const evX = [], evY = [], csX = [], csY = [];
+  rows.forEach((r) => {
+    shapes.push({ type: "line", x0: 0.4, y0: r.y, x1: r.solid, y1: r.y, line: { color: r.arm === "early" ? TEAL : SLATE, width: 4 } });
+    if (r.mark === "event") { evX.push(r.solid); evY.push(r.y); }
+    if (r.mark === "cens") { csX.push(r.solid); csY.push(r.y); }
+  });
+  const traces = [
+    { x: evX, y: evY, mode: "markers", type: "scatter", name: tr("● 事件", "● event"), marker: { color: RED, size: 13 } },
+    { x: csX, y: csY, mode: "markers", type: "scatter", name: tr("✂ 偏離策略 → 設限", "✂ deviation → censored"),
+      marker: { color: "#64748b", size: 14, symbol: "x-thin-open", line: { width: 3 } } },
+  ];
+  const anns = [
+    Object.assign(_lbl(0.2, 7, tr("甲 · 早臂", "A · early"), TEAL, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(0.2, 6, tr("甲 · 晚臂", "A · late"), SLATE, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(0.2, 4, tr("乙 · 早臂", "B · early"), TEAL, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(0.2, 3, tr("乙 · 晚臂", "B · late"), SLATE, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(g, 7.95, tr("寬限期 g", "grace g"), "#b45309", 10), { xanchor: "center" }),
+    _lbl(6, 1.4, tr("在時間零點把每個人複製到兩臂；一旦行為偏離被指派的策略，就在那一刻設限(✂)，再用反設限機率加權。",
+                    "Clone each person into both arms at time zero; the moment behaviour deviates from the assigned strategy, censor (✂) — then reweight by inverse probability of censoring."), INK, 10),
+  ];
+  Plotly.react("ccwScene", traces, schemaLayout({
+    height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.14 },
+    xaxis: { visible: true, title: tr("診斷後月份", "months since diagnosis"), range: [0, XMAX], fixedrange: true },
+    yaxis: { visible: false, range: [0.6, 8.3] },
+    margin: { t: 32, r: 16, b: 36, l: 16 },
+  }), SCENE_CFG);
+}
+
+function initCcwLearn() {
+  if (ccwLearnReady) return;
+  ccwLearnReady = true;
+  drawSceneCcw();
+}
+
+// ---- ② interactive ----
+const ccwTimingSlider = document.getElementById("ccwTimingSlider");
+let ccwPlayTimer = null;
+function initCcwPlay() {
+  if (ccwPlayReady) return;
+  ccwPlayReady = true;
+  refreshCcwPlay();
+}
+function scheduleCcwPlay() {
+  document.getElementById("ccwTimingVal").textContent = Number(ccwTimingSlider.value).toFixed(2);
+  clearTimeout(ccwPlayTimer);
+  ccwPlayTimer = setTimeout(refreshCcwPlay, 350);
+}
+if (ccwTimingSlider) ccwTimingSlider.addEventListener("input", scheduleCcwPlay);
+async function refreshCcwPlay() {
+  const te = ccwTimingSlider ? Number(ccwTimingSlider.value) : 1.0;
+  let d;
+  try { d = await getJSON(`${API}/api/ccw_interactive?timing_effect=${te}&lang=${lang()}`); }
+  catch (e) { return; }
+  state.ccwPlay = d;
+  const set = (id, v, col) => { const el = document.getElementById(id); if (el) { el.textContent = fmt(v, 2); if (col) el.style.color = col; } };
+  set("ccwEst", d.ccw, Math.abs(d.ccw - d.true_rd) < 0.06 ? TEAL : AMBER);
+  set("ccwTruth", d.true_rd, GREEN);
+  set("ccwNaiveEst", d.naive, RED);
+  ccwCurveInto("ccwPlayChart", d.curve);
+}
+
+// ---- ③ analyze ----
+function initCcwAnalyze() {
+  if (ccwAnalyzeReady) return;
+  ccwAnalyzeReady = true;
+  document.getElementById("useCcwExample").click();
+}
+function ccwFillSelects(cols) {
+  const opts = cols.map((c) => `<option value="${c}">${c}</option>`).join("");
+  ["ccwSelVacc", "ccwSelEvent", "ccwSelFu"].forEach((id) =>
+    document.getElementById(id).innerHTML = opts);
+  const cov = document.getElementById("ccwSelCov");
+  if (cov) cov.innerHTML = opts;
+  document.getElementById("ccwColMap").classList.remove("hidden");
+}
+function ccwApplyDefaults(d) {
+  if (!d) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (v != null && el) el.value = v; };
+  set("ccwSelVacc", d.vacc_time); set("ccwSelEvent", d.event); set("ccwSelFu", d.futime);
+  const cov = document.getElementById("ccwSelCov");
+  if (cov && d.covariates) [...cov.options].forEach((o) => { o.selected = d.covariates.includes(o.value); });
+}
+document.getElementById("useCcwExample").addEventListener("click", async () => {
+  const st = document.getElementById("ccwDataStatus");
+  try {
+    const d = await getJSON(`${API}/api/ccw_example`);
+    ccwState.source = "example_ccw"; ccwState.columns = d.columns;
+    st.textContent = tr(`已載入內建「早 vs 晚接種」範例（${d.n} 人，合成虛構）`,
+                        `Loaded built-in early-vs-late vaccination example (${d.n} people, synthetic)`);
+    ccwFillSelects(d.columns); ccwApplyDefaults(d.defaults);
+    runCcwAnalyze();
+  } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
+});
+document.getElementById("ccwFileInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const st = document.getElementById("ccwDataStatus"); st.textContent = tr("上傳中…", "Uploading…");
+  try {
+    const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    ccwState.source = d.token; ccwState.columns = d.columns;
+    st.textContent = tr(`已上傳「${file.name}」（${d.n} 列）`, `Uploaded "${file.name}" (${d.n} rows)`);
+    ccwFillSelects(d.columns);
+  } catch (e) { st.textContent = tr("上傳失敗：", "Upload failed: ") + e.message; }
+});
+function ccwCurrentMapping() {
+  const v = (id) => document.getElementById(id).value;
+  const cov = [...document.getElementById("ccwSelCov").selectedOptions].map((o) => o.value);
+  return { source: ccwState.source, vacc_time: v("ccwSelVacc"), event: v("ccwSelEvent"),
+    futime: v("ccwSelFu"), covariates: cov.length ? cov : ["age", "frailty"], lang: lang() };
+}
+const runCcwBtn = document.getElementById("runCcwAnalyze");
+if (runCcwBtn) runCcwBtn.addEventListener("click", runCcwAnalyze);
+async function runCcwAnalyze() {
+  const req = ccwCurrentMapping();
+  if (!req.source) return;
+  ccwState.req = req;
+  try {
+    const a = await postJSON(`${API}/api/ccw_analyze`, req);
+    renderCcwAnalyze(a);
+    state.ccwDash = null;   // dashboard (④) is computed lazily when that tab opens (each full_ccw is ~3s under Pyodide)
+  } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+function renderCcwAnalyze(a) {
+  document.getElementById("ccwAnalyzeOut").classList.remove("hidden");
+  const cards = [
+    [tr("CCW（因果風險差）", "CCW (causal risk difference)"), a.ccw, a.interpretation, true],
+    [tr("天真比較（immortal-time 偏誤）", "Naive contrast (immortal-time bias)"), a.naive,
+      tr("照實際早／晚分組直接比，被 immortal-time 與混淆扭曲。", "Comparing realized early/late groups — distorted by immortal time and confounding."), false],
+    [tr("真值（估計目標）", "Truth (the estimand target)"), a.true_rd,
+      tr("CCW 應該還原的風險差（負值＝早接種較保護）。", "The risk difference CCW should recover (negative = early is protective)."), false],
+  ];
+  document.getElementById("ccwAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${v >= 0 ? "+" : ""}${fmt(v, 2)}</div><p>${desc}</p></div>`
+  ).join("");
+  ccwCurveInto("ccwAnalyzeChart", a.curve);
+}
+
+// ---- ④ assumptions ----
+function initCcwAssume() {
+  if (ccwAssumeReady) return;
+  ccwAssumeReady = true;
+  if (state.ccwDash) { renderCcwAssumptions(state.ccwDash); return; }   // reuse if already computed
+  runCcwAssumptions(ccwState.req || { source: "example_ccw", lang: lang() });
+}
+async function runCcwAssumptions(req) {
+  const body = req ? { ...req, lang: lang() } : { source: "example_ccw", lang: lang() };
+  let out;
+  try { out = await postJSON(`${API}/api/ccw_assumptions`, body); } catch (e) { return; }
+  state.ccwDash = out;
+  renderCcwAssumptions(out);
+}
+function renderCcwAssumptions(out) {
+  const hint = document.getElementById("ccwAssumeHint");
+  if (hint) hint.classList.add("hidden");
+  const ov = document.getElementById("ccwOverall");
+  const worst = worstStatus(out.checks);
+  const head = {
+    green: tr("可測項目通過；關鍵假設仍需領域判斷。", "Testable checks pass; the key assumptions still need domain judgement."),
+    amber: tr("有項目需要留意，請展開卡片細看。", "Some items need attention — expand the cards."),
+    red: tr("有項目不符，CCW 結果要保守看待。", "Some items fail — interpret the CCW with caution."),
+    info: tr("CCW 多數核心假設不可檢驗，需靠領域知識與設計。", "Most core CCW assumptions are untestable — rely on domain knowledge and design."),
+  }[worst];
+  ov.classList.remove("hidden");
+  ov.className = `overall st-${worst}`; ov.style.background = "#fff";
+  ov.innerHTML = `<span class="dot bg-${worst}"></span> ${head}`;
+  document.getElementById("ccwAssumeCards").innerHTML = out.checks.map((c) => {
+    const metrics = c.metrics.map((m) =>
+      `<li>${m.name}<b>${m.value === null ? "–" : m.value}</b><span>${m.note || ""}</span></li>`).join("");
+    return `<div class="acard st-${c.status}">
+      <h3><span class="dot bg-${c.status}"></span>${c.title}
+        <span class="badge bg-${c.status}">${statusText(c.status)}</span></h3>
+      <p class="headline"><b>${c.headline}</b></p>
+      <p class="plain">${c.plain}</p>
+      <ul class="metrics">${metrics}</ul>
+      <details class="term"><summary>${tr("看專有名詞解釋", "Show term explanation")}</summary><p>${c.term}</p></details>
+    </div>`;
+  }).join("");
+}
+
+// ---- ⑤ grace-period sensitivity (button-triggered; ~1.7s) ----
+function initCcwMl() { /* concept cards are static HTML; the grace demo is button-triggered */ }
+const runCcwGraceBtn = document.getElementById("runCcwGrace");
+if (runCcwGraceBtn) {
+  runCcwGraceBtn.addEventListener("click", async () => {
+    runCcwGraceBtn.disabled = true;
+    await refreshCcwGrace();
+    runCcwGraceBtn.textContent = tr("重新顯示寬限期敏感度", "Re-show grace-period sensitivity");
+    runCcwGraceBtn.disabled = false;
+  });
+}
+async function refreshCcwGrace() {
+  let s;
+  try { s = await getJSON(`${API}/api/ccw_grace?lang=${lang()}`); } catch (e) { return; }
+  state.ccwGrace = s;
+  document.getElementById("ccwGraceOut").classList.remove("hidden");
+  drawCcwGrace(s);
+  document.getElementById("ccwGraceReading").innerHTML = s.reading;
+}
+function drawCcwGrace(s) {
+  if (!document.getElementById("ccwGraceChart")) return;
+  Plotly.react("ccwGraceChart", [
+    { x: s.graces, y: s.ccw, mode: "lines+markers", type: "scatter", line: { color: TEAL, width: 3 },
+      marker: { size: 7 }, name: tr("CCW（複製-設限-加權）", "CCW") },
+    { x: s.graces, y: s.naive, mode: "lines+markers", type: "scatter", line: { color: AMBER, width: 3 },
+      marker: { size: 7 }, name: tr("天真（immortal-time）", "naive (immortal time)") },
+  ], sceneLayout({
+    height: 300, legend: { orientation: "h", y: 1.16 }, margin: { t: 28, r: 18, b: 42, l: 54 },
+    xaxis: { title: tr("寬限期 g（月）", "grace period g (months)"), dtick: 1 },
+    yaxis: { title: tr("風險差（早 − 晚）", "risk difference (early − late)") },
+    shapes: [{ type: "line", x0: s.graces[0], x1: s.graces[s.graces.length - 1], y0: s.truth_ref, y1: s.truth_ref,
+               line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: s.graces[s.graces.length - 1], y: s.truth_ref, text: tr("真值（g=3）", "truth (g=3)"),
+               showarrow: false, font: { color: GREEN, size: 11 }, yshift: 11, xanchor: "right" }],
+  }), SCENE_CFG);
+}
+
+// ======================================================================
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
@@ -3027,6 +3285,11 @@ window.addEventListener("iv-lang", async () => {
   if (perrAnalyzeReady) runPerrAnalyze();              // PERR ③ analysis + dashboard
   else if (perrAssumeReady) runPerrAssumptions(perrState.req);
   if (perrMlReady) refreshPerrMl();                    // PERR ⑤ scale sensitivity
+  if (ccwLearnReady) drawSceneCcw();                   // CCW ① learn scene
+  if (ccwPlayReady) refreshCcwPlay();                  // CCW ② interactive
+  if (ccwAnalyzeReady) runCcwAnalyze();                // CCW ③ analysis + dashboard
+  else if (ccwAssumeReady) runCcwAssumptions(ccwState.req);
+  if (state.ccwGrace) refreshCcwGrace();               // CCW ⑤ grace sensitivity (re-render)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
 });
 

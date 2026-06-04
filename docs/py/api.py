@@ -36,6 +36,9 @@ import its_ml
 import perr_core
 import perr_gen
 import perr_assumptions
+import ccw_core
+import ccw_gen
+import ccw_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -67,6 +70,8 @@ TIT_DEFAULTS = {"covariates": ["x1", "x2"], "K": 5}
 ITS_DEFAULTS = {"outcome": "outcome", "time": "time", "post": "post", "t_since": "t_since"}
 PERR_DEFAULTS = {"group": "group", "events_prior": "events_prior", "pt_prior": "pt_prior",
                  "events_post": "events_post", "pt_post": "pt_post"}
+CCW_DEFAULTS = {"vacc_time": "vacc_month", "event": "event", "futime": "futime",
+                "covariates": ["age", "frailty"], "grace": 3, "horizon": 12}
 
 DISCLAIMER = "⚠ 純屬虛構的合成示範資料,非真實病人/個資,僅供教學展示。"
 
@@ -77,6 +82,7 @@ _DEMO_DID: pd.DataFrame | None = None
 _DEMO_TIT: pd.DataFrame | None = None
 _DEMO_ITS: pd.DataFrame | None = None
 _DEMO_PERR: pd.DataFrame | None = None
+_DEMO_CCW: pd.DataFrame | None = None
 
 
 def _demo() -> pd.DataFrame:
@@ -119,6 +125,13 @@ def _demo_perr() -> pd.DataFrame:
     if _DEMO_PERR is None:
         _DEMO_PERR = perr_gen.generate()
     return _DEMO_PERR
+
+
+def _demo_ccw() -> pd.DataFrame:
+    global _DEMO_CCW
+    if _DEMO_CCW is None:
+        _DEMO_CCW = ccw_gen.generate()
+    return _DEMO_CCW
 
 
 def _clean(obj):
@@ -589,6 +602,63 @@ def _perr_scale(q: dict) -> dict:
     return perr_core.scale_demo(seed=int(q.get("seed", 7)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Clone-Censor-Weight endpoints (CCW method)
+# ---------------------------------------------------------------------------
+def _load_ccw(source: str) -> pd.DataFrame:
+    if source in ("example_ccw", "example"):
+        return _demo_ccw()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _ccw_example() -> dict:
+    df = _demo_ccw()
+    return {
+        "columns": list(df.columns), "defaults": CCW_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "vacc_month": "vacc_month（診斷後第幾個月接種；空白＝追蹤期內未接種）",
+            "event": "event（追蹤期內是否發生重大健康事件）／futime（事件或追蹤結束月份）",
+            "age": "age、frailty（共變項；體弱者傾向更早接種＝適應症混淆）",
+        },
+    }
+
+
+def _ccw_analyze(req: dict) -> dict:
+    df = _load_ccw(req.get("source", "example_ccw"))
+    return ccw_core.full_ccw(df, req.get("vacc_time", "vacc_month"),
+                             req.get("event", "event"), req.get("futime", "futime"),
+                             tuple(req.get("covariates", ["age", "frailty"])),
+                             int(req.get("grace", 3)), int(req.get("horizon", 12)),
+                             n_boot=int(req.get("n_boot", 0)), lang=req.get("lang", "zh"))
+
+
+def _ccw_assumptions(req: dict) -> dict:
+    df = _load_ccw(req.get("source", "example_ccw"))
+    return ccw_assumptions.run_dashboard(df, req.get("vacc_time", "vacc_month"),
+                                         req.get("event", "event"), req.get("futime", "futime"),
+                                         tuple(req.get("covariates", ["age", "frailty"])),
+                                         int(req.get("grace", 3)), int(req.get("horizon", 12)),
+                                         lang=req.get("lang", "zh"))
+
+
+def _ccw_interactive(q: dict) -> dict:
+    te = float(np.clip(float(q.get("timing_effect", 1.0)), 0.0, 1.0))
+    df = ccw_gen.generate(n=3200, timing_effect=te)   # smaller sample → snappier slider under Pyodide
+    out = ccw_core.full_ccw(df, true_rd=ccw_core.estimand_truth(te), lang=q.get("lang", "zh"))
+    return {"timing_effect": te, "true_rd": out["true_rd"], "ccw": out["ccw"],
+            "naive": out["naive"], "curve": out["curve"],
+            "risk_early_ccw": out["risk_early_ccw"], "risk_late_ccw": out["risk_late_ccw"]}
+
+
+def _ccw_grace(q: dict) -> dict:
+    return ccw_core.grace_demo(seed=int(q.get("seed", 0)), lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -640,6 +710,11 @@ _ROUTES = {
     ("POST", "/api/perr_assumptions"): lambda q, b: _perr_assumptions(b),
     ("GET", "/api/perr_interactive"): lambda q, b: _perr_interactive(q),
     ("GET", "/api/perr_scale"): lambda q, b: _perr_scale(q),
+    ("GET", "/api/ccw_example"): lambda q, b: _ccw_example(),
+    ("POST", "/api/ccw_analyze"): lambda q, b: _ccw_analyze(b),
+    ("POST", "/api/ccw_assumptions"): lambda q, b: _ccw_assumptions(b),
+    ("GET", "/api/ccw_interactive"): lambda q, b: _ccw_interactive(q),
+    ("GET", "/api/ccw_grace"): lambda q, b: _ccw_grace(q),
 }
 
 

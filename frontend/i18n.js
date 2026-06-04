@@ -24,8 +24,8 @@
   window.IV = IV;
 
   // --- the document-level bits that aren't covered by [data-en] ---
-  const TITLE = { zh: "準實驗工具箱：IV · RDD · DiD · TiT · ITS · PERR",
-                  en: "Quasi-experimental Toolbox: IV · RDD · DiD · TiT · ITS · PERR" };
+  const TITLE = { zh: "準實驗工具箱：IV · RDD · DiD · TiT · ITS · PERR · CCW",
+                  en: "Quasi-experimental Toolbox: IV · RDD · DiD · TiT · ITS · PERR · CCW" };
   const HTMLLANG = { zh: "zh-Hant", en: "en" };
   const BTN = { zh: "EN", en: "中文" };          // button shows the OTHER language
   const BTNTITLE = { zh: "切換到英文", en: "切換到中文" };
