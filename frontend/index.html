@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>準實驗工具箱 Quasi-experimental Toolbox：IV · RDD · DiD · TiT · ITS · PERR</title>
-<link rel="stylesheet" href="/styles.css?v=37" />
+<link rel="stylesheet" href="/styles.css?v=38" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -1215,13 +1215,6 @@
           因果森林<b>或許</b>能探討效果是否隨次群體而異；E-value 式的敏感度分析<b>或許</b>能量化：一個與暴露同步的時代混淆（A4 的威脅）要多強，才能把結果解釋掉。兩者都是通用工具，未針對此設計驗證。</p></div>
     </div>
 
-    <div class="card">
-      <h3 data-en="The honest bottom line">誠實的結論</h3>
-      <p data-en="Until someone develops and validates these ideas, the right move for trend-in-trend is the classical estimator in tabs ②–④, reported transparently with its assumptions. We would rather tell you &quot;not yet&quot; than sell you a demo the literature doesn't support.">
-        在有人把這些想法做出來並驗證之前，趨勢中的趨勢正確的做法，就是分頁 ②–④ 的古典估計，透明地連同它的假設一起報告。
-        我們寧可老實跟你說「還沒有」，也不願賣你一個文獻並不支持的 demo。
-      </p>
-    </div>
   </section>
 
   <!-- ===================== ITS ① 是什麼 ===================== -->
@@ -1559,40 +1552,8 @@
       <div id="perrAnalyzeChart" class="chart"></div>
       <p class="caption" data-en="Event rates by group and period. The prior-period gap (treated above control) is the confounding PERR removes; the post-period gap reflects confounding plus the treatment effect.">各組各期的事件率。事前期的落差（處置高於對照）是 PERR 要消掉的混淆；事後期的落差反映混淆加上處置效果。</p>
     </div>
-  </section>
 
-  <!-- ===================== PERR ④ 假設檢驗 ===================== -->
-  <section id="perrassume" class="panel">
-    <h1 data-en="Can we trust this PERR? Five checks">這個 PERR 可不可信？五道體檢</h1>
-    <p class="lead" data-en="PERR rests on assumptions that are mostly <b>not testable from data alone</b>, so we are honest (blue cards) and point to what the literature DOES offer. The key one: the confounding is time-invariant and multiplicative. Others: a clean prior period, no event-dependent treatment or dropout, and enough prior events (the one testable check). Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
-      PERR 依賴的假設大多<b>無法只用資料檢驗</b>，所以我們誠實（藍卡），並指出文獻真有的檢查。最關鍵的：
-      混淆時間不變且乘法。其餘：乾淨的事前期、無事件相依的處置或退出、以及足夠的事前事件數（唯一可檢項）。
-      綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
-    </p>
-    <div id="perrOverall" class="overall hidden"></div>
-    <div id="perrAssumeCards" class="assume-cards"></div>
-    <p id="perrAssumeHint" class="muted" data-en="Loading…">載入中…</p>
-  </section>
-
-  <!-- ===================== PERR ⑤ 用 AI 強化 ===================== -->
-  <section id="perrml" class="panel">
-    <h1 data-en="Boosting PERR — an honest &quot;no AI version yet&quot;, plus the real refinements">強化 PERR —— 誠實的「目前沒有 AI 版本」，外加真正的精修</h1>
-    <p class="lead" data-en="As with trend-in-trend, we have to be honest: across the source papers, there is <b>no established machine-learning or doubly-robust version of PERR</b>. The most recent work (Cheung &amp; Ma 2025) clarifies the framework, it is not an AI method. So instead of a fake demo, here is what the literature genuinely offers to make PERR more robust — and some clearly-labelled <b>speculation</b>.">
-      和趨勢中的趨勢一樣，我們必須誠實：在來源論文裡，<b>並沒有成熟的機器學習或雙重穩健版本的 PERR</b>。
-      最新的研究（Cheung &amp; Ma 2025）是在釐清框架，不是 AI 方法。所以與其做一個假 demo，這裡列出文獻
-      真正提供、能讓 PERR 更穩健的做法——再加上清楚標示為<b>推測</b>的方向。
-    </p>
-
-    <div class="card warn">
-      <h3 data-en="What the source papers actually contain">來源論文實際上有什麼</h3>
-      <p data-en="The PERR papers (Yu 2012; Uddin 2015; van Aalst 2021; Rogers 2020; Cheung 2024; Cheung &amp; Ma 2025) use <b>classical rate-ratio / Cox estimation</b> with delta-method or bootstrap intervals. There is <b>no machine learning, no cross-fitting, no doubly-robust PERR</b> in this literature. That is the current state — not a gap we will paper over with a slick demo.">
-        PERR 的論文（Yu 2012、Uddin 2015、van Aalst 2021、Rogers 2020、Cheung 2024、Cheung &amp; Ma 2025）
-        都用<b>古典率比／Cox 估計</b>，搭配 delta-method 或自助法區間。這個文獻中<b>沒有機器學習、沒有交叉擬合、
-        沒有雙重穩健的 PERR</b>。這就是現況——不是我們會用漂亮 demo 掩蓋的缺口。
-      </p>
-    </div>
-
-    <h2 data-en="The real refinements the literature DOES offer">文獻真正提供的精修</h2>
+    <h2 data-en="Advanced refinements the literature offers (non-AI extensions)">文獻提供的進階／精修（非 AI 的延伸）</h2>
     <div class="cards">
       <div class="card"><h3 data-en="① PERR-ALT (paired within-subject framing)">① PERR-ALT（組內配對框架）</h3>
         <p data-en="Instead of two cross-group ratios, compute each group's own before→after ratio and divide them (paired Cox). Algebraically the same point estimate on these aggregate rates, but it needs no rare-disease approximation and handles paired data and tied events better.">不用兩個跨組率比，而是各組算自己的前→後率比再相除（配對 Cox）。在這些聚合率上點估計相同，但不需罕見近似，且更能處理配對資料與並列事件。</p></div>
@@ -1613,15 +1574,54 @@
       <div id="perrScaleChart" class="chart"></div>
     </div>
     <p class="caption" id="perrScaleReading"></p>
+  </section>
+
+  <!-- ===================== PERR ④ 假設檢驗 ===================== -->
+  <section id="perrassume" class="panel">
+    <h1 data-en="Can we trust this PERR? Five checks">這個 PERR 可不可信？五道體檢</h1>
+    <p class="lead" data-en="PERR rests on assumptions that are mostly <b>not testable from data alone</b>, so we are honest (blue cards) and point to what the literature DOES offer. The key one: the confounding is time-invariant and multiplicative. Others: a clean prior period, no event-dependent treatment or dropout, and enough prior events (the one testable check). Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      PERR 依賴的假設大多<b>無法只用資料檢驗</b>，所以我們誠實（藍卡），並指出文獻真有的檢查。最關鍵的：
+      混淆時間不變且乘法。其餘：乾淨的事前期、無事件相依的處置或退出、以及足夠的事前事件數（唯一可檢項）。
+      綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="perrOverall" class="overall hidden"></div>
+    <div id="perrAssumeCards" class="assume-cards"></div>
+    <p id="perrAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== PERR ⑤ 用 AI 強化 ===================== -->
+  <section id="perrml" class="panel">
+    <h1 data-en="Boosting PERR with AI — an honest &quot;we don't know yet&quot;">用 AI 強化 PERR —— 誠實的「目前還不知道」</h1>
+    <p class="lead" data-en="For three of the methods this tab showed concrete, published ML upgrades. For PERR we have to be honest: across the source papers, there is <b>no established machine-learning or doubly-robust version of PERR</b> (the latest work, Cheung &amp; Ma 2025, clarifies the framework — it is not an AI method). So instead of pretending, here is exactly what the literature does and does not offer — and some cautious, clearly-labelled <b>speculation</b>. The literature's real, <b>non-AI</b> refinements (PERR-ALT, PERR vs PERD, PERR-Comp + the scale-sensitivity demo) now live in tab ③.">
+      在其中三個方法，這個分頁能展示具體、已發表的 ML 升級。對 PERR，我們必須誠實：在來源論文裡，
+      <b>並沒有成熟的機器學習或雙重穩健版本的 PERR</b>（最新的 Cheung &amp; Ma 2025 是在釐清框架，不是 AI 方法）。
+      所以與其假裝有，不如老實說明文獻有什麼、沒有什麼——再加上清楚標示為<b>推測</b>的方向。文獻真正提供的
+      <b>非 AI 精修</b>（PERR-ALT、PERR vs PERD、PERR-Comp，以及尺度敏感度示範）<b>已移到分頁 ③</b>。
+    </p>
+
+    <div class="card warn">
+      <h3 data-en="What the source papers actually contain">來源論文實際上有什麼</h3>
+      <p data-en="The PERR papers (Yu 2012; Uddin 2015; van Aalst 2021; Rogers 2020; Cheung 2024; Cheung &amp; Ma 2025) use <b>classical rate-ratio / Cox estimation</b> with delta-method or bootstrap intervals. There is <b>no machine learning, no cross-fitting, no doubly-robust PERR</b> in this literature. That is the current state — not a gap we will paper over with a slick demo.">
+        PERR 的論文（Yu 2012、Uddin 2015、van Aalst 2021、Rogers 2020、Cheung 2024、Cheung &amp; Ma 2025）
+        都用<b>古典率比／Cox 估計</b>，搭配 delta-method 或自助法區間。這個文獻中<b>沒有機器學習、沒有交叉擬合、
+        沒有雙重穩健的 PERR</b>。這就是現況——不是我們會用漂亮 demo 掩蓋的缺口。
+      </p>
+    </div>
 
     <div class="card info">
       <h3 data-en="Are there any possible AI remedies here? Honestly: we don't know — but plausibly…">有沒有可能的「AI 藥方」？老實說：不知道——但有可能…</h3>
-      <p data-en="The following are <b>our cautious speculation</b>, not results from any paper: ① an ML model for the prior-period rate could sharpen the confounding fingerprint; ② a doubly-robust score pairing a treatment model with an outcome model <i>might</i> reduce reliance on the time-invariance assumption, if a valid orthogonal score can be derived for this design; ③ an E-value-style sensitivity analysis could quantify how much time-variation in confounding would explain the result away. All unvalidated for PERR. Until then, the honest move is the classical estimator in tabs ②–④, reported transparently with the scale sensitivity above.">
-        以下是<b>我們謹慎的推測</b>，不是任何論文的結果：① 用 ML 估事前期率，<b>或許</b>能讓混淆指紋更鋭利；
-        ② 把處置模型與結果模型配成一條雙重穩健分數，<i>或許</i>能減少對時間不變假設的依賴——前提是能為此設計
-        導出有效的正交分數；③ E-value 式的敏感度分析<b>或許</b>能量化「混淆的時間變動要多大才能把結果解釋掉」。
-        以上對 PERR 皆未驗證。在那之前，誠實的做法就是分頁 ②–④ 的古典估計，連同上面的尺度敏感度一起透明報告。
+      <p data-en="The following are <b>our cautious speculation</b> (possible remedies, not established ones), not results from any paper. Treat them as research directions, not recommendations:">
+        以下是<b>我們謹慎的推測</b>（可能的藥方，不是成熟的藥方），不是任何論文的結果。請當成研究方向，而非建議：
       </p>
+    </div>
+
+    <div class="cards">
+      <div class="card"><h3 data-en="① ML for the prior-period rate（推測 / speculative）">① 用 ML 估「事前期率」（推測）</h3>
+        <p data-en="An ML model for the prior-period rate could sharpen the &quot;confounding fingerprint&quot; that PERR divides out — much as ML propensity scores help elsewhere. Unverified for PERR.">用機器學習估事前期的事件率，<b>或許</b>能讓 PERR 要除掉的「混淆指紋」更鋭利——就像 ML 傾向分數在別處的幫助。對 PERR 尚未驗證。</p></div>
+      <div class="card"><h3 data-en="② A doubly-robust score（推測 / speculative）">② 一條雙重穩健分數（推測）</h3>
+        <p data-en="Pairing a treatment model with an outcome model into a doubly-robust score <i>might</i> reduce reliance on the time-invariance assumption (P1) — provided a valid orthogonal score can be derived for this design, which is an open question.">把處置模型與結果模型配成一條雙重穩健分數，<i>或許</i>能減少對「混淆時間不變」假設（P1）的依賴——前提是能為此設計導出有效的正交分數，這仍是未解的問題。</p></div>
+      <div class="card"><h3 data-en="③ E-value-style sensitivity（推測 / speculative）">③ E-value 式敏感度（推測）</h3>
+        <p data-en="An E-value-style sensitivity analysis could quantify how much time-variation in the confounding would be needed to explain the result away. A generic tool, not validated for PERR.">E-value 式的敏感度分析<b>或許</b>能量化：混淆的時間變動要多大，才能把結果解釋掉。這是通用工具，未針對 PERR 驗證。</p></div>
     </div>
   </section>
 
@@ -1828,7 +1828,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=37"></script>
-<script src="app.js?v=37"></script>
+<script src="i18n.js?v=38"></script>
+<script src="app.js?v=38"></script>
 </body>
 </html>

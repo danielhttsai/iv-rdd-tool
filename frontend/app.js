@@ -1360,74 +1360,68 @@ const L = (o) => (lang() === "en" ? o.en : o.zh);
 const DNODES = {
   n1: {
     step: { zh: "錨點", en: "Anchor" },
-    q: { zh: "你的研究「錨點」是什麼？（這是藥物流行病學決策樹的第一個分岔）", en: "What is your study's anchor? (the first split in the pharmacoepidemiology design tree)" },
+    q: { zh: "你的研究「錨點」是什麼？（決策樹的第一個分岔）", en: "What is your study's anchor? (the first split)" },
     opts: [
-      { l: { zh: "暴露錨定：先固定一個暴露／介入，看它造成什麼結果", en: "Exposure-anchored: fix one exposure/intervention, study its effects" }, to: "aEx" },
-      { l: { zh: "結果錨定：先固定一個結果，回頭找是哪些暴露造成的", en: "Outcome-anchored: fix one outcome, look back for the exposures behind it" }, to: "aOut" },
+      { l: { zh: "暴露錨定：先固定一個暴露／介入，看它造成什麼結果", en: "Exposure-anchored: fix one exposure/intervention, study its effects" }, to: "exOut" },
+      { l: { zh: "結果錨定：先固定一個結果，回頭找是哪些暴露造成的", en: "Outcome-anchored: fix one outcome, look back for the exposures" }, to: "outHow" },
     ],
   },
-
   // ================= A · exposure-anchored =================
-  aEx: {
-    step: { zh: "A 暴露錨定 · 有外生工具？", en: "A Exposure-anchored · an instrument?" },
-    q: { zh: "你有沒有一個「外生、近似隨機」的工具，會改變人們是否接受暴露，而且只透過暴露影響結果？（隨機寄送的提醒、抽籤、政策樂透、基因變異）",
-         en: "Do you have an external, near-random instrument that changes whether people get the exposure and affects the outcome only through it? (a randomised reminder, a lottery, a policy lottery, a genetic variant)" },
+  exOut: {
+    step: { zh: "結果型態", en: "Outcome type" },
+    q: { zh: "你的結果是哪一種？這一步決定哪些設計「用得了」。", en: "Which kind is your outcome? This step decides which designs are even eligible." },
+    opts: [
+      { l: { zh: "一次性／可能致命／慢性持續（不是「會反覆又會好」）", en: "One-off / possibly fatal / chronic-persistent (not 'recurs and resolves')" }, to: "exInst" },
+      { l: { zh: "急性、會反覆發生、也會痊癒、非致命", en: "Acute, recurrent, resolving, non-fatal" }, to: "exSelf" },
+    ],
+  },
+  exInst: {
+    step: { zh: "外生工具？", en: "An instrument?" },
+    q: { zh: "你有沒有一個「外生、近似隨機」的工具，會改變人們是否接受暴露，且只透過暴露影響結果？（隨機提醒、抽籤、政策樂透、基因變異）", en: "Do you have an external, near-random instrument that changes whether people get the exposure and affects the outcome only through it? (a randomised reminder, lottery, policy lottery, genetic variant)" },
     opts: [
       { l: { zh: "有，這工具幾乎可當隨機", en: "Yes — that instrument is essentially random" }, to: "rIV" },
-      { l: { zh: "沒有這種工具，繼續往下", en: "No such instrument — continue" }, to: "aEx2" },
+      { l: { zh: "沒有這種工具 → 繼續往下", en: "No such instrument — continue" }, to: "exCut" },
     ],
   },
-  aEx2: {
-    step: { zh: "有活性對照藥物？", en: "Active comparator?" },
-    q: { zh: "你有沒有一個「藥理／適應症相近」的活性對照，可以拿來比較（也就是比「打 A 對 B」，而不是直接比「打 vs 不打」）？",
-         en: "Is there a pharmacologically / indication-similar active comparator to compare against (i.e. 'A vs B', not 'treated vs untreated')?" },
+  exCut: {
+    step: { zh: "切點／時點／對照", en: "Cutoff / timing / comparator" },
+    q: { zh: "你的暴露有沒有以下任一種「準隨機」結構？（選最接近的一個）", en: "Does your exposure have any of these quasi-random structures? (pick the closest one)" },
     opts: [
-      { l: { zh: "有合適的活性對照藥物", en: "Yes — a suitable active comparator" }, to: "rACC" },
-      { l: { zh: "沒有（直接比『用 vs 不用』易有 immortal time bias）", en: "No (a treated-vs-untreated comparison risks immortal-time bias)" }, to: "aEx3" },
-    ],
-  },
-  aEx3: {
-    step: { zh: "干擾隨不隨時間變？", en: "Time-invariant confounding?" },
-    q: { zh: "你最頭痛、難測量的干擾因子，比較像哪一種？（這是決策樹的關鍵分岔）",
-         en: "Your hardest-to-measure confounding is more like which? (the key split in the tree)" },
-    opts: [
-      { l: { zh: "難處理，但大致「不隨時間變動」（體質、基因、長期習慣）", en: "Hard, but roughly time-invariant (constitution, genetics, long-run habits)" }, to: "aEx4" },
-      { l: { zh: "會「隨時間變動」，或治療策略本身就是動態的", en: "It shifts over time, or the strategy itself is dynamic" }, to: "aEx5" },
-    ],
-  },
-  aEx4: {
-    step: { zh: "借哪種準隨機結構？", en: "Which quasi-random structure?" },
-    q: { zh: "在「干擾不隨時間變」之下，你的資料裡有哪種可借來當準隨機的結構？（選最接近的一個）",
-         en: "Under time-invariant confounding, which quasi-random structure do you have in your data? (pick the closest one)" },
-    opts: [
-      { l: { zh: "暴露由分數上的明確門檻決定（年齡 65／風險指標切點）", en: "Exposure set by a sharp cutoff on a score (age 65 / a risk-index threshold)" }, to: "rRDD" },
+      { l: { zh: "分數上的明確門檻（年齡 65／風險指標切點），只需門檻附近的答案", en: "A sharp cutoff on a score (age 65 / a risk index); answer needed near the cutoff" }, to: "rRDD" },
       { l: { zh: "政策在已知時點開啟，且有沒被開啟的對照組（面板資料）", en: "Policy switched on at a known time, with an untreated control group (panel data)" }, to: "rDiD" },
-      { l: { zh: "介入在已知時點，但只有單一群體、前後有許多時間點", en: "Intervention at a known time, but a single population with many time points" }, to: "rITS" },
-      { l: { zh: "你有兩組「暴露前 vs 暴露後」的事件率，混淆乘法穩定", en: "Both groups' before-vs-after event rates, with stable multiplicative confounding" }, to: "rPERR" },
-      { l: { zh: "沒有明確切點，但結果急性短暫、可復發、不致命（看不了死亡），可用個人自身當對照", en: "No sharp cutoff, but an acute, recurrent, non-fatal outcome (not death) — person as own control" }, to: "rSCCS" },
+      { l: { zh: "政策在已知時點開啟，但只有單一群體、前後有許多時間點", en: "Policy at a known time, but a single population with many time points" }, to: "rITS" },
+      { l: { zh: "有藥理／適應症相近的活性對照（比「打 A vs 打 B」）", en: "A pharmacologically / indication-similar active comparator ('A vs B')" }, to: "rACC" },
+      { l: { zh: "都沒有，但有兩組「暴露前 vs 暴露後」事件率、且混淆乘法穩定", en: "None, but both groups' before-vs-after event rates with stable multiplicative confounding" }, to: "rPERR" },
+      { l: { zh: "以上皆非 → 繼續", en: "None of the above — continue" }, to: "exDyn" },
     ],
   },
-  aEx5: {
-    step: { zh: "時間變動／動態策略", en: "Time-varying / dynamic" },
-    q: { zh: "在「干擾隨時間變／策略動態」之下，哪一種最接近你的情況？",
-         en: "Under time-varying confounding / dynamic strategies, which is closest to your case?" },
+  exDyn: {
+    step: { zh: "動態策略？", en: "Dynamic strategy?" },
+    q: { zh: "剩下的情況：你的處置是「診斷後動態／隨時間調整」的策略嗎？", en: "What's left: is the treatment a sustained / dynamic strategy adjusted over time after diagnosis?" },
     opts: [
-      { l: { zh: "治療是「診斷後一段時間的動態／持續策略」：早 vs 晚開始、是否持續或密集用藥（隨時間調整）", en: "A sustained / dynamic strategy over a window after diagnosis: early vs late initiation, sustained or intensive use (adjusted over time)" }, to: "rCCW" },
-      { l: { zh: "治療比較像「某時點的單次（點）決定」，但病人在不同時間點陸續符合資格", en: "More of a one-shot (point) treatment decision, but patients become eligible at different time points" }, to: "rSEQ" },
-      { l: { zh: "暴露隨日曆時間逐漸普及、跨族群速度不同；結果罕見、會反覆／會痊癒（看不了死亡）", en: "Exposure spreads over calendar time at different rates; outcome rare, recurrent/resolving (not death)" }, to: "rTiT" },
-      { l: { zh: "以上皆非——但其實已有一場（別族群的）RCT 可以借", en: "None of the above — but I already have an RCT (in another population) to borrow" }, to: "rctSplit" },
+      { l: { zh: "是，動態策略（早 vs 晚開始、是否持續或密集用藥）", en: "Yes — a dynamic strategy (early vs late, sustained / intensive use)" }, to: "rCCW" },
+      { l: { zh: "比較像一次性的點治療，但病人在多個時間點陸續符合收案", en: "More a one-off point treatment, but patients become eligible at many times" }, to: "rSEQ" },
+      { l: { zh: "以上皆非 → 最後一步", en: "None of the above — go to the last step" }, to: "rLast" },
     ],
   },
-
+  exSelf: {
+    step: { zh: "自身對照／趨勢", en: "Self-control / trend" },
+    q: { zh: "結果是急性、會反覆又會好——你想怎麼利用「個人自身」或「日曆趨勢」？", en: "The outcome is acute and recurrent/resolving — how do you want to use 'the person as their own control' or a calendar trend?" },
+    opts: [
+      { l: { zh: "用個人自身當對照、暴露有明確時窗（非致命、可復發）", en: "Person as own control, exposure has a clear window (non-fatal, recurrent)" }, to: "rSCCS" },
+      { l: { zh: "暴露隨日曆時間逐漸普及、跨族群速度不同，且結果罕見", en: "Exposure spreads over calendar time at different rates; rare outcome" }, to: "rTiT" },
+      { l: { zh: "以上皆非 → 最後一步", en: "None of the above — go to the last step" }, to: "rLast" },
+    ],
+  },
   // ================= B · outcome-anchored =================
-  aOut: {
-    step: { zh: "B 結果錨定 · 怎麼取對照？", en: "B Outcome-anchored · how to take controls?" },
-    q: { zh: "你想從「已發生結果的個案」回看暴露——打算怎麼取對照？",
-         en: "You will look back from cases (people who had the outcome) — how do you want to take controls?" },
+  outHow: {
+    step: { zh: "B 結果錨定 · 取對照", en: "B Outcome-anchored · controls" },
+    q: { zh: "你從「已發生結果的個案」回看暴露——怎麼取對照？（多用於急性、可復發的結果）", en: "Looking back from cases — how do you take controls? (usually for acute, recurrent outcomes)" },
     opts: [
-      { l: { zh: "想細看「劑量–反應」：在大世代裡只量個案＋抽樣對照的暴露量", en: "Want a dose-response: in a big cohort, measure exposure level only for cases + sampled controls" }, to: "rNCC" },
-      { l: { zh: "用「個人自身近期」當對照，且暴露沒有明顯時間趨勢", en: "The person's own recent past as control, with no clear exposure time-trend" }, to: "rCCO" },
-      { l: { zh: "用個人自身對照，但暴露本身有日曆時間趨勢、需扣掉", en: "Person-as-own-control, but the exposure has a calendar trend that must be netted out" }, to: "rCTC" },
+      { l: { zh: "在大世代裡用配對對照、巢式抽樣（想細看劑量–反應）", en: "Matched controls nested in a large cohort (to examine dose-response)" }, to: "rNCC" },
+      { l: { zh: "用個人自身近期當對照、暴露沒有明顯時間趨勢", en: "The person's own recent past as control, no clear exposure trend" }, to: "rCCO" },
+      { l: { zh: "用個人自身對照，但暴露本身有日曆時間趨勢", en: "Person-as-own-control, but the exposure has a calendar trend" }, to: "rCTC" },
+      { l: { zh: "以上皆非 → 最後一步", en: "None of the above — go to the last step" }, to: "rLast" },
     ],
   },
 
@@ -1538,15 +1532,23 @@ const DNODES = {
                 en: "Vaccine scenario: in a cohort of a million, carefully measure <b>number of doses / antibody level</b> only for disease cases and sampled controls, to map how risk changes with dose." },
     watch: { zh: "↗ 常見研究設計，本工具箱未實作。仍需處理測量到的混淆（配對／調整）。",
              en: "↗ A common design, not implemented here. Still needs to handle measured confounding (matching/adjustment)." } } },
-  rctSplit: {
-    step: { zh: "已有別族群 RCT", en: "Have an RCT elsewhere" },
-    q: { zh: "你已經有一場（做在別族群的）RCT。你拿得到那場 RCT 的「<b>個體層級資料（individual-level data）</b>」嗎？",
-         en: "You already have an RCT (in a different population). Do you have its <b>individual-level data</b>?" },
+  rLast: {
+    step: { zh: "最後一步（沒辦法的辦法）", en: "Last step (last resort)" },
+    q: { zh: "上面的觀察性設計都不符合——這是沒辦法的辦法：你其實已經有一場（別族群的）RCT 可以借嗎？", en: "None of the observational designs above fit — as a last resort: do you actually have an RCT (in another population) to borrow?" },
     opts: [
-      { l: { zh: "拿不到——只有發表的彙總結果（效果量、亞組表）", en: "No — only published summary results (effect sizes, subgroup tables)" }, to: "rEXTCTRL" },
-      { l: { zh: "拿得到——有每位受試者的個體資料", en: "Yes — I have per-participant individual data" }, to: "rTRANS" },
+      { l: { zh: "沒有現成的 RCT", en: "No existing RCT" }, to: "rNeedNew" },
+      { l: { zh: "有，但只有發表的彙總結果（沒有個體資料）", en: "Yes, but only published summary results (no individual data)" }, to: "rEXTCTRL" },
+      { l: { zh: "有，且拿得到個體層級資料", en: "Yes, and I can get its individual-level data" }, to: "rTRANS" },
     ],
   },
+  rNeedNew: { rec: { kind: "fallback", badge: "★",
+    title: { zh: "建議：可能需要原創資料／一場新的研究", en: "Suggested: you likely need original data / a new study" },
+    why: { zh: "既沒有可借的準隨機變異、也沒有現成的 RCT——那就沒有捷徑了。誠實的選項是：設計並執行一場新的研究（理想是隨機試驗；不能隨機時，用 <b>target trial emulation</b> 明確設計一個觀察性分析去「模擬」一場理想試驗）。",
+           en: "With no borrowable quasi-random variation and no existing RCT, there is no shortcut. The honest option is to design and run a new study (ideally a randomised trial; when you can't randomise, use <b>target trial emulation</b> to explicitly design an observational analysis that emulates an ideal trial)." },
+    scenario: { zh: "疫苗情境：手上既沒有隨機提醒、明確切點、政策時點，也沒有別處的 RCT——那就先寫清楚一場理想試驗該怎麼做，再去收能回答它的資料。",
+                en: "Vaccine scenario: no random reminder, sharp cutoff, policy timing, nor an RCT elsewhere — write down the ideal trial first, then go and collect data that can answer it." },
+    watch: { zh: "別硬把不適合的設計套上去；先確認手上真的沒有任何準隨機來源，再決定收新資料。",
+             en: "Don't force an ill-fitting design; first make sure you truly have no quasi-random source, then decide to collect new data." } } },
   rEXTCTRL: { rec: { kind: "external", badge: "↗",
     title: { zh: "建議：外部對照（external control）—— 把那場 RCT／外部資料當對照組 ↗", en: "Suggested: external control — borrow the RCT / external data as a control arm ↗" },
     why: { zh: "如果你<b>拿不到個體資料、只有彙總結果</b>，可把那場 RCT（或外部世代／登錄資料）當成<b>外部對照組</b>，補上你這邊缺的對照——常見於單臂試驗或罕病。代價是兩邊的收案、時代、測量方式可能不同，需要謹慎校準。",
@@ -1576,27 +1578,23 @@ const FULLMAP = {
       head: { zh: "A · 暴露錨定", en: "A · Exposure-anchored" },
       sub: { zh: "先固定暴露／介入 → 看它造成的結果", en: "fix the exposure → study its effects" },
       steps: [
-        { q: { zh: "有外生、近似隨機的工具？", en: "An external, near-random instrument?" },
-          yes: { edge: { zh: "是（隨機提醒／抽籤／基因）", en: "yes (reminder / lottery / gene)" },
-                 leaves: [{ key: "rIV", tag: "IV ✓", kind: "tb" }] } },
-        { q: { zh: "有藥理相近的活性對照？", en: "A similar active comparator?" },
-          yes: { edge: { zh: "是", en: "yes" },
-                 leaves: [{ key: "rACC", tag: "對照藥物世代 ↗", kind: "ex" }] } },
-        { q: { zh: "難處理的干擾「不隨時間變動」嗎？", en: "Is the hard confounding time-invariant?" },
+        { q: { zh: "結果是哪一種型態？", en: "What type of outcome?" },
           forks: [
-            { edge: { zh: "是 · 時間不變 → 借哪種準隨機結構？", en: "yes · time-invariant → which quasi-random structure?" },
+            { edge: { zh: "一次性／致命／慢性 → 世代與時點設計", en: "one-off / fatal / chronic → cohort & timing designs" },
               leaves: [
-                { key: "rRDD", cond: { zh: "分數明確門檻", en: "sharp cutoff" }, tag: "RDD ✓", kind: "tb" },
-                { key: "rDiD", cond: { zh: "政策某時間點才上路，而且有沒受影響的對照組", en: "the policy only starts at some date, and there's an unaffected control group" }, tag: "DiD ✓", kind: "tb" },
-                { key: "rITS", cond: { zh: "只有一群人，但介入前後都追蹤了很多時間點", en: "just one group, but tracked at many time points before & after" }, tag: "ITS ✓", kind: "tb" },
-                { key: "rPERR", cond: { zh: "前後事件率＋乘法穩定", en: "before/after rates, stable" }, tag: "PERR ✓", kind: "tb" },
-                { key: "rSCCS", cond: { zh: "急性短暫、可復發、不致命（看不了死亡）＋自身對照", en: "acute, recurrent, non-fatal (no death) + own control" }, tag: "SCCS ↗", kind: "ex" },
+                { key: "rIV", cond: { zh: "有外生、近似隨機的工具", en: "an external, near-random instrument" }, tag: "IV ✓", kind: "tb" },
+                { key: "rRDD", cond: { zh: "分數上的明確門檻（年齡 65／指標）", en: "a sharp cutoff on a score" }, tag: "RDD ✓", kind: "tb" },
+                { key: "rDiD", cond: { zh: "政策某時點開啟＋有對照組", en: "policy at a known time + control group" }, tag: "DiD ✓", kind: "tb" },
+                { key: "rITS", cond: { zh: "政策某時點＋單一群體、前後多時點", en: "policy at a time + single population, many points" }, tag: "ITS ✓", kind: "tb" },
+                { key: "rACC", cond: { zh: "有藥理相近的活性對照（打 A vs 打 B）", en: "a similar active comparator (A vs B)" }, tag: "對照藥物世代 ↗", kind: "ex" },
+                { key: "rPERR", cond: { zh: "前後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, tag: "PERR ✓", kind: "tb" },
+                { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy (early vs late, intensive)" }, tag: "CCW ↗", kind: "ex" },
+                { key: "rSEQ", cond: { zh: "點治療，但多時點陸續收案", en: "point treatment, eligible at many times" }, tag: "序列試驗 ↗", kind: "ex" },
               ] },
-            { edge: { zh: "否 · 隨時間變／動態策略", en: "no · time-varying / dynamic" },
+            { edge: { zh: "急性、會反覆又會好、非致命 → 自身對照／趨勢", en: "acute, recurrent/resolving, non-fatal → self-control / trend" },
               leaves: [
-                { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy after dx (early vs late, intensive)" }, tag: "CCW ↗", kind: "ex" },
-                { key: "rSEQ", cond: { zh: "一次性的用藥決定，大家在不同時間才陸續符合資格", en: "a one-off treatment decision; people qualify at different times" }, tag: "序列試驗 ↗", kind: "ex" },
-                { key: "rTiT", cond: { zh: "日曆趨勢＋結果罕見、會反覆／會痊癒（看不了死亡）", en: "calendar trend, rare, recurrent/resolving (no death)" }, tag: "TiT ✓", kind: "tb" },
+                { key: "rSCCS", cond: { zh: "個人自身當對照＋暴露有明確時窗", en: "person as own control + clear exposure window" }, tag: "SCCS ↗", kind: "ex" },
+                { key: "rTiT", cond: { zh: "暴露隨日曆趨勢、跨族群速度不同、結果罕見", en: "exposure has a calendar trend, rare outcome" }, tag: "TiT ✓", kind: "tb" },
               ] },
           ] },
       ],
@@ -1605,14 +1603,14 @@ const FULLMAP = {
       cls: "b",
       edge: { zh: "結果錨定", en: "outcome-anchored" },
       head: { zh: "B · 結果錨定", en: "B · Outcome-anchored" },
-      sub: { zh: "先固定結果 → 回頭找暴露", en: "fix the outcome → find exposures" },
+      sub: { zh: "先固定結果 → 回頭找暴露（多為急性、可復發）", en: "fix the outcome → find exposures (usually acute, recurrent)" },
       steps: [
         { q: { zh: "從個案回看，怎麼取對照？", en: "From cases, how to take controls?" },
           forks: [
             { edge: { zh: "配對、巢式抽樣", en: "matched, nested" },
-              leaves: [{ key: "rNCC", cond: { zh: "想看「劑量–反應」，只要量個案＋抽樣對照的暴露量", en: "want a dose-response; measure exposure level only for cases + sampled controls" }, tag: "巢式對照 ↗", kind: "ex" }] },
+              leaves: [{ key: "rNCC", cond: { zh: "想看「劑量–反應」，只量個案＋抽樣對照的暴露量", en: "want a dose-response; measure exposure only for cases + sampled controls" }, tag: "巢式對照 ↗", kind: "ex" }] },
             { edge: { zh: "自身對照 · 暴露無趨勢", en: "own control · no trend" },
-              leaves: [{ key: "rCCO", cond: { zh: "急性、會波動的暴露", en: "acute, fluctuating" }, tag: "案例交叉 ↗", kind: "ex" }] },
+              leaves: [{ key: "rCCO", cond: { zh: "急性、會波動的暴露", en: "acute, fluctuating exposure" }, tag: "案例交叉 ↗", kind: "ex" }] },
             { edge: { zh: "自身對照 · 暴露有趨勢", en: "own control · has a trend" },
               leaves: [{ key: "rCTC", cond: { zh: "扣掉日曆趨勢（世代版＝TiT ✓）", en: "net out the trend (cohort = TiT ✓)" }, tag: "CTC／CCTC ↗", kind: "ex" }] },
           ] },
@@ -1620,17 +1618,17 @@ const FULLMAP = {
     },
   ],
   rct: {
-    q: { zh: "若其實已有一場（別族群的）RCT —— 你拿得到它的「個體層級資料」嗎？",
-         en: "If you already have an RCT (in another population) — do you have its individual-level data?" },
+    q: { zh: "最後一步（沒辦法的辦法）：上面都不符合——你其實已有一場（別族群的）RCT 可以借嗎？", en: "Last step (last resort): nothing above fits — do you actually have an RCT (in another population) to borrow?" },
     forks: [
-      { edge: { zh: "沒有（只有彙總結果）", en: "no (only summary results)" },
+      { edge: { zh: "沒有現成 RCT", en: "no existing RCT" },
+        leaves: [{ key: "rNeedNew", cond: { zh: "可能要收原創資料／做新研究（或 target trial emulation）", en: "you may need original data / a new study (or target trial emulation)" }, tag: "新研究 ★", kind: "ex" }] },
+      { edge: { zh: "有，但只有彙總結果", en: "yes, summary results only" },
         leaves: [{ key: "rEXTCTRL", cond: { zh: "把那場 RCT／外部資料當對照組", en: "borrow the RCT / external data as a control arm" }, tag: "external control ↗", kind: "ex" }] },
-      { edge: { zh: "有（個體資料）", en: "yes (individual data)" },
+      { edge: { zh: "有，且有個體資料", en: "yes, with individual data" },
         leaves: [{ key: "rTRANS", cond: { zh: "用效果修飾因子把結果轉到你的族群", en: "reweight by effect modifiers to your population" }, tag: "transportability ↗", kind: "ex" }] },
     ],
   },
 };
-
 let dtreeStack = [{ id: "n1", ans: null }];
 
 function initDtree() {
@@ -2796,6 +2794,7 @@ function initPerrAnalyze() {
   if (perrAnalyzeReady) return;
   perrAnalyzeReady = true;
   document.getElementById("usePerrExample").click();
+  perrMlReady = true; refreshPerrMl();   // PERR vs PERD scale-sensitivity demo (non-AI) now lives in ③
 }
 function perrFillSelects(cols) {
   const opts = cols.map((c) => `<option value="${c}">${c}</option>`).join("");
@@ -2907,11 +2906,8 @@ function renderPerrAssumptions(out) {
 }
 
 // ---- ⑤ scale sensitivity (documented refinement, not AI) ----
-function initPerrMl() {
-  if (perrMlReady) return;
-  perrMlReady = true;
-  refreshPerrMl();
-}
+function initPerrMl() { /* PERR ⑤ is now text-only (honest "no AI" + speculation); the
+  scale-sensitivity demo moved to ③ and is drawn from initPerrAnalyze. */ }
 async function refreshPerrMl() {
   let s;
   try { s = await getJSON(`${API}/api/perr_scale?lang=${lang()}`); } catch (e) { return; }
