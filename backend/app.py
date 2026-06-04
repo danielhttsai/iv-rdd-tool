@@ -44,6 +44,9 @@ import ccw_assumptions
 import cctc_core
 import cctc_gen
 import cctc_assumptions
+import seq_core
+import seq_gen
+import seq_assumptions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data", "demo_vaccine.csv")
@@ -813,6 +816,74 @@ def cctc_interactive(trend: float = 1.0, lang: str = "zh"):
 def cctc_demo(lang: str = "zh"):
     """CCTC ⑤: case-time-control vs case-case-time-control refinement."""
     return _clean(cctc_core.cctc_demo(lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# Sequential (nested) trials endpoints
+# ---------------------------------------------------------------------------
+class SeqRequest(BaseModel):
+    source: str = "example_seq"
+    init_time: str = "init_month"
+    event: str = "event"
+    futime: str = "futime"
+    covariates: list[str] = ["age", "frailty"]
+    n_boot: int = 0
+    lang: str = "zh"
+
+
+def _load_seq(source: str) -> pd.DataFrame:
+    if source in ("example_seq", "example"):
+        return seq_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/seq_example")
+def seq_example():
+    df = seq_gen.generate()
+    return _clean({
+        "columns": list(df.columns),
+        "defaults": {"init_time": "init_month", "event": "event", "futime": "futime", "covariates": ["age", "frailty"]},
+        "n": len(df), "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "init_month": "init_month（第幾個月啟動治療；空白＝未啟動）",
+            "event": "event／futime（事件或追蹤結束月份）",
+            "age": "age、frailty（基線共變項；體弱者較早啟動＝混淆）",
+        },
+    })
+
+
+@app.post("/api/seq_analyze")
+def seq_analyze(req: SeqRequest):
+    df = _load_seq(req.source)
+    return _clean(seq_core.full_seq(df, req.init_time, req.event, req.futime,
+                                    tuple(req.covariates), n_boot=req.n_boot, lang=req.lang))
+
+
+@app.post("/api/seq_assumptions")
+def seq_assumptions_check(req: SeqRequest):
+    df = _load_seq(req.source)
+    return _clean(seq_assumptions.run_dashboard(df, req.init_time, req.event, req.futime,
+                                                tuple(req.covariates), lang=req.lang))
+
+
+@app.get("/api/seq_interactive")
+def seq_interactive(conf: float = 1.0, lang: str = "zh"):
+    """Slider on confounding strength: 0 → naive≈seq≈truth; larger → naive biased, seq ok."""
+    cf = float(np.clip(conf, 0.0, 1.0))
+    df = seq_gen.generate(n=4000, conf=cf)
+    out = seq_core.full_seq(df, lang=lang)
+    return _clean({"conf": cf, "true_rd": out["true_rd"], "seq_rd": out["seq_rd"],
+                   "naive": out["naive"], "per_trial": out["per_trial"], "ci": out["ci"]})
+
+
+@app.get("/api/seq_demo")
+def seq_demo(lang: str = "zh"):
+    """Sequential ⑤: single baseline trial vs full nested pooling."""
+    return _clean(seq_core.seq_demo(lang=lang))
 
 
 @app.get("/api/tit_interactive")

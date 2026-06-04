@@ -12,7 +12,7 @@
 
   // Pyodide 套件版本需與 index.html 載入的 pyodide.js 相符
   var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
-  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "api"];
+  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "api"];
 
   var pyodide = null;
   var routeFn = null;
@@ -128,6 +128,8 @@
       ["POST", "/api/ccw_analyze", "{}", JSON.stringify({ source: "example_ccw", lang: "zh" })],
       ["GET", "/api/cctc_example", "{}", "{}"],
       ["POST", "/api/cctc_analyze", "{}", JSON.stringify({ source: "example_cctc", lang: "zh" })],
+      ["GET", "/api/seq_example", "{}", "{}"],
+      ["POST", "/api/seq_analyze", "{}", JSON.stringify({ source: "example_seq", lang: "zh" })],
     ];
     for (var i = 0; i < calls.length; i++) {
       try { routeFn(calls[i][0], calls[i][1], calls[i][2], calls[i][3]); }

@@ -27,6 +27,8 @@ const PANEL_INIT = {
   ccwassume: () => initCcwAssume(), ccwml: () => initCcwMl(),
   cctclearn: () => initCctcLearn(), cctcplay: () => initCctcPlay(), cctcanalyze: () => initCctcAnalyze(),
   cctcassume: () => initCctcAssume(), cctcml: () => initCctcMl(),
+  seqlearn: () => initSeqLearn(), seqplay: () => initSeqPlay(), seqanalyze: () => initSeqAnalyze(),
+  seqassume: () => initSeqAssume(), seqml: () => initSeqMl(),
   choose: () => initChoose(),
 };
 let curMethod = "iv", curSub = "learn";
@@ -1540,14 +1542,14 @@ const DNODES = {
                 en: "Vaccine scenario: compare '<b>early vs late</b> vaccination after diagnosis', or 'keep up booster doses on schedule or not' — a time-varying strategy. Clone each person into each strategy, censor on deviation, then reweight — avoiding immortal-time bias." },
     watch: { zh: "✓ 本工具箱已實作（見 CCW 分頁 ①–⑤）。是 <b>target trial emulation</b> 的常見實作之一。",
              en: "✓ Implemented in this toolbox (see the CCW tabs ①–⑤). A common way to implement <b>target trial emulation</b>." } } },
-  rSEQ: { rec: { kind: "external", badge: "↗",
-    title: { zh: "建議：序列（巢式）試驗 sequential trial ↗", en: "Suggested: sequential (nested) trials ↗" },
+  rSEQ: { rec: { kind: "toolbox", method: "seq", badge: "序列試驗 ✓",
+    title: { zh: "建議：序列（巢式）試驗 sequential trial ✓（本工具）", en: "Suggested: sequential (nested) trials ✓ (this tool)" },
     why: { zh: "序列試驗適合「<b>某時點的單次（點）治療決定</b>」（不是診斷後持續調整的策略）——病人在不同時間點陸續符合資格時，在每個符合點各開一場「迷你試驗」（當下打 vs 不打）、對齊時間零點再合併。和 CCW 的差別：這裡是<b>點治療</b>，CCW 處理的是<b>診斷後一段時間的動態／持續策略</b>。<b>好處</b>：同一個人可在多個符合點被重複納入，<b>潛在能放大有效樣本數</b>。",
            en: "Sequential trials fit a <b>one-shot (point) treatment decision</b> (not a strategy adjusted over time): when patients become eligible at different times, open a 'mini-trial' at each point (treat now vs not), align time zero, then pool. Versus CCW: here the treatment is a <b>point decision</b>, whereas CCW handles a <b>sustained / dynamic strategy over a window after diagnosis</b>. <b>Bonus</b>: the same person can re-enter at several eligibility points, so it can <b>boost the effective sample size</b>." },
     scenario: { zh: "疫苗情境：每個月把「當月剛符合接種資格的人」開一場迷你試驗（<b>當下打 vs 暫不打</b>，一次決定），再把多場合併估計。",
                 en: "Vaccine scenario: each month, open a mini-trial among people who just became eligible (<b>vaccinate now vs not</b> — a one-shot decision), then pool across months." },
-    watch: { zh: "↗ 常見研究設計，本工具箱未實作。也屬 <b>target trial emulation</b> 家族。",
-             en: "↗ A common design, not implemented here. Also part of the <b>target trial emulation</b> family." } } },
+    watch: { zh: "✓ 本工具箱已實作（見「序列試驗」分頁 ①–⑤）。也屬 <b>target trial emulation</b> 家族。",
+             en: "✓ Implemented in this toolbox (see the Sequential-trials tabs ①–⑤). Also part of the <b>target trial emulation</b> family." } } },
   rCCTC: { rec: { kind: "toolbox", method: "cctc", badge: "CCO/CCTC ✓",
     title: { zh: "建議：案例交叉／案例-時間對照 CCO/CCTC ✓（本工具）", en: "Suggested: case-crossover / case-(case-)time-control (CCO/CCTC) ✓ (this tool)" },
     why: { zh: "暴露<b>短暫、會波動</b>，想用個人自身近期當對照——比較發病前的危險窗 vs 較早的參考窗（案例交叉，CCO），自我控制掉所有穩定特徵。若暴露的<b>盛行率隨日曆時間上升</b>，純 CCO 會被高估；用對照族群（或較晚發病的未來 case）把趨勢扣掉，就是 <b>CCTC</b>。其「世代版」正是本工具箱的 TiT。",
@@ -1622,7 +1624,7 @@ const FULLMAP = {
                 { key: "rACC", cond: { zh: "有藥理相近的活性對照（打 A vs 打 B）", en: "a similar active comparator (A vs B)" }, tag: "對照藥物世代 ↗", kind: "ex" },
                 { key: "rPERR", cond: { zh: "前後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, tag: "PERR ✓", kind: "tb" },
                 { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy (early vs late, intensive)" }, tag: "CCW ✓", kind: "tb" },
-                { key: "rSEQ", cond: { zh: "點治療，但多時點陸續收案", en: "point treatment, eligible at many times" }, tag: "序列試驗 ↗", kind: "ex" },
+                { key: "rSEQ", cond: { zh: "點治療，但多時點陸續收案", en: "point treatment, eligible at many times" }, tag: "序列試驗 ✓", kind: "tb" },
               ] },
             { edge: { zh: "急性、會反覆又會好、非致命 → 自身對照／趨勢", en: "acute, recurrent/resolving, non-fatal → self-control / trend" },
               leaves: [
@@ -1819,6 +1821,7 @@ const METHOD_REF = {
   perr: { zh: "事前事件率比 PERR", en: "Prior Event Rate Ratio (PERR)", src: "Yu et al. (2012); van Aalst et al. (2021)" },
   ccw:  { zh: "複製-設限-加權 CCW", en: "Clone-Censor-Weight (CCW)", src: "Hernán (2018), BMJ; Gaber et al. (2024)" },
   cctc: { zh: "案例交叉與時間對照 CCO/CCTC", en: "Case-crossover & (case-)time-control (CCO/CCTC)", src: "Maclure (1991); Suissa (1995); Jeong et al. (2023)" },
+  seq:  { zh: "序列（巢式）試驗", en: "Sequential (nested) trials", src: "Hernán & Robins (target trial); Danaei et al.; Gran et al." },
 };
 let refsContext = "iv";   // which page's references/citation to show
 
@@ -3442,6 +3445,213 @@ function drawCctcDemo(s) {
 }
 
 // ======================================================================
+// Sequential (nested) trials — tabs ①–⑤
+// ======================================================================
+const seqState = { source: null, columns: [], req: null };
+let seqLearnReady = false, seqPlayReady = false, seqAnalyzeReady = false,
+    seqAssumeReady = false, seqMlReady = false;
+
+// per-trial risk differences + pooled / truth / naive lines
+function seqPerTrialInto(elId, d) {
+  if (!document.getElementById(elId) || !d) return;
+  const pt = d.per_trial || [];
+  const xs = pt.map((p) => p.k), ys = pt.map((p) => p.rd);
+  const xr = pt.length ? [Math.min(...xs) - 0.5, Math.max(...xs) + 0.5] : [-0.5, 5.5];
+  const traces = [
+    { x: xs, y: ys, mode: "markers", type: "scatter", name: tr("每場試驗的風險差", "per-trial risk diff"),
+      marker: { color: SLATE, size: 9 } },
+    { x: xr, y: [d.seq_rd, d.seq_rd], mode: "lines", type: "scatter", name: tr("合併（序列）", "pooled (sequential)"), line: { color: TEAL, width: 3 } },
+    { x: xr, y: [d.naive, d.naive], mode: "lines", type: "scatter", name: tr("天真（曾 vs 從未）", "naive (ever vs never)"), line: { color: AMBER, width: 3, dash: "dot" } },
+  ];
+  Plotly.react(elId, traces, sceneLayout({
+    height: 300, legend: { orientation: "h", y: 1.16 }, margin: { t: 28, r: 18, b: 42, l: 54 },
+    xaxis: { title: tr("巢式試驗（資格月 k）", "nested trial (eligibility month k)"), dtick: 1 },
+    yaxis: { title: tr("風險差", "risk difference") },
+    shapes: [{ type: "line", x0: xr[0], x1: xr[1], y0: d.true_rd, y1: d.true_rd, line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: xr[1], y: d.true_rd, text: tr("真值", "truth"), showarrow: false, yshift: 11, xanchor: "right", font: { color: GREEN, size: 11 } }],
+  }), SCENE_CFG);
+}
+
+// ① learn: a mini-trial opens at each eligibility month; an untreated person re-enters
+function drawSceneSeq() {
+  if (!document.getElementById("seqScene")) return;
+  const shapes = [], anns = [];
+  for (let k = 0; k < 6; k++) {
+    shapes.push({ type: "rect", x0: k + 0.1, x1: k + 0.9, y0: 2.2, y1: 3.0, fillcolor: "rgba(63,130,104,.14)", line: { color: TEAL, width: 1.2 } });
+    anns.push(_lbl(k + 0.5, 2.6, "k=" + k, TEAL, 9.5));
+  }
+  // an untreated person's row spanning several trials, then initiating
+  shapes.push({ type: "line", x0: 0.1, x1: 3.0, y0: 1.2, y1: 1.2, line: { color: SLATE, width: 4 } });
+  shapes.push({ type: "line", x0: 3.0, x1: 6.0, y0: 1.2, y1: 1.2, line: { color: TEAL, width: 4 } });
+  anns.push(Object.assign(_lbl(0.1, 1.5, tr("某人：未啟動 → 進入 k=0,1,2 各場（當對照）", "a person: untreated → enters trials k=0,1,2 (as control)"), SLATE, 10), { xanchor: "left" }));
+  anns.push(Object.assign(_lbl(3.0, 0.85, tr("第 3 月啟動 → 之後成為 k=3 的『啟動者』、退出後續", "initiates at month 3 → an 'initiator' in trial k=3, exits later trials"), "#2f6149", 10), { xanchor: "left" }));
+  anns.push(_lbl(3, 3.45, tr("每個資格月開一場 mini-trial（當下啟動 vs 不啟動），對齊時間零點再合併",
+                             "a mini-trial opens at each eligibility month (initiate-now vs not), time-zero aligned, then pooled"), INK, 10));
+  Plotly.react("seqScene", [{ x: [null], y: [null], mode: "markers", type: "scatter", showlegend: false }], schemaLayout({
+    height: 280, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: true, title: tr("資格月", "eligibility month"), range: [0, 6], dtick: 1, fixedrange: true },
+    yaxis: { visible: false, range: [0.5, 3.7] },
+    margin: { t: 30, r: 16, b: 36, l: 16 },
+  }), SCENE_CFG);
+}
+function initSeqLearn() { if (seqLearnReady) return; seqLearnReady = true; drawSceneSeq(); }
+
+// ② interactive — confounding slider
+const seqConfSlider = document.getElementById("seqConfSlider");
+let seqPlayTimer = null;
+function initSeqPlay() { if (seqPlayReady) return; seqPlayReady = true; refreshSeqPlay(); }
+function scheduleSeqPlay() {
+  document.getElementById("seqConfVal").textContent = Number(seqConfSlider.value).toFixed(1);
+  clearTimeout(seqPlayTimer); seqPlayTimer = setTimeout(refreshSeqPlay, 300);
+}
+if (seqConfSlider) seqConfSlider.addEventListener("input", scheduleSeqPlay);
+async function refreshSeqPlay() {
+  const cf = seqConfSlider ? Number(seqConfSlider.value) : 1.0;
+  let d;
+  try { d = await getJSON(`${API}/api/seq_interactive?conf=${cf}&lang=${lang()}`); } catch (e) { return; }
+  state.seqPlay = d;
+  const set = (id, v, col) => { const el = document.getElementById(id); if (el) { el.textContent = fmt(v, 2); if (col) el.style.color = col; } };
+  set("seqEst", d.seq_rd, Math.abs(d.seq_rd - d.true_rd) < 0.06 ? TEAL : AMBER);
+  set("seqTruth", d.true_rd, GREEN);
+  set("seqNaiveEst", d.naive, RED);
+  seqPerTrialInto("seqPlayChart", d);
+}
+
+// ③ analyze
+function initSeqAnalyze() { if (seqAnalyzeReady) return; seqAnalyzeReady = true; document.getElementById("useSeqExample").click(); }
+function seqFillSelects(cols) {
+  const opts = cols.map((c) => `<option value="${c}">${c}</option>`).join("");
+  ["seqSelInit", "seqSelEvent", "seqSelFu"].forEach((id) => document.getElementById(id).innerHTML = opts);
+  const cov = document.getElementById("seqSelCov"); if (cov) cov.innerHTML = opts;
+  document.getElementById("seqColMap").classList.remove("hidden");
+}
+function seqApplyDefaults(d) {
+  if (!d) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (v != null && el) el.value = v; };
+  set("seqSelInit", d.init_time); set("seqSelEvent", d.event); set("seqSelFu", d.futime);
+  const cov = document.getElementById("seqSelCov");
+  if (cov && d.covariates) [...cov.options].forEach((o) => { o.selected = d.covariates.includes(o.value); });
+}
+document.getElementById("useSeqExample").addEventListener("click", async () => {
+  const st = document.getElementById("seqDataStatus");
+  try {
+    const d = await getJSON(`${API}/api/seq_example`);
+    seqState.source = "example_seq"; seqState.columns = d.columns;
+    st.textContent = tr(`已載入內建點治療範例（${d.n} 人，合成虛構）`, `Loaded built-in point-treatment example (${d.n} people, synthetic)`);
+    seqFillSelects(d.columns); seqApplyDefaults(d.defaults);
+    runSeqAnalyze();
+  } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
+});
+document.getElementById("seqFileInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const st = document.getElementById("seqDataStatus"); st.textContent = tr("上傳中…", "Uploading…");
+  try {
+    const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    seqState.source = d.token; seqState.columns = d.columns;
+    st.textContent = tr(`已上傳「${file.name}」（${d.n} 列）`, `Uploaded "${file.name}" (${d.n} rows)`);
+    seqFillSelects(d.columns);
+  } catch (e) { st.textContent = tr("上傳失敗：", "Upload failed: ") + e.message; }
+});
+function seqCurrentMapping() {
+  const v = (id) => document.getElementById(id).value;
+  const cov = [...document.getElementById("seqSelCov").selectedOptions].map((o) => o.value);
+  return { source: seqState.source, init_time: v("seqSelInit"), event: v("seqSelEvent"),
+    futime: v("seqSelFu"), covariates: cov.length ? cov : ["age", "frailty"], lang: lang() };
+}
+const runSeqBtn = document.getElementById("runSeqAnalyze");
+if (runSeqBtn) runSeqBtn.addEventListener("click", runSeqAnalyze);
+async function runSeqAnalyze() {
+  const req = seqCurrentMapping();
+  if (!req.source) return;
+  seqState.req = req;
+  try {
+    const a = await postJSON(`${API}/api/seq_analyze`, req);
+    renderSeqAnalyze(a);
+    runSeqAssumptions(req);
+  } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+function renderSeqAnalyze(a) {
+  document.getElementById("seqAnalyzeOut").classList.remove("hidden");
+  const cards = [
+    [tr("序列合併（因果風險差）", "Sequential pooled (causal risk diff)"), a.seq_rd, a.interpretation, true],
+    [tr("天真（曾 vs 從未治療）", "Naive (ever vs never treated)"), a.naive,
+      tr("被 immortal-time bias 與混淆扭曲。", "Distorted by immortal-time bias and confounding."), false],
+    [tr("真值（點治療效應）", "Truth (point-treatment effect)"), a.true_rd,
+      tr(`合併了 ${a.n_trials} 場巢式試驗；95% 區間 ${fmt(a.ci[0], 2)}～${fmt(a.ci[1], 2)}。`,
+         `Pooled over ${a.n_trials} nested trials; 95% interval ${fmt(a.ci[0], 2)}–${fmt(a.ci[1], 2)}.`), false],
+  ];
+  document.getElementById("seqAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${v >= 0 ? "+" : ""}${fmt(v, 2)}</div><p>${desc}</p></div>`
+  ).join("");
+  seqPerTrialInto("seqAnalyzeChart", a);
+}
+
+// ④ assumptions
+function initSeqAssume() {
+  if (seqAssumeReady) return;
+  seqAssumeReady = true;
+  runSeqAssumptions(seqState.req || { source: "example_seq", lang: lang() });
+}
+async function runSeqAssumptions(req) {
+  const body = req ? { ...req, lang: lang() } : { source: "example_seq", lang: lang() };
+  let out;
+  try { out = await postJSON(`${API}/api/seq_assumptions`, body); } catch (e) { return; }
+  state.seqDash = out;
+  renderSeqAssumptions(out);
+}
+function renderSeqAssumptions(out) {
+  const hint = document.getElementById("seqAssumeHint"); if (hint) hint.classList.add("hidden");
+  const ov = document.getElementById("seqOverall");
+  const worst = worstStatus(out.checks);
+  const head = {
+    green: tr("可測項目通過；關鍵假設仍需領域判斷。", "Testable checks pass; key assumptions need domain judgement."),
+    amber: tr("有項目需要留意，請展開卡片細看。", "Some items need attention — expand the cards."),
+    red: tr("有項目不符，結果要保守看待。", "Some items fail — interpret with caution."),
+    info: tr("多數核心假設不可檢驗，需靠領域知識與設計。", "Most core assumptions are untestable — rely on domain knowledge and design."),
+  }[worst];
+  ov.classList.remove("hidden"); ov.className = `overall st-${worst}`; ov.style.background = "#fff";
+  ov.innerHTML = `<span class="dot bg-${worst}"></span> ${head}`;
+  document.getElementById("seqAssumeCards").innerHTML = out.checks.map((c) => {
+    const metrics = c.metrics.map((m) => `<li>${m.name}<b>${m.value === null ? "–" : m.value}</b><span>${m.note || ""}</span></li>`).join("");
+    return `<div class="acard st-${c.status}"><h3><span class="dot bg-${c.status}"></span>${c.title}
+      <span class="badge bg-${c.status}">${statusText(c.status)}</span></h3>
+      <p class="headline"><b>${c.headline}</b></p><p class="plain">${c.plain}</p>
+      <ul class="metrics">${metrics}</ul>
+      <details class="term"><summary>${tr("看專有名詞解釋", "Show term explanation")}</summary><p>${c.term}</p></details></div>`;
+  }).join("");
+}
+
+// ⑤ refinement demo
+function initSeqMl() { /* concept cards static; demo button-triggered */ }
+const runSeqDemoBtn = document.getElementById("runSeqDemo");
+if (runSeqDemoBtn) runSeqDemoBtn.addEventListener("click", refreshSeqDemo);
+async function refreshSeqDemo() {
+  let s;
+  try { s = await getJSON(`${API}/api/seq_demo?lang=${lang()}`); } catch (e) { return; }
+  state.seqDemo = s;
+  document.getElementById("seqDemoOut").classList.remove("hidden");
+  drawSeqDemo(s);
+  document.getElementById("seqDemoReading").innerHTML = s.reading;
+}
+function drawSeqDemo(s) {
+  if (!document.getElementById("seqDemoChart")) return;
+  const labels = [tr("天真（曾 vs 從未）", "naive (ever vs never)"), tr("只用第 0 月那場", "month-0 trial only"), tr("合併所有巢式試驗", "pooled (all trials)")];
+  const vals = [s.naive, s.single, s.pooled];
+  Plotly.react("seqDemoChart", [{
+    x: labels, y: vals, type: "bar", marker: { color: [RED, SLATE, TEAL] },
+    text: vals.map((v) => (v >= 0 ? "+" : "") + v.toFixed(2)), textposition: "outside",
+  }], sceneLayout({
+    height: 300, margin: { t: 28, r: 18, b: 56, l: 50 },
+    yaxis: { title: tr("風險差", "risk difference"), range: [Math.min(...vals) * 1.2, 0.05] },
+    shapes: [{ type: "line", x0: -0.5, x1: 2.5, y0: s.true_rd, y1: s.true_rd, line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: 2.5, y: s.true_rd, text: tr("真值 " + s.true_rd, "truth " + s.true_rd), showarrow: false, yshift: 11, xanchor: "right", font: { color: GREEN, size: 11 } }],
+  }), SCENE_CFG);
+}
+
+// ======================================================================
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
@@ -3511,6 +3721,11 @@ window.addEventListener("iv-lang", async () => {
   if (cctcAnalyzeReady) runCctcAnalyze();              // CCO/CCTC ③ analysis + dashboard
   else if (cctcAssumeReady) runCctcAssumptions(cctcState.req);
   if (state.cctcDemo) refreshCctcDemo();               // CCO/CCTC ⑤ demo (re-render)
+  if (seqLearnReady) drawSceneSeq();                   // Sequential ① learn scene
+  if (seqPlayReady) refreshSeqPlay();                  // Sequential ② interactive
+  if (seqAnalyzeReady) runSeqAnalyze();                // Sequential ③ analysis + dashboard
+  else if (seqAssumeReady) runSeqAssumptions(seqState.req);
+  if (state.seqDemo) refreshSeqDemo();                 // Sequential ⑤ demo (re-render)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
 });
 

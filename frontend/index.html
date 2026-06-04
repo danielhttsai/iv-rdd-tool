@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=45" />
+<link rel="stylesheet" href="/styles.css?v=46" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -21,6 +21,7 @@
         <option value="perr" data-en="PERR · Prior event rate ratio">PERR · 事前事件率比</option>
         <option value="ccw" data-en="CCW · Clone-censor-weight">CCW · 複製-設限-加權</option>
         <option value="cctc" data-en="CCO/CCTC · Case-crossover &amp; time-control">CCO/CCTC · 案例交叉與時間對照</option>
+        <option value="seq" data-en="Sequential trials · nested target trials">序列試驗 · 巢式目標試驗</option>
       </select>
     </label>
     <div class="subtabs">
@@ -2384,6 +2385,165 @@
     </div>
   </section>
 
+  <!-- ===================== Sequential ① 是什麼 ===================== -->
+  <section id="seqlearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Sequential (nested) trials: one emulated trial per eligibility time, then pool">序列（巢式）試驗：每個資格時點開一場模擬試驗，再合併</h1>
+    <p class="lead" data-en="When a <b>point treatment</b> (treat now vs not) could be started at many different times, you can't just compare 'ever-treated vs never' — that has <b>immortal-time bias</b> (the ever-treated had to survive long enough to start). Instead, emulate a small <b>target trial at each eligibility month</b>: at that moment, compare those who initiate vs those who don't, align time-zero, adjust for baseline covariates, then <b>pool</b> across all the nested trials. A person can re-enter several trials, boosting the effective sample.">
+      當一個<b>點治療</b>（當下治療 vs 不治療）可以在很多不同時間點啟動時，你不能只比「曾治療 vs 從未治療」
+      ——那會有 <b>immortal-time bias</b>（曾治療者必須先活得夠久才能開始）。做法：在<b>每個資格月</b>各模擬一場
+      小型目標試驗：在那一刻，比較啟動 vs 不啟動的人、對齊時間零點、調整基線共變項，再把所有巢式試驗<b>合併</b>。
+      同一個人可在多場重複收案，放大有效樣本。
+    </p>
+
+    <div class="card scene">
+      <h3 data-en="How it works — a mini-trial opens at each eligibility month">怎麼做 —— 每個資格月開一場 mini-trial</h3>
+      <div id="seqScene" class="chart"></div>
+    </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>巢式（序列）試驗 <span class="en">nested / sequential trials</span></h4>
+        <p data-en="<b>Plain:</b> open a fresh emulated trial at each time someone becomes eligible, then combine them.<br /><b>Definition:</b> a sequence of target-trial emulations indexed by start time; within each, compare initiators vs non-initiators with time-zero aligned at that start.<br /><b>Why it matters:</b> it uses every eligibility time (a person can re-enter), and aligning time-zero removes immortal time.<br /><b>Example:</b> a mini-trial each month, k = 0…5, pooled.<br /><b>Pooling:</b> inverse-variance across trials.">
+          <b>白話：</b>每當有人符合資格，就開一場新的模擬試驗，最後合併起來。<br />
+          <b>定義：</b>以「開始時間」索引的一連串目標試驗模擬；每場內比較啟動 vs 不啟動，時間零點對齊在該開始點。<br />
+          <b>為什麼重要：</b>它用到每個資格時點（同一人可重複收案），對齊時間零點消除 immortal time。<br />
+          <b>例子：</b>每月一場 mini-trial，k＝0…5，合併。<br />
+          <b>合併：</b>跨試驗反變異加權。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>點治療 vs 動態策略 <span class="en">point treatment vs dynamic strategy</span></h4>
+        <p data-en="<b>Plain:</b> sequential trials answer a one-shot 'treat now vs not' question; CCW answers a sustained/dynamic strategy over a window.<br /><b>Definition:</b> a point treatment is a single decision at time-zero; a sustained strategy specifies actions over follow-up.<br /><b>Why it matters:</b> picking the right design depends on whether the question is one-shot or ongoing.<br /><b>Example:</b> 'vaccinate at this visit?' (sequential) vs 'keep up boosters?' (CCW).<br /><b>Both:</b> are target-trial emulations.">
+          <b>白話：</b>序列試驗回答一次性的「當下治療 vs 不治療」；CCW 回答一段時間的持續／動態策略。<br />
+          <b>定義：</b>點治療是時間零點的單次決定；持續策略則指定整段追蹤的動作。<br />
+          <b>為什麼重要：</b>選對設計取決於問題是「一次性」還是「持續」。<br />
+          <b>例子：</b>「這次門診要不要接種？」（序列）vs「要不要持續打追加劑？」（CCW）。<br />
+          <b>兩者：</b>都是目標試驗模擬。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>反機率加權（IPTW） <span class="en">inverse-probability-of-treatment weighting</span></h4>
+        <p data-en="<b>Plain:</b> within each mini-trial, reweight people so initiators and non-initiators are comparable on measured covariates.<br /><b>Definition:</b> weights 1/P(initiate now | X) and 1/P(not | X) from a within-trial propensity model.<br /><b>Why it matters:</b> it adjusts for confounding-by-indication at each eligibility time, so each trial estimates a clean effect.<br /><b>Example:</b> frail patients more likely to initiate → downweighted to balance the arms.<br /><b>Check:</b> positivity (tab ④, C2).">
+          <b>白話：</b>每場 mini-trial 內，把人重新加權，讓啟動與不啟動者在可測共變項上可比。<br />
+          <b>定義：</b>權重 1/P(當下啟動 | X) 與 1/P(不啟動 | X)，來自場內傾向模型。<br />
+          <b>為什麼重要：</b>它在每個資格時點調整適應症混淆，讓每場估出乾淨的效果。<br />
+          <b>例子：</b>體弱者較易啟動 → 降權以平衡兩臂。<br />
+          <b>檢查：</b>正性（見 ④ 的 C2）。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== Sequential ② 互動講解 ===================== -->
+  <section id="seqplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: sequential trials stay on target while the naive contrast drifts">互動：序列試驗穩住目標，天真比較卻飄走</h1>
+    <p class="lead" data-en="Drag the slider to change how strongly treatment is confounded by indication (frail patients initiate sooner). The <b>sequential</b> pooled estimate tracks the truth at every setting; the <b>naive</b> ever-vs-never comparison is badly immortal-time biased throughout. Watch the per-trial risk differences and the numbers.">
+      拉動滑桿，改變治療被適應症混淆的程度（體弱者較早啟動）。<b>序列</b>合併估計在每個設定下都緊貼真值；
+      <b>天真</b>的曾 vs 從未比較則整段都嚴重中 immortal-time bias。看各場的風險差與數字。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="Confounding by indication:">適應症混淆程度：</span><b id="seqConfVal">1.0</b>
+        <input type="range" id="seqConfSlider" min="0" max="1" value="1" step="0.1" />
+        <small data-en="0 = initiation independent of frailty (naive less biased — but immortal time remains). 1 = strong confounding. Sequential recovers the truth either way.">0＝啟動與體弱無關（天真偏誤較小——但 immortal time 仍在）。1＝強混淆。序列法兩種情況都還原真值。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Sequential (pooled)">序列（合併）</div><div class="stat-num" id="seqEst">–</div><div class="stat-foot" data-en="should hug the truth">應緊貼真值</div></div>
+      <div class="stat"><div class="stat-label" data-en="Truth (point-treatment effect)">真值（點治療效應）</div><div class="stat-num" id="seqTruth">–</div><div class="stat-foot" data-en="negative = treatment protects">負值＝治療有保護</div></div>
+      <div class="stat"><div class="stat-label" data-en="Naive (ever vs never)">天真（曾 vs 從未）</div><div class="stat-num" id="seqNaiveEst">–</div><div class="stat-foot" data-en="immortal-time biased">中 immortal-time</div></div>
+    </div>
+
+    <div id="seqPlayChart" class="chart"></div>
+    <p class="caption" data-en="Each dot is one nested trial's IPTW risk difference (treat-now vs not) at its eligibility month; the teal line is their inverse-variance pooled estimate; the green dashed line is the truth. The amber line is the naive ever-vs-never contrast — far below, inflated by immortal time.">
+      每個點是一場巢式試驗在其資格月的 IPTW 風險差（當下治療 vs 不治療）；青線是它們的反變異合併估計；綠虛線是真值。
+      琥珀線是天真的曾 vs 從未比較——遠在下方，被 immortal time 吹大。
+    </p>
+  </section>
+
+  <!-- ===================== Sequential ③ 資料分析 ===================== -->
+  <section id="seqanalyze" class="panel">
+    <h1 data-en="Data analysis: run full sequential nested trials">資料分析：跑一次完整的序列巢式試驗</h1>
+    <p class="lead" data-en="Load the built-in point-treatment example (or upload a CSV with one row per person: when they initiated treatment, whether/when the event happened, and baseline covariates). The tool opens a nested trial at each eligibility month, applies IPTW, inverse-variance pools the per-trial effects, and contrasts the result with the immortal-time-biased naive comparison.">
+      載入內建的點治療範例（或上傳每列一個人的 CSV：何時啟動治療、是否／何時發生事件、基線共變項）。
+      工具會在每個資格月開一場巢式試驗、做 IPTW、把各場效果反變異合併，並與「中 immortal-time 偏誤」的
+      天真比較並列。
+    </p>
+
+    <div class="datasource">
+      <button id="useSeqExample" class="btn primary" data-en="Load built-in point-treatment example">載入內建點治療範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="seqFileInput" accept=".csv" hidden /></label>
+      <span id="seqDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="seqColMap" class="colmap hidden">
+      <div class="field"><label data-en="Initiation month (blank = never)">啟動月份（init_month；空白＝未啟動）</label><select id="seqSelInit"></select></div>
+      <div class="field"><label data-en="Event indicator">事件指標（event）</label><select id="seqSelEvent"></select></div>
+      <div class="field"><label data-en="Follow-up time">追蹤時間（futime）</label><select id="seqSelFu"></select></div>
+      <div class="field wide"><label data-en="Covariates (multi-select, for IPTW)">共變項（covariates，可多選，IPTW 用）</label><select id="seqSelCov" multiple size="4"></select></div>
+      <button id="runSeqAnalyze" class="btn primary" data-en="Run sequential analysis">執行序列分析</button>
+    </div>
+
+    <div id="seqAnalyzeOut" class="hidden">
+      <h2 data-en="Pooled sequential vs naive">合併序列 vs 天真</h2>
+      <div class="result-cards" id="seqAnalyzeCards"></div>
+      <div id="seqAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="Per-trial IPTW risk differences (dots) and their inverse-variance pooled estimate (teal line). The green dashed line is the truth; the naive number in the cards ignores immortal time.">
+        各場 IPTW 風險差（點）與其反變異合併估計（青線）。綠虛線是真值；卡片裡的天真數字忽略了 immortal time。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== Sequential ④ 假設檢驗 ===================== -->
+  <section id="seqassume" class="panel">
+    <h1 data-en="Can we trust this sequential estimate? Five checks">這個序列估計可不可信？五道體檢</h1>
+    <p class="lead" data-en="The core assumptions are mostly <b>not testable from data alone</b> (blue cards): no unmeasured confounding at each eligibility time, correct time-zero alignment, and no carry-over between nested trials. Positivity and having enough trials/events are checkable. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      核心假設大多<b>無法只用資料檢驗</b>（藍卡）：各資格時點無未測混淆、時間零點對齊正確、巢式試驗間無 carry-over。
+      正性與試驗／事件數則可檢。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="seqOverall" class="overall hidden"></div>
+    <div id="seqAssumeCards" class="assume-cards"></div>
+    <p id="seqAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== Sequential ⑤ 進階 ===================== -->
+  <section id="seqml" class="panel">
+    <h1 data-en="Refinement: one baseline trial vs pooling all nested trials">進階：只用一場基線試驗 vs 合併所有巢式試驗</h1>
+    <p class="lead" data-en="Both the single month-0 trial and the full pooling are unbiased — the difference is <b>efficiency</b>. Pooling uses people at every eligibility time (a person can re-enter), shrinking the interval. Click to compare, and read the honest notes.">
+      只用第 0 月那一場、以及合併所有巢式試驗，<b>兩者都無偏</b>——差別在<b>效率</b>。合併用到每個資格時點的人
+      （同一人可重複收案），讓區間更窄。按下面比較，再看誠實的說明。
+    </p>
+    <button id="runSeqDemo" class="btn primary" data-en="Compare single-trial vs pooled">比較單場 vs 合併</button>
+    <div id="seqDemoOut" class="hidden">
+      <div id="seqDemoChart" class="chart"></div>
+      <p class="caption" id="seqDemoReading"></p>
+    </div>
+
+    <h2 data-en="Honest notes from the literature">文獻中誠實的注意事項</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Robust (person-clustered) standard errors">① 個人叢集穩健標準誤</h3>
+        <p data-en="Because a person re-enters several trials, the rows are correlated. Use person-clustered robust SEs (or bootstrap by person); naive SEs are too narrow. This tool offers a person-cluster bootstrap interval.">同一人在多場重複出現，列彼此相關。用個人叢集穩健 SE（或對人自助）；天真 SE 太窄。本工具提供個人叢集自助區間。</p></div>
+      <div class="card"><h3 data-en="② Per-protocol vs intention-to-treat">② 依計畫 vs 意向治療</h3>
+        <p data-en="Within each nested trial you can analyse intention-to-treat (by baseline choice) or per-protocol (censor on deviation + IPCW, like CCW). They answer different questions; pre-specify which.">每場巢式試驗內可做意向治療（照基線選擇）或依計畫（偏離設限＋IPCW，像 CCW）。兩者回答不同問題；要事先講清楚。</p></div>
+      <div class="card"><h3 data-en="③ ML / doubly-robust nuisance models">③ ML／雙重穩健的雜務模型</h3>
+        <p data-en="The within-trial propensity (and outcome) models are nuisances — they can be estimated with flexible/ML learners under cross-fitting, and combined doubly-robustly, exactly as in IV ⑤ / DiD ⑤. The pooling stays the same.">場內的傾向（與結果）模型是雜務——可用彈性／ML 學習器搭配交叉擬合來估、再雙重穩健地結合，就像 IV ⑤／DiD ⑤。合併方式不變。</p></div>
+    </div>
+
+    <h2 data-en="Where this method comes from">這個方法的出處</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="Method &amp; application">方法與應用</h3>
+        <p data-en="Hernán &amp; Robins — the target-trial framework. Danaei et al. and Gran et al. — nested/sequential trial emulation with pooled estimation. An applied example: emulating target trials to avoid immortal time in pregnancy medication-safety studies (Epidemiology 2023;34(3):430-438). When the question is 'treat now vs not' at many eligibility times, sequential trials are the natural design.">
+          Hernán &amp; Robins——目標試驗框架。Danaei 等人與 Gran 等人——巢式／序列試驗模擬與合併估計。應用例：在懷孕用藥安全研究中，用目標試驗模擬避免 immortal time（Epidemiology 2023;34(3):430-438）。當問題是多個資格時點的「當下治療 vs 不治療」時，序列試驗就是最自然的設計。
+        </p></div>
+    </div>
+  </section>
+
   <!-- ===================== 8. IV vs RDD：怎麼選 ===================== -->
   <section id="choose" class="panel">
     <h1 data-en="Many designs, one vaccine question — which to use?">各設計怎麼選：同一個疫苗問題，多種攻法</h1>
@@ -2602,11 +2762,15 @@
       <li data-ref="cctc">Jeong, H. E., Lee, H., Oh, I.-S., Filion, K. B., &amp; Shin, J.-Y. (2023). Immeasurable Time Bias in Self-controlled Designs: Case-crossover, Case-time-control, and Case-case-time-control Analyses. <i>Journal of Epidemiology, 33</i>(2), 82–90. <span data-en="〔compares CCO/CTC/CCTC &amp; immeasurable-time bias — CCO/CCTC tabs ④/⑤〕">〔比較 CCO/CTC/CCTC 與不可測時間偏誤 —— 分頁 ④/⑤〕</span></li>
       <li data-ref="cctc">Wong, A. Y. S., et al. (2025). Potential interactions between digoxin and direct oral anticoagulants: cohort &amp; novel case-crossover designs. <i>American Journal of Epidemiology</i>. <span data-en="〔applied case-crossover, immeasurable time〕">〔案例交叉應用、不可測時間〕</span></li>
       <li data-ref="cctc"><b data-en="Clinical application">臨床應用</b> · Kang, H.-R., Lee, E.-K., Kim, W. J., &amp; Shin, J.-Y. (2018). Risk of neuropsychiatric adverse events associated with oseltamivir: a nationwide population-based case-crossover study. <i>J. Antimicrob. Chemother.</i> <span data-en="〔oseltamivir &amp; neuropsychiatric events〕">〔克流感與神經精神事件〕</span></li>
+      <li data-ref="seq"><b data-en="Method">方法</b> · Hernán, M. A., &amp; Robins, J. M. (2016). Using Big Data to Emulate a Target Trial When a Randomized Trial Is Not Available. <i>American Journal of Epidemiology, 183</i>(8), 758–764. <span data-en="〔the target-trial framework — Sequential tabs ①–⑤〕">〔目標試驗框架 —— 序列分頁 ①–⑤〕</span></li>
+      <li data-ref="seq">Danaei, G., García Rodríguez, L. A., Cantero, O. F., Logan, R. W., &amp; Hernán, M. A. (2013). Electronic medical records can be used to emulate target trials of sustained treatment strategies. <i>Journal of Clinical Epidemiology</i> / Stat Methods Med Res. <span data-en="〔nested sequential trial emulation &amp; pooling〕">〔巢式序列試驗模擬與合併〕</span></li>
+      <li data-ref="seq">Gran, J. M., et al. A sequential Cox approach for estimating the causal effect of treatment in the presence of time-dependent confounding. <i>Statistics in Medicine.</i> <span data-en="〔sequential/stacked estimation〕">〔序列／堆疊估計〕</span></li>
+      <li data-ref="seq"><b data-en="Clinical application">臨床應用</b> · Emulating target trials to avoid immortal time bias — an application to medication safety in pregnancy. <i>Epidemiology, 34</i>(3), 430–438 (2023). <span data-en="〔nested trials avoid immortal time〕">〔巢式試驗避免 immortal time〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=45"></script>
-<script src="app.js?v=45"></script>
+<script src="i18n.js?v=46"></script>
+<script src="app.js?v=46"></script>
 </body>
 </html>

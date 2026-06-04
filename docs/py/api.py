@@ -42,6 +42,9 @@ import ccw_assumptions
 import cctc_core
 import cctc_gen
 import cctc_assumptions
+import seq_core
+import seq_gen
+import seq_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -735,6 +738,62 @@ def _cctc_demo(q: dict) -> dict:
     return cctc_core.cctc_demo(lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# Sequential (nested) trials endpoints
+# ---------------------------------------------------------------------------
+SEQ_DEFAULTS = {"init_time": "init_month", "event": "event", "futime": "futime",
+                "covariates": ["age", "frailty"]}
+
+
+def _load_seq(source: str) -> pd.DataFrame:
+    if source in ("example_seq", "example"):
+        return seq_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _seq_example() -> dict:
+    df = seq_gen.generate()
+    return {
+        "columns": list(df.columns), "defaults": SEQ_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "init_month": "init_month（第幾個月啟動治療；空白＝追蹤期內未啟動）",
+            "event": "event（是否發生事件）／futime（事件或追蹤結束月份）",
+            "age": "age、frailty（基線共變項；體弱者較早啟動＝混淆）",
+        },
+    }
+
+
+def _seq_analyze(req: dict) -> dict:
+    df = _load_seq(req.get("source", "example_seq"))
+    return seq_core.full_seq(df, req.get("init_time", "init_month"), req.get("event", "event"),
+                             req.get("futime", "futime"), tuple(req.get("covariates", ["age", "frailty"])),
+                             n_boot=int(req.get("n_boot", 0)), lang=req.get("lang", "zh"))
+
+
+def _seq_assumptions(req: dict) -> dict:
+    df = _load_seq(req.get("source", "example_seq"))
+    return seq_assumptions.run_dashboard(df, req.get("init_time", "init_month"), req.get("event", "event"),
+                                         req.get("futime", "futime"), tuple(req.get("covariates", ["age", "frailty"])),
+                                         lang=req.get("lang", "zh"))
+
+
+def _seq_interactive(q: dict) -> dict:
+    conf = float(np.clip(float(q.get("conf", 1.0)), 0.0, 1.0))
+    df = seq_gen.generate(n=4000, conf=conf)
+    out = seq_core.full_seq(df, lang=q.get("lang", "zh"))
+    return {"conf": conf, "true_rd": out["true_rd"], "seq_rd": out["seq_rd"],
+            "naive": out["naive"], "per_trial": out["per_trial"], "ci": out["ci"]}
+
+
+def _seq_demo(q: dict) -> dict:
+    return seq_core.seq_demo(lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -796,6 +855,11 @@ _ROUTES = {
     ("POST", "/api/cctc_assumptions"): lambda q, b: _cctc_assumptions(b),
     ("GET", "/api/cctc_interactive"): lambda q, b: _cctc_interactive(q),
     ("GET", "/api/cctc_demo"): lambda q, b: _cctc_demo(q),
+    ("GET", "/api/seq_example"): lambda q, b: _seq_example(),
+    ("POST", "/api/seq_analyze"): lambda q, b: _seq_analyze(b),
+    ("POST", "/api/seq_assumptions"): lambda q, b: _seq_assumptions(b),
+    ("GET", "/api/seq_interactive"): lambda q, b: _seq_interactive(q),
+    ("GET", "/api/seq_demo"): lambda q, b: _seq_demo(q),
 }
 
 
