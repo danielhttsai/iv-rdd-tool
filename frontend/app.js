@@ -3019,6 +3019,8 @@ function drawSceneCcw() {
     if (r.mark === "event") { evX.push(r.solid); evY.push(r.y); }
     if (r.mark === "cens") { csX.push(r.solid); csY.push(r.y); }
   });
+  // step ③ IPCW: surviving (uncensored) clones get up-weighted to stand in for the
+  // ones artificially censored — a ×w is annotated on segments that continue past grace
   const traces = [
     { x: evX, y: evY, mode: "markers", type: "scatter", name: tr("● 事件", "● event"), marker: { color: RED, size: 13 } },
     { x: csX, y: csY, mode: "markers", type: "scatter", name: tr("✂ 偏離策略 → 設限", "✂ deviation → censored"),
@@ -3030,9 +3032,14 @@ function drawSceneCcw() {
     Object.assign(_lbl(0.2, 4, tr("乙 · 早臂", "B · early"), TEAL, 9.5), { xanchor: "left" }),
     Object.assign(_lbl(0.2, 3, tr("乙 · 晚臂", "B · late"), SLATE, 9.5), { xanchor: "left" }),
     Object.assign(_lbl(g, 7.95, tr("寬限期 g", "grace g"), "#b45309", 10), { xanchor: "center" }),
-    _lbl(6, 1.4, tr("在時間零點把每個人複製到兩臂；一旦行為偏離被指派的策略，就在那一刻設限(✂)，再用反設限機率加權。",
-                    "Clone each person into both arms at time zero; the moment behaviour deviates from the assigned strategy, censor (✂) — then reweight by inverse probability of censoring."), INK, 10),
+    // step badges (Hernán 2018 three steps)
+    Object.assign(_lbl(0.4, 8.15, tr("① 複製", "① clone"), TEAL, 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(g + 0.2, 8.15, tr("② 偏離即設限 ✂", "② censor on deviation ✂"), "#64748b", 9.5), { xanchor: "left" }),
+    Object.assign(_lbl(7.5, 8.15, tr("③ 反設限加權 ×w", "③ IPCW up-weight ×w"), PURPLE, 9.5), { xanchor: "left" }),
+    _lbl(6, 1.4, tr("三步驟：在時間零點把每個人①複製到兩臂；一旦行為偏離被指派的策略，就在那一刻②設限(✂)；再用③反設限機率(×w)把存活的分身加權，補回被人為設限流失的資訊。",
+                    "Three steps: at time zero ① clone each person into both arms; the moment behaviour deviates from the assigned strategy ② censor (✂); then ③ inverse-probability-of-censoring weight (×w) the survivors to recover the information lost to artificial censoring."), INK, 10),
   ];
+  rows.forEach((r) => { if (r.mark !== "cens" && r.solid > g) anns.push(Object.assign(_lbl(g + 0.6, r.y + 0.36, "×w", PURPLE, 9), { xanchor: "left" })); });
   Plotly.react("ccwScene", traces, schemaLayout({
     height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.14 },
     xaxis: { visible: true, title: tr("診斷後月份", "months since diagnosis"), range: [0, XMAX], fixedrange: true },
@@ -3263,32 +3270,45 @@ function cctcCurveInto(elId, curve) {
   }), SCENE_CFG);
 }
 
-// ① learn: the exposure trend makes the recent (hazard) window sit higher than the
-// earlier (reference) window → plain case-crossover is inflated.
+// ① learn: the standard case-crossover design figure — a per-person timeline with a
+// reference window and a hazard window before the event; a control (or future case)
+// row carries the calendar trend that CCTC divides out (Maclure 1991; Jeong 2023).
 function drawSceneCctc() {
   if (!document.getElementById("cctcScene")) return;
-  const xs = [], ys = []; for (let s = 0; s <= 24; s += 1) { xs.push(s); ys.push(0.10 + 0.30 * (s / 24)); }
-  const W0 = 12, W1 = 20;
+  const REF0 = 2.0, REF1 = 3.7, HAZ0 = 7.6, HAZ1 = 9.3, EVT = 9.9;
+  const yCase = 3.0, yCtrl = 1.3;
   const shapes = [
-    { type: "rect", x0: W0 - 1.2, x1: W0 + 1.2, y0: 0, y1: 1, fillcolor: "rgba(100,116,139,.12)", line: { width: 0 } },
-    { type: "rect", x0: W1 - 1.2, x1: W1 + 1.2, y0: 0, y1: 1, fillcolor: "rgba(245,158,11,.16)", line: { width: 0 } },
+    // window bands spanning both rows
+    { type: "rect", x0: REF0, x1: REF1, y0: 0.7, y1: 3.6, fillcolor: "rgba(100,116,139,.13)", line: { color: SLATE, width: 1 } },
+    { type: "rect", x0: HAZ0, x1: HAZ1, y0: 0.7, y1: 3.6, fillcolor: "rgba(245,158,11,.16)", line: { color: "#e08e10", width: 1 } },
+    // timelines
+    { type: "line", x0: 0.5, x1: EVT, y0: yCase, y1: yCase, line: { color: SLATE, width: 3 } },
+    { type: "line", x0: 0.5, x1: 10.6, y0: yCtrl, y1: yCtrl, line: { color: SLATE, width: 3 } },
   ];
-  const yv = (x) => 0.10 + 0.30 * (x / 24);
   const traces = [
-    { x: xs, y: ys, mode: "lines", type: "scatter", line: { color: AMBER, width: 3 }, name: tr("暴露盛行率（隨時間上升）", "exposure prevalence (rising)") },
-    { x: [W0, W1], y: [yv(W0), yv(W1)], mode: "markers", type: "scatter", marker: { color: [SLATE, "#b45309"], size: 13 }, showlegend: false },
+    { x: [EVT], y: [yCase], mode: "markers", type: "scatter", name: tr("● 事件（指標日）", "● event (index date)"), marker: { color: RED, size: 14 } },
+    // exposure marks (pills): both case & control exposed in the hazard window (= the
+    // calendar trend); the case ALSO carries the causal effect
+    { x: [(HAZ0 + HAZ1) / 2, (HAZ0 + HAZ1) / 2], y: [yCase, yCtrl], mode: "markers", type: "scatter",
+      name: tr("暴露", "exposed"), marker: { color: "#b45309", size: 12, symbol: "square" } },
   ];
   const anns = [
-    Object.assign(_lbl(W0, yv(W0) + 0.12, tr("參考窗 W0（較早）", "reference W0 (earlier)"), SLATE, 10.5), { xanchor: "center" }),
-    Object.assign(_lbl(W1, yv(W1) + 0.12, tr("危險窗 W1（事件前）", "hazard W1 (pre-event)"), "#b45309", 10.5), { xanchor: "center" }),
-    _lbl(12, 0.92, tr("趨勢讓 W1 本就比 W0 常暴露 → 純案例交叉被高估；CCTC 用對照的趨勢把它除掉",
-                      "the trend makes W1 more exposed than W0 → plain case-crossover is inflated; CCTC divides out the trend using controls"), INK, 10),
+    Object.assign(_lbl((REF0 + REF1) / 2, 3.85, tr("參考窗 W0", "reference W0"), SLATE, 10.5), { xanchor: "center" }),
+    Object.assign(_lbl((HAZ0 + HAZ1) / 2, 3.85, tr("危險窗 W1", "hazard W1"), "#b45309", 10.5), { xanchor: "center" }),
+    Object.assign(_lbl(0.2, yCase, tr("案例（有事件）", "case (has event)"), INK, 10), { xanchor: "left" }),
+    Object.assign(_lbl(0.2, yCtrl, tr("對照／未來 case（無事件）", "control / future case (no event)"), SLATE, 10), { xanchor: "left" }),
+    _lbl(5.5, 0.25, tr(
+      "案例交叉：比同一人「危險窗 vs 參考窗」的暴露。趨勢讓 W1 本就比 W0 常暴露 → CCO 高估；",
+      "Case-crossover: compare a person's exposure in the hazard vs reference window. The trend makes W1 more exposed → CCO inflated;"), INK, 10),
+    _lbl(5.5, -0.3, tr(
+      "對照（或未來 case）用同樣的窗量出日曆趨勢，CCTC 把它從案例交叉中除掉。",
+      "controls (or future cases) measure the calendar trend in the same windows; CCTC divides it out."), INK, 10),
   ];
   Plotly.react("cctcScene", traces, schemaLayout({
     height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.16 },
-    xaxis: { visible: true, title: tr("日曆月", "calendar month"), range: [0, 24], fixedrange: true },
-    yaxis: { visible: true, title: tr("暴露盛行率", "exposure prevalence"), range: [0, 1.05], tickformat: ".0%", fixedrange: true },
-    margin: { t: 30, r: 16, b: 38, l: 50 },
+    xaxis: { visible: true, title: tr("時間 →（事件在右）", "time → (event at right)"), range: [0, 10.8], fixedrange: true, showticklabels: false },
+    yaxis: { visible: false, range: [-0.6, 4.2] },
+    margin: { t: 30, r: 16, b: 30, l: 16 },
   }), SCENE_CFG);
 }
 function initCctcLearn() { if (cctcLearnReady) return; cctcLearnReady = true; drawSceneCctc(); }
