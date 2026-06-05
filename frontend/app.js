@@ -4141,87 +4141,122 @@ function drawSccsSelf(s) {
 //  no text is copied from the book). One small counterfactual-contrast diagram
 //  per method, parameterised by the WHATIF config table.
 // ======================================================================
+// Each method gets its OWN causal DAG — the actual structure that explains how the
+// design identifies the effect (the language of What If, Part I). Nodes: A exposure,
+// Y outcome, U confounder, Z instrument, T time, L time-varying confounder, S selection;
+// a boxed node = "conditioned on". Edges: effect (the A→Y we want, teal), causal (ink),
+// inst (amber), bias (red backdoor), cancel (grey — differenced/cancelled by the design).
 const WHATIF = {
-  iv:   { wa: { zh: "如果「全部都接種」Yᵃ⁼¹", en: "if everyone were treated  Yᵃ⁼¹" },
-          wb: { zh: "如果「全部都不接種」Yᵃ⁼⁰", en: "if no one were treated  Yᵃ⁼⁰" },
-          pop: { zh: "順從者（被工具推動才改變治療的人）", en: "compliers (those the instrument moves)" },
-          exch: { zh: "工具 Z 近似隨機，且只透過治療影響結果（排除限制）", en: "instrument Z is as-good-as-random and affects Y only through treatment (exclusion)" } },
-  rdd:  { wa: { zh: "如果都拿到資格 Yᵃ⁼¹", en: "if all eligible  Yᵃ⁼¹" },
-          wb: { zh: "如果都沒拿到資格 Yᵃ⁼⁰", en: "if none eligible  Yᵃ⁼⁰" },
-          pop: { zh: "剛好落在斷點（65 歲）附近的人", en: "people right at the cutoff (age 65)" },
-          exch: { zh: "切點附近「局部隨機化／連續性」——上下兩側的人其他條件幾乎一樣", en: "local randomisation / continuity at the cutoff — just-below ≈ just-above" } },
-  did:  { wa: { zh: "受處置組「有政策」Yᵃ⁼¹", en: "treated group with the policy  Yᵃ⁼¹" },
-          wb: { zh: "受處置組「沒政策」的反事實 Yᵃ⁼⁰", en: "treated group's no-policy counterfactual  Yᵃ⁼⁰" },
-          pop: { zh: "受處置者（ATT）", en: "the treated (ATT)" },
-          exch: { zh: "平行趨勢——受處置組「沒政策的變化」＝對照組的變化", en: "parallel trends — the treated's no-policy change equals the control group's change" } },
-  perr: { wa: { zh: "處置組「有用藥」Yᵃ⁼¹", en: "treated group on drug  Yᵃ⁼¹" },
-          wb: { zh: "處置組「沒用藥」的反事實 Yᵃ⁼⁰", en: "treated group's no-drug counterfactual  Yᵃ⁼⁰" },
-          pop: { zh: "處置者，扣掉時間不變的體質差異", en: "the treated, net of time-fixed frailty" },
-          exch: { zh: "混淆「時間不變、且乘法型」——比值的比值把穩定的體質相消", en: "confounding is time-fixed and multiplicative — the ratio-of-ratios cancels stable frailty" } },
-  its:  { wa: { zh: "介入後實際走勢 Yᵃ⁼¹", en: "observed post-intervention path  Yᵃ⁼¹" },
-          wb: { zh: "介入前趨勢外推的反事實 Yᵃ⁼⁰", en: "pre-trend extrapolated counterfactual  Yᵃ⁼⁰" },
-          pop: { zh: "同一族群、介入前後", en: "the same population, before vs after" },
-          exch: { zh: "沒有同時發生的時代事件——介入前的趨勢就是「沒介入會怎樣」", en: "no co-occurring events — the pre-trend IS what would have happened without the intervention" } },
-  tit:  { wa: { zh: "暴露上升快的層 Yᵃ⁼¹", en: "strata where exposure rises fast  Yᵃ⁼¹" },
-          wb: { zh: "暴露上升慢的層 Yᵃ⁼⁰", en: "strata where exposure rises slow  Yᵃ⁼⁰" },
-          pop: { zh: "跨累積暴露機率（CPE）層的對比", en: "contrast across cumulative-probability-of-exposure strata" },
-          exch: { zh: "若暴露致病，結果率該在「暴露漲得快的層」也漲得快；對無跨層相關趨勢的混淆穩健", en: "if exposure is causal, outcomes rise faster where exposure rises faster; robust to confounders without correlated cross-stratum trends" } },
-  ccw:  { wa: { zh: "如果都「早起始」策略 Yᵍ¹", en: "if all followed the early-start strategy  Yᵍ¹" },
-          wb: { zh: "如果都「晚起始」策略 Yᵍ⁰", en: "if all followed the late-start strategy  Yᵍ⁰" },
-          pop: { zh: "全體，比較兩種「持續／動態策略」", en: "everyone, contrasting two sustained / dynamic strategies" },
-          exch: { zh: "序列（時變）可交換性，用 IPCW（g-methods）處理；時間零點對齊避免 immortal time", en: "sequential (time-varying) exchangeability handled by IPCW (g-methods); time-zero alignment avoids immortal time" } },
-  seq:  { wa: { zh: "如果都「當下啟動」Yᵃ⁼¹", en: "if all initiated now  Yᵃ⁼¹" },
-          wb: { zh: "如果都「先不啟動」Yᵃ⁼⁰", en: "if all did not yet initiate  Yᵃ⁼⁰" },
-          pop: { zh: "每個資格月各開一場試驗、對齊時間零點再合併", en: "one emulated trial per eligibility month, time-zero aligned, then pooled" },
-          exch: { zh: "每場試驗在基線條件可交換——這就是 target trial emulation", en: "baseline conditional exchangeability within each trial — i.e. target trial emulation" } },
-  cctc: { wa: { zh: "同一人「危險窗有暴露」Yᵃ⁼¹", en: "same person, exposed in the hazard window  Yᵃ⁼¹" },
-          wb: { zh: "同一人「參考窗沒暴露」Yᵃ⁼⁰", en: "same person, unexposed in the reference window  Yᵃ⁼⁰" },
-          pop: { zh: "每個 case 自己當對照（個人內對比）", en: "each case is their own control (within-person contrast)" },
-          exch: { zh: "自我對照→時間不變的混淆全部相消；CCTC 再扣掉暴露的時間趨勢（時變混淆）", en: "self-control cancels all time-fixed confounding; CCTC further removes the exposure time trend (a time-varying confounder)" } },
-  cc:   { wa: { zh: "來源族群「有暴露」Yᵃ⁼¹", en: "source population, exposed  Yᵃ⁼¹" },
-          wb: { zh: "來源族群「沒暴露」Yᵃ⁼⁰", en: "source population, unexposed  Yᵃ⁼⁰" },
-          pop: { zh: "對「模擬目標試驗的世代」做病例對照抽樣", en: "case-control sampling of a target-trial-emulating cohort" },
-          exch: { zh: "對照代表產生病例的來源族群＋把已測混淆校正掉（罕見時 OR≈RR）", en: "controls represent the source population + measured confounding adjusted (OR ≈ RR when rare)" } },
-  sccs: { wa: { zh: "同一人「暴露時段」Yᵃ⁼¹", en: "same person, exposed time  Yᵃ⁼¹" },
-          wb: { zh: "同一人「非暴露時段」Yᵃ⁼⁰", en: "same person, unexposed time  Yᵃ⁼⁰" },
-          pop: { zh: "只用 case、每個人當自己的對照", en: "cases only, each their own control" },
-          exch: { zh: "個人內→所有時間不變因子自動相消；年齡/季節等時變因子靠切分", en: "within-person → all time-fixed factors cancel; time-varying ones (age, season) handled by splitting" } },
+  iv: { nodes: [
+      { id: "Z", x: 0.5, y: 1.1, role: "Z", label: { zh: "工具 Z（隨機提醒）", en: "instrument Z" } },
+      { id: "A", x: 2.1, y: 1.1, role: "A", label: { zh: "治療（接種）", en: "treatment A" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } },
+      { id: "U", x: 2.1, y: 2.5, role: "U", label: { zh: "未測混淆 U", en: "unmeasured U" } }],
+    edges: [{ a: "Z", b: "A", kind: "inst" }, { a: "A", b: "Y", kind: "effect" }, { a: "U", b: "A", kind: "bias" }, { a: "U", b: "Y", kind: "bias" }],
+    note: { zh: "後門 A←U→Y 打開，<b>不能直接比 A</b>；工具 Z 與 U 無關、又只透過 A 影響 Y（排除限制），是<b>乾淨的側門</b>→在順從者身上辨識 A→Y。", en: "The backdoor A←U→Y is open, so <b>A can't be compared directly</b>; instrument Z is independent of U and affects Y only via A (exclusion) — a <b>clean side door</b> identifying A→Y in compliers." } },
+  rdd: { nodes: [
+      { id: "R", x: 0.5, y: 1.2, role: "X", label: { zh: "分數 R（年齡）", en: "running R (age)" } },
+      { id: "A", x: 2.1, y: 0.6, role: "A", label: { zh: "資格／治療", en: "eligible / treated A" } },
+      { id: "Y", x: 3.7, y: 1.2, role: "Y", label: { zh: "結果", en: "outcome Y" } }],
+    edges: [{ a: "R", b: "A", kind: "causal", label: { zh: "在斷點 65 跳變", en: "jumps at cutoff 65" } }, { a: "A", b: "Y", kind: "effect" }, { a: "R", b: "Y", kind: "causal", label: { zh: "連續、平滑", en: "continuous, smooth" } }],
+    note: { zh: "R 透過斷點決定 A，也可能<b>平滑</b>地直接影響 Y。但斷點附近 R 幾乎固定→A 近似隨機；R→Y 連續，所以「<b>跳階只能來自 A</b>」。", en: "R sets A via the cutoff and may also affect Y <b>smoothly</b>. But right at the cutoff R is nearly fixed → A is as-good-as-random; since R→Y is continuous, <b>any jump must come from A</b>." } },
+  did: { nodes: [
+      { id: "A", x: 2.1, y: 1.1, role: "A", label: { zh: "政策 A", en: "policy A" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } },
+      { id: "G", x: 0.5, y: 2.4, role: "U", label: { zh: "固定組差", en: "fixed group gap" } },
+      { id: "T", x: 0.5, y: -0.2, role: "T", label: { zh: "共同時間趨勢", en: "common time trend" } }],
+    edges: [{ a: "A", b: "Y", kind: "effect" }, { a: "G", b: "Y", kind: "cancel", label: { zh: "被差分掉", en: "differenced out" } }, { a: "T", b: "Y", kind: "cancel", label: { zh: "被差分掉", en: "differenced out" } }],
+    note: { zh: "固定的<b>組間差</b>與<b>共同時間趨勢</b>被「差異中的差異」差分掉；只要兩組「沒政策的變化」相同（<b>平行趨勢</b>），剩下的就是 A→Y。", en: "Fixed <b>group gaps</b> and the <b>common time trend</b> are differenced away; if the two groups' no-policy changes match (<b>parallel trends</b>), what remains is A→Y." } },
+  perr: { nodes: [
+      { id: "A", x: 1.6, y: 1.1, role: "A", label: { zh: "用藥 A", en: "drug A" } },
+      { id: "Y", x: 3.5, y: 1.1, role: "Y", label: { zh: "事件率", en: "event rate Y" } },
+      { id: "U", x: 2.5, y: 2.5, role: "U", label: { zh: "穩定體質 U", en: "stable frailty U" } }],
+    edges: [{ a: "A", b: "Y", kind: "effect" }, { a: "U", b: "A", kind: "bias" }, { a: "U", b: "Y", kind: "cancel", label: { zh: "比值相除消掉", en: "cancels in the ratio" } }],
+    note: { zh: "穩定體質 U 同時影響用藥與事件率。在<b>事前期</b>也算一次率比、再相除：<b>時間不變、乘法型</b>的 U 被消掉，剩下 A→Y。", en: "Stable frailty U affects both drug use and the event rate. Taking the rate ratio in the <b>prior period</b> and dividing it out cancels <b>time-fixed, multiplicative</b> U, leaving A→Y." } },
+  its: { nodes: [
+      { id: "T", x: 0.5, y: 1.1, role: "T", label: { zh: "時間趨勢", en: "time trend" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } },
+      { id: "X", x: 2.1, y: 2.5, role: "X", label: { zh: "介入 X", en: "intervention X" } }],
+    edges: [{ a: "T", b: "Y", kind: "causal", label: { zh: "反事實＝外推", en: "counterfactual = extrapolation" } }, { a: "X", b: "Y", kind: "effect", label: { zh: "水準/斜率變化", en: "level/slope change" } }],
+    note: { zh: "介入前的<b>時間趨勢外推</b>＝「沒介入會怎樣」的反事實；效果＝實際偏離它的幅度。前提：介入時點<b>沒有其他同時發生的原因</b>。", en: "The pre-intervention <b>trend extrapolated</b> is the 'no-intervention' counterfactual; the effect is the departure from it. Assumes <b>no other cause</b> occurs at the same moment." } },
+  tit: { nodes: [
+      { id: "A", x: 2.1, y: 1.1, role: "A", label: { zh: "暴露 A（隨時間↑）", en: "exposure A (rising)" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } },
+      { id: "U", x: 2.1, y: 2.5, role: "U", label: { zh: "未測混淆 U", en: "unmeasured U" } }],
+    edges: [{ a: "A", b: "Y", kind: "effect" }, { a: "U", b: "A", kind: "bias" }, { a: "U", b: "Y", kind: "bias", label: { zh: "只有「跨層相關趨勢」才偏", en: "biases only if its trend tracks A across strata" } }],
+    note: { zh: "暴露隨日曆時間上升、且跨「累積暴露機率」層速度不同。<b>只有趨勢跨層跟著暴露走的 U 才會偏</b>——比「無混淆」寬鬆得多。", en: "Exposure rises over calendar time at different speeds across CPE strata. <b>Only a U whose trend tracks exposure across strata biases TiT</b> — far weaker than 'no confounding'." } },
+  ccw: { nodes: [
+      { id: "A₀", x: 0.5, y: 1.1, role: "A", label: { zh: "早期治療 A₀", en: "early treatment A₀" } },
+      { id: "L", x: 1.7, y: 2.5, role: "L", label: { zh: "時變狀態 L₁", en: "time-varying L₁" } },
+      { id: "A₁", x: 2.6, y: 1.1, role: "A", label: { zh: "後續治療 A₁", en: "later treatment A₁" } },
+      { id: "Y", x: 3.9, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } }],
+    edges: [{ a: "A₀", b: "L", kind: "causal" }, { a: "L", b: "A₁", kind: "bias" }, { a: "L", b: "Y", kind: "bias" }, { a: "A₁", b: "Y", kind: "effect" }],
+    note: { zh: "L₁ 是被<b>前一步治療 A₀ 影響、又影響後續治療 A₁ 與結果 Y</b> 的時變混淆。標準校正會出錯（對撞／擋住中介）→ 要用 <b>g-methods（IPCW）</b>。", en: "L₁ is a time-varying confounder <b>affected by prior treatment A₀ and affecting later treatment A₁ and Y</b>. Standard adjustment fails (collider / blocked mediator) → you need <b>g-methods (IPCW)</b>." } },
+  seq: { nodes: [
+      { id: "L", x: 1.0, y: 2.4, role: "L", label: { zh: "基線 Lₖ", en: "baseline Lₖ" } },
+      { id: "A", x: 2.1, y: 1.1, role: "A", label: { zh: "當下啟動 Aₖ", en: "initiate now Aₖ" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } }],
+    edges: [{ a: "L", b: "A", kind: "bias" }, { a: "L", b: "Y", kind: "bias" }, { a: "A", b: "Y", kind: "effect" }],
+    note: { zh: "<b>點治療</b>：每個資格月開一場試驗，<b>條件在基線 Lₖ</b> 就可交換（IPTW）；對齊各場時間零點避免 immortal time，再反變異合併。", en: "A <b>point treatment</b>: open a trial each eligibility month; <b>conditioning on baseline Lₖ</b> gives exchangeability (IPTW); align each trial's time zero to avoid immortal time, then pool." } },
+  cctc: { nodes: [
+      { id: "X", x: 0.5, y: 1.1, role: "X", label: { zh: "危險窗暴露", en: "hazard-window exposure" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "急性事件", en: "acute event Y" } },
+      { id: "U", x: 2.1, y: 2.5, role: "U", box: true, label: { zh: "個人固定 Uᵢ", en: "person-fixed Uᵢ" } },
+      { id: "T", x: 2.1, y: -0.2, role: "T", label: { zh: "暴露時間趨勢", en: "exposure time trend" } }],
+    edges: [{ a: "X", b: "Y", kind: "effect" }, { a: "U", b: "Y", kind: "cancel", label: { zh: "自我對照消掉", en: "cancelled by self-control" } }, { a: "T", b: "X", kind: "bias" }],
+    note: { zh: "同一人比危險窗 vs 參考窗→所有<b>個人固定 Uᵢ 自動相消（入框＝條件在人）</b>；暴露的時間趨勢會殘留→<b>CCTC 用對照把趨勢扣掉</b>。", en: "Comparing a person's hazard vs reference window cancels all <b>person-fixed Uᵢ (boxed = conditioned on the person)</b>; the exposure time trend would remain → <b>CCTC divides it out using controls</b>." } },
+  cc: { nodes: [
+      { id: "A", x: 1.6, y: 1.1, role: "A", label: { zh: "暴露 A", en: "exposure A" } },
+      { id: "Y", x: 3.4, y: 1.1, role: "Y", label: { zh: "疾病 Y", en: "disease Y" } },
+      { id: "U", x: 2.5, y: 2.5, role: "U", label: { zh: "已測混淆 U（校正）", en: "measured U (adjusted)" } },
+      { id: "S", x: 3.9, y: 2.4, role: "S", label: { zh: "選入樣本 S", en: "selected S" } }],
+    edges: [{ a: "A", b: "Y", kind: "effect" }, { a: "U", b: "A", kind: "bias" }, { a: "U", b: "Y", kind: "bias" }, { a: "Y", b: "S", kind: "causal", label: { zh: "依結果抽樣", en: "sample on outcome" } }],
+    note: { zh: "病例對照＝<b>依「結果」抽樣（Y→S）</b>：選病例＋代表來源族群的對照。把已測混淆 U 校正/配對，OR≈世代效果（罕見時≈RR）。", en: "Case-control samples on the <b>outcome (Y→S)</b>: cases + controls representing the source population. Adjust/match measured U; the OR ≈ the cohort effect (≈ RR when rare)." } },
+  sccs: { nodes: [
+      { id: "X", x: 0.5, y: 1.1, role: "X", label: { zh: "暴露時段", en: "exposed time" } },
+      { id: "Y", x: 3.7, y: 1.1, role: "Y", label: { zh: "事件", en: "event Y" } },
+      { id: "U", x: 2.1, y: 2.5, role: "U", box: true, label: { zh: "個人固定 Uᵢ", en: "person-fixed Uᵢ" } },
+      { id: "Ag", x: 0.5, y: 2.5, role: "T", label: { zh: "年齡/季節", en: "age / season" } }],
+    edges: [{ a: "X", b: "Y", kind: "effect" }, { a: "U", b: "Y", kind: "cancel", label: { zh: "條件在人→相消", en: "conditioned → cancels" } }, { a: "Ag", b: "Y", kind: "bias", label: { zh: "切分調整", en: "split out" } }],
+    note: { zh: "只用 case、<b>條件在「人」</b>：所有時間不變的 Uᵢ 自動相消（入框）；會隨時間變的（年齡、季節）用<b>切分</b>調整。", en: "Cases only, <b>conditioning on the person</b>: all time-fixed Uᵢ cancel (boxed); time-varying factors (age, season) are handled by <b>splitting</b>." } },
 };
 
+const WHATIF_COL = { A: TEAL, Y: "#c0504d", U: "#5b7aa8", Z: "#f59e0b", X: "#b45309", T: "#64748b", L: "#7c5fae", S: "#94a3b8" };
+const WHATIF_EDGE = { effect: { c: TEAL, w: 3.2 }, causal: { c: INK, w: 2.2 }, inst: { c: "#f59e0b", w: 2.8 }, bias: { c: "#c0504d", w: 2 }, cancel: { c: "#9aa6b2", w: 1.8 } };
 const whatifShown = new Set();
 function drawWhatif(method) {
   const id = "whatifScene_" + method;
   if (!document.getElementById(id)) return;
   whatifShown.add(method);
-  const c = WHATIF[method]; if (!c) return;
-  const L = (o) => (lang() === "en" ? o.en : o.zh);
-  const TEAL2 = TEAL, GREY = "#5b7aa8", yA = 2.55, yB = 1.05;
-  const shapes = [
-    { type: "rect", x0: 0.2, x1: 6.6, y0: yA - 0.34, y1: yA + 0.34, fillcolor: "rgba(63,130,104,.13)", line: { color: TEAL2, width: 1 } },
-    { type: "rect", x0: 0.2, x1: 6.6, y0: yB - 0.34, y1: yB + 0.34, fillcolor: "rgba(91,122,168,.13)", line: { color: GREY, width: 1 } },
-    { type: "line", x0: 7.25, x1: 7.25, y0: yB, y1: yA, line: { color: RED, width: 2 } },
-    { type: "line", x0: 7.1, x1: 7.4, y0: yA, y1: yA, line: { color: RED, width: 2 } },
-    { type: "line", x0: 7.1, x1: 7.4, y0: yB, y1: yB, line: { color: RED, width: 2 } },
-    // the design recovers the contrast only here → a highlighted band
-    { type: "rect", x0: 0.2, x1: 6.6, y0: -0.05, y1: 0.5, fillcolor: "rgba(245,158,11,.10)", line: { color: "rgba(245,158,11,.5)", width: 1 } },
-  ];
-  const traces = [
-    { x: [6.0], y: [yA], mode: "markers", type: "scatter", name: tr("結果：治療世界", "outcome: treated world"), marker: { color: TEAL2, size: 15 } },
-    { x: [6.0], y: [yB], mode: "markers", type: "scatter", name: tr("結果：未治療世界", "outcome: untreated world"), marker: { color: GREY, size: 15 } },
-  ];
-  const anns = [
-    Object.assign(_lbl(0.45, yA, L(c.wa), TEAL2, 10), { xanchor: "left" }),
-    Object.assign(_lbl(0.45, yB, L(c.wb), GREY, 10), { xanchor: "left" }),
-    Object.assign(_lbl(7.55, (yA + yB) / 2, tr("因果效果<br>＝兩個反事實的對比", "causal effect<br>= contrast of the two"), RED, 9.5), { xanchor: "left" }),
-    Object.assign(_lbl(0.45, 0.22, tr("這個設計救回對比的「對象／位置」：", "where/whom the design recovers it: ") + "<b>" + L(c.pop) + "</b>", "#b45309", 9.5), { xanchor: "left" }),
-    _lbl(3.4, -0.55, tr("借來的「可交換性」：", "the borrowed exchangeability: ") + "<b>" + L(c.exch) + "</b>", INK, 9.5),
-    Object.assign(_lbl(0.2, 3.25, tr("兩個世界（反事實）", "two worlds (counterfactuals)"), SLATE, 9), { xanchor: "left" }),
-  ];
+  const cfg = WHATIF[method]; if (!cfg) return;
+  const L = (o) => (o == null ? "" : (typeof o === "string" ? o : (lang() === "en" ? o.en : o.zh)));
+  const pos = {}; cfg.nodes.forEach((n) => { pos[n.id] = [n.x, n.y]; });
+  const shapes = [];
+  cfg.nodes.forEach((n) => { if (n.box) shapes.push({ type: "rect", x0: n.x - 0.5, x1: n.x + 0.5, y0: n.y - 0.34, y1: n.y + 0.34, line: { color: INK, width: 1.4, dash: "dot" }, fillcolor: "rgba(20,40,60,.05)" }); });
+  const anns = [];
+  // arrows (Plotly annotation arrows; colour-coded by edge kind)
+  cfg.edges.forEach((e) => {
+    const [ax, ay] = pos[e.a], [x, y] = pos[e.b];
+    const s = WHATIF_EDGE[e.kind] || WHATIF_EDGE.causal;
+    anns.push({ x, y, ax, ay, xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true,
+      arrowhead: 3, arrowsize: 1.1, arrowwidth: s.w, arrowcolor: s.c, standoff: 22, startstandoff: 22, text: "" });
+    if (e.label) {
+      const mx = (ax + x) / 2, my = (ay + y) / 2 + (Math.abs(ay - y) < 0.4 ? 0.24 : 0.05);
+      anns.push(Object.assign(_lbl(mx, my, L(e.label), s.c, 8), { xanchor: "center" }));
+    }
+  });
+  // node markers + ids inside; full label beside
+  const traces = [{ x: cfg.nodes.map((n) => n.x), y: cfg.nodes.map((n) => n.y), mode: "markers+text", type: "scatter",
+    text: cfg.nodes.map((n) => n.id), textposition: "middle center", textfont: { color: "#fff", size: 11 },
+    marker: { color: cfg.nodes.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 34, line: { color: "#fff", width: 1.5 } },
+    hoverinfo: "none", showlegend: false }];
+  cfg.nodes.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.5 : n.y - 0.5, L(n.label), INK, 8), { xanchor: "center" })));
+  anns.push(_lbl(2.15, -1.2, L(cfg.note), INK, 9.5));
   Plotly.react(id, traces, schemaLayout({
-    height: 300, shapes, annotations: anns, showlegend: true, legend: { orientation: "h", y: 1.18 },
-    xaxis: { visible: false, range: [0, 9.2], fixedrange: true },
-    yaxis: { visible: false, range: [-0.85, 3.4] },
-    margin: { t: 28, r: 12, b: 30, l: 12 },
+    height: 320, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: false, range: [-0.5, 4.7], fixedrange: true },
+    yaxis: { visible: false, range: [-1.7, 3.3] },
+    margin: { t: 16, r: 12, b: 14, l: 12 },
   }), SCENE_CFG);
 }
 

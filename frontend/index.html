@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=62" />
+<link rel="stylesheet" href="/styles.css?v=63" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -2938,7 +2938,7 @@
     <p class="lead" data-en="The whole point of causal inference is a <b>contrast of counterfactuals</b>: what would the outcome be <b>if everyone were treated</b> vs <b>if no one were treated</b>? We never see both worlds for the same person, so we need a design that makes the treated and untreated <b>comparable</b>. IV does <b>not</b> make everyone comparable — instead it borrows an (as-good-as) random nudge and reads off the effect <b>among the people that nudge moves</b>.">
       因果推論的核心是<b>兩個反事實的對比</b>：如果<b>大家都接種</b> vs 如果<b>大家都不接種</b>，結果會差多少？同一個人不可能同時看到兩個世界，所以要靠設計讓「接種與不接種的人<b>可比</b>」。IV 並<b>不</b>讓全體可比——而是借一個<b>近似隨機的推力</b>，把效果讀在<b>被這個推力推動的人</b>身上。
     </p>
-    <div class="card scene"><h3 data-en="The two worlds, and where IV recovers the contrast">兩個世界，以及 IV 在哪救回對比</h3><div id="whatifScene_iv" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind IV — the instrument as a clean side door">IV 的因果結構圖（DAG）——工具像一條乾淨的側門</h3><div id="whatifScene_iv" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰. IV identifies it only for <b>compliers</b> — people who take the treatment when nudged and not otherwise. That's the <b>local average treatment effect (LATE)</b>, not the whole-population effect.">效果＝Yᵃ⁼¹ − Yᵃ⁼⁰。IV 只在<b>順從者</b>（被推力推了才接種、沒推就不接種的人）身上辨識它——這是<b>局部平均因果效果（LATE）</b>，不是全體的效果。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> for treatment is <b>not</b> assumed; instead the <b>instrument</b> is assumed unconfounded and to act only through treatment (exclusion). <b>Positivity</b>: the instrument actually shifts treatment in one direction (relevance + monotonicity). <b>Consistency</b>: a well-defined treatment.">這裡<b>不</b>假設治療本身可交換；而是假設<b>工具</b>無混淆、且只透過治療影響結果（排除限制）。<b>正性</b>：工具確實單方向移動治療（相關性＋單調性）。<b>一致性</b>：治療定義明確。</p></div>
@@ -2952,7 +2952,7 @@
     <p class="lead" data-en="We want the contrast of <b>Yᵃ⁼¹</b> (eligible) vs <b>Yᵃ⁼⁰</b> (not) — but eligibility is decided by a sharp rule (age ≥ 65). Right at the cutoff, the person just-below is an almost-perfect stand-in for the person just-above: it's like a tiny randomised experiment.">
       我們要的是<b>Yᵃ⁼¹</b>（有資格）vs <b>Yᵃ⁼⁰</b>（沒資格）的對比——但資格由一條尖銳規則（年齡 ≥ 65）決定。<b>剛好在斷點</b>，差一點點沒過的人，幾乎就是差一點點過了的人的替身：像一個小型隨機實驗。
     </p>
-    <div class="card scene"><h3 data-en="The two worlds, recovered at the cutoff">兩個世界，在斷點處救回</h3><div id="whatifScene_rdd" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind RDD — a jump that can only come from A">RDD 的因果結構圖（DAG）——跳階只能來自 A</h3><div id="whatifScene_rdd" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰ <b>at the cutoff</b> (a local effect). Sharp RDD gives the eligibility effect for everyone at the threshold; fuzzy RDD gives the complier effect there (the cutoff as an instrument).">效果＝<b>斷點處</b>的 Yᵃ⁼¹ − Yᵃ⁼⁰（局部效果）。Sharp 給斷點處所有人的資格效果；Fuzzy 給斷點處順從者的效果（把門檻當工具）。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: local randomisation / continuity — just-below and just-above are otherwise alike. <b>Positivity</b>: there are people on both sides of the cutoff. <b>Consistency</b>: the policy is a well-defined intervention.">​<b>可交換性</b>：局部隨機化／連續性——斷點上下兩側其他條件幾乎相同。<b>正性</b>：切點兩側都有人。<b>一致性</b>：政策是明確的介入。</p></div>
@@ -3064,7 +3064,7 @@
     <p class="lead" data-en="A valid case-control study is just an <b>efficient sampling</b> of a cohort that emulates a target trial. The counterfactual contrast (Yᵃ⁼¹ vs Yᵃ⁼⁰) lives in the source population; we recover the odds ratio cheaply by measuring exposure only in cases and a representative sample of controls.">
       一個有效的病例對照，其實是對「模擬目標試驗的世代」做<b>有效率的抽樣</b>。反事實對比（Yᵃ⁼¹ vs Yᵃ⁼⁰）存在於來源族群；我們只在病例與一組有代表性的對照量暴露，就能省力地還原勝算比。
     </p>
-    <div class="card scene"><h3 data-en="Sampling the source population's two worlds">對來源族群的兩個世界抽樣</h3><div id="whatifScene_cc" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind case-control — sampling on the outcome">病例對照的因果結構圖（DAG）——依結果抽樣</h3><div id="whatifScene_cc" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The exposure odds ratio (≈ the risk ratio when the outcome is rare), as an efficient estimate of the cohort/target-trial effect.">暴露勝算比（結果罕見時 ≈ 風險比），作為世代／目標試驗效果的有效率估計。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: measured confounders adjusted (no unmeasured confounding), and controls drawn from the source population. <b>Positivity</b>: exposure varies in both groups. <b>Consistency</b>: a well-defined exposure and time zero (new users, not prevalent).">​<b>可交換性</b>：已測混淆校正（無未測混淆）、對照取自來源族群。<b>正性</b>：兩組暴露都有變化。<b>一致性</b>：暴露與時間零點定義明確（新使用者、非既有使用者）。</p></div>
@@ -3325,7 +3325,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=62"></script>
-<script src="app.js?v=62"></script>
+<script src="i18n.js?v=63"></script>
+<script src="app.js?v=63"></script>
 </body>
 </html>
