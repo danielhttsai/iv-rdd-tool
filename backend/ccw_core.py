@@ -13,9 +13,12 @@ pure numpy/scipy, Pyodide-safe.
 設限＋加權後，對每個策略臂做**加權 Kaplan–Meier**，得到各策略到第 T 月的累積發生率，相減＝因果
 風險差。對照天真「照實際 early/late 分組」的比較會中 immortal-time bias。
 
-NOTE — teaching reconstruction. The IPC weights use a stabilized pooled-logistic
-censoring model with covariates X = (standardized age, frailty); under no unmeasured
-confounding this is consistent for the strategy contrast. Not a copy of any package.
+NOTE — teaching reconstruction. The IPC weights use a pooled-logistic censoring model
+with covariates X = (standardized age, frailty). The grace / early-vs-late strategies use
+STABILIZED weights (marginal numerator, mean ≈ 1); the sustained "stay-on vs discontinue"
+strategy uses UNSTABILIZED weights (numerator = 1) + truncation — the canonical pairing
+for a non-parametric weighted-KM display (see _ipcw_km). Under no unmeasured confounding
+both are consistent for the strategy contrast. Not a copy of any package.
 """
 from __future__ import annotations
 
@@ -101,24 +104,31 @@ def _month_design(months, Xrows, T):
     return np.column_stack([np.ones(nrow), dummies, Xrows])
 
 
-def _ipcw_km(arm, vacc, evtm, fut, X, grace, T):
-    """Clone-censor-weight one arm: build clones, fit a stabilized pooled-logistic
-    IPCW model for the artificial censoring, then weighted KM cumulative incidence."""
+def _ipcw_km(arm, vacc, evtm, fut, X, grace, T, stabilize=True):
+    """Clone-censor-weight one arm: build clones, fit a pooled-logistic IPCW model for
+    the artificial censoring, then weighted KM cumulative incidence.
+
+    `stabilize` picks the weight flavour (both are valid for this marginal weighted KM):
+      stabilize=True  → STABILIZED weight, numerator = marginal P(uncensored | month)
+                        (no baseline covariates), mean ≈ 1, narrower CIs. Used for the
+                        grace / early-vs-late strategies.
+      stabilize=False → UNSTABILIZED weight, numerator = 1, W = 1/P(uncensored | month,X);
+                        recreates the full baseline population, no constraint on the
+                        outcome model — the canonical choice for a sustained-strategy
+                        weighted KM (e.g. stay-on vs discontinue). Extreme weights are
+                        trimmed (truncated) below. See Current Epidemiology Reports CCW
+                        review (s40471-024-00346-2) and What If Ch. 12 (MSM/IPW)."""
     pid, mon, evt, cens = _build_arm(arm, vacc, evtm, fut, grace, T)
     if pid.size == 0:
         return np.zeros(T), 0, {"mean": 1.0, "max": 1.0, "p99": 1.0, "frac_extreme": 0.0}
     Xrows = X[pid]
     # pooled-logistic censoring model: P(acens this month | at risk, month, X)
     D = _month_design(mon, Xrows, T)
-    Dm = _month_design(mon, np.zeros_like(Xrows), T)   # marginal (no covariates → zeros)
     beta = _logit_fit(D, cens)
-    beta_m = _logit_fit(Dm, cens)
     pc = _predict(D, beta)
-    pc_m = _predict(Dm, beta_m)
-    # stabilized cumulative weights per clone-month (cumprod within person over time).
-    # Rows are contiguous and time-ordered per person (built by _build_arm), so we
-    # cumprod via cumulative log-sums with per-person prefix subtraction.
-    surv_num = np.clip(1.0 - pc_m, 1e-9, 1.0)
+    # cumulative weights per clone-month (cumprod within person over time). Rows are
+    # contiguous and time-ordered per person (built by _build_arm), so we cumprod via
+    # cumulative log-sums with per-person prefix subtraction.
     surv_den = np.clip(1.0 - pc, 1e-6, 1.0)
     # per-person run lengths (pid is sorted/grouped)
     uniq, lengths = np.unique(pid, return_counts=True)
@@ -129,8 +139,16 @@ def _ipcw_km(arm, vacc, evtm, fut, X, grace, T):
         prev_end = np.concatenate([[0.0], cs[last_idx][:-1]])   # exclusive prefix per group
         base = np.repeat(prev_end, lengths)
         return np.exp(cs - base)
-    w_raw = _grp_cumprod(surv_num) / _grp_cumprod(surv_den)
-    w = np.clip(w_raw, 0.0, 20.0)   # trim extreme weights
+    if stabilize:
+        # STABILIZED: numerator = marginal P(uncensored) (month-only design, no covariates)
+        Dm = _month_design(mon, np.zeros_like(Xrows), T)
+        pc_m = _predict(Dm, _logit_fit(Dm, cens))
+        surv_num = np.clip(1.0 - pc_m, 1e-9, 1.0)
+        w_raw = _grp_cumprod(surv_num) / _grp_cumprod(surv_den)
+    else:
+        # UNSTABILIZED: numerator = 1 → W = 1 / P(uncensored | month, X)
+        w_raw = 1.0 / _grp_cumprod(surv_den)
+    w = np.clip(w_raw, 0.0, 20.0)   # trim (truncate) extreme weights
     # weighted KM cumulative incidence by month
     surv = 1.0
     ci = np.zeros(T)
@@ -161,7 +179,8 @@ _TRUTH_GRID_X = [0.0, 0.25, 0.5, 0.75, 1.0]
 _TRUTH_GRID = {
     "grace":     [0.0226, -0.0480, -0.1130, -0.1729, -0.2242],
     "earlylate": [0.0076, -0.0260, -0.0642, -0.0998, -0.1321],
-    "sustained": [-0.0138, -0.0868, -0.1606, -0.2365, -0.3088],
+    # sustained uses UNSTABILIZED IPCW (numerator = 1) — see _ipcw_km(stabilize=False)
+    "sustained": [-0.0115, -0.0821, -0.1575, -0.2329, -0.3018],
 }
 # the two clone arms per scenario
 ARMS = {"grace": ("early", "late"), "earlylate": ("early", "latetreat"),
@@ -188,8 +207,9 @@ def _estimand_truth_sim(timing_effect=1.0, scenario="grace", grace=3, horizon=12
     X = np.column_stack([(age - age.mean()) / (age.std() + 1e-9),
                          (fr - fr.mean()) / (fr.std() + 1e-9)])
     a1, a2 = ARMS[scenario]
-    ci1, _, _ = _ipcw_km(a1, drive, evtm, fut, X, grace, horizon)
-    ci2, _, _ = _ipcw_km(a2, drive, evtm, fut, X, grace, horizon)
+    stab = scenario != "sustained"        # sustained → unstabilized IPCW
+    ci1, _, _ = _ipcw_km(a1, drive, evtm, fut, X, grace, horizon, stabilize=stab)
+    ci2, _, _ = _ipcw_km(a2, drive, evtm, fut, X, grace, horizon, stabilize=stab)
     return float(ci1[horizon - 1] - ci2[horizon - 1])
 
 
@@ -216,8 +236,9 @@ def full_ccw(df, vacc_time=None, event="event", futime="futime",
         cov.append((v - v.mean()) / (v.std() + 1e-9))
     X = np.column_stack(cov) if cov else np.zeros((len(df), 1))
 
-    ci_e, n_e, ws_e = _ipcw_km(a1, drive, evtm, fut, X, grace, T)
-    ci_l, n_l, ws_l = _ipcw_km(a2, drive, evtm, fut, X, grace, T)
+    stab = scenario != "sustained"        # sustained → unstabilized IPCW (numerator = 1)
+    ci_e, n_e, ws_e = _ipcw_km(a1, drive, evtm, fut, X, grace, T, stabilize=stab)
+    ci_l, n_l, ws_l = _ipcw_km(a2, drive, evtm, fut, X, grace, T, stabilize=stab)
     ccw_rd = float(ci_e[T - 1] - ci_l[T - 1])
 
     # naive (immortal-time / selection biased): classify by realized behaviour
@@ -236,8 +257,8 @@ def full_ccw(df, vacc_time=None, event="event", futime="futime",
         rng = np.random.default_rng(20240607); reps = []; nN = len(df)
         for _ in range(int(n_boot)):
             idx = rng.integers(0, nN, nN)
-            cE, _, _ = _ipcw_km(a1, drive[idx], evtm[idx], fut[idx], X[idx], grace, T)
-            cL, _, _ = _ipcw_km(a2, drive[idx], evtm[idx], fut[idx], X[idx], grace, T)
+            cE, _, _ = _ipcw_km(a1, drive[idx], evtm[idx], fut[idx], X[idx], grace, T, stabilize=stab)
+            cL, _, _ = _ipcw_km(a2, drive[idx], evtm[idx], fut[idx], X[idx], grace, T, stabilize=stab)
             reps.append(cE[T - 1] - cL[T - 1])
         lo = float(np.percentile(reps, 2.5)); hi = float(np.percentile(reps, 97.5))
 
@@ -282,12 +303,15 @@ def _ccw_interp(scenario, ccw, naive, truth, horizon, lo, hi, lang):
         return t(lang,
             f"複製-設限-加權（CCW）估計『持續用藥 vs 停藥』的因果風險差 ≈ {ccw:+.2f}{ci_zh}，貼近真值 {truth:+.2f}"
             f"（負值＝持續用藥讓 {horizon} 個月內發生事件的機率更低）。治療是<b>時變的</b>（可中途停），CCW 把每個人複製"
-            f"到『持續』與『停藥』兩策略、偏離就設限、再用反設限機率加權處理時變遵循。對照：天真只比『完成者（從不停藥）"
+            f"到『持續』與『停藥』兩策略、偏離就設限、再用反設限機率加權處理時變遵循（此處用 <b>unstabilized</b> 權重＝"
+            f"1/未設限機率＋截斷，搭配無母數加權 KM——sustained 策略的標準作法）。對照：天真只比『完成者（從不停藥）"
             f"vs 停藥者』約 {naive:+.2f}，被<b>選擇偏誤</b>扭曲（體弱者較易停藥也較易發病）。",
             f"Clone-censor-weight estimates the 'stay-on vs discontinue' risk difference ≈ {ccw:+.2f}{ci_en}, close to "
             f"the truth {truth:+.2f} (negative = staying on lowers the {horizon}-month event risk). Treatment is "
             f"<b>time-varying</b> (it can stop); CCW clones each person into the sustain and discontinue strategies, "
-            f"censors on deviation, and IPC-weights the time-varying adherence. Naively comparing 'completers (never "
+            f"censors on deviation, and IPC-weights the time-varying adherence (here with <b>unstabilized</b> weights = "
+            f"1/uncensored-probability + truncation, paired with a non-parametric weighted KM — the standard choice for a "
+            f"sustained strategy). Naively comparing 'completers (never "
             f"stopped) vs discontinuers' gives ≈ {naive:+.2f}, distorted by selection bias (frail people both "
             f"discontinue more and have the event more).")
     return t(lang,   # grace

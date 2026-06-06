@@ -53,12 +53,25 @@ def test_dashboard_shape_and_statuses():
     assert dash["checks"][4]["status"] == "info"     # C5 alignment by design
 
 
-def test_weights_are_stabilized():
+def test_grace_weights_are_stabilized():
+    # grace / early-vs-late use STABILIZED weights → average ≈ 1
     out = ccw_core.full_ccw(ccw_gen.generate())
     for arm in ("early", "late"):
         w = out["weights"][arm]
         assert 0.7 < w["mean"] < 1.5         # stabilized weights average ≈ 1
         assert w["max"] < 50
+
+
+def test_sustained_weights_are_unstabilized():
+    # sustained (stay-on vs discontinue) uses UNSTABILIZED weights (numerator = 1)
+    # → 1/uncensored-probability, so the mean is clearly above 1 (not stabilized)
+    out = ccw_core.full_ccw(ccw_gen.generate(scenario="sustained"), scenario="sustained")
+    means = [out["weights"][arm]["mean"] for arm in ("early", "late")]
+    assert max(means) > 1.6              # at least one arm's mean is well above 1
+    # and the design still recovers the truth despite the larger, truncated weights
+    truth = ccw_core.estimand_truth(1.0, scenario="sustained")
+    assert abs(out["ccw"] - truth) < 0.05
+    assert abs(out["naive"] - truth) > abs(out["ccw"] - truth) + 0.05
 
 
 @pytest.mark.parametrize("scenario", ["grace", "earlylate", "sustained"])

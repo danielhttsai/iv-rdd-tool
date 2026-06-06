@@ -33,10 +33,10 @@ const PANEL_INIT = {
   ccassume: () => initCcAssume(), ccml: () => initCcMl(),
   sccslearn: () => initSccsLearn(), sccsplay: () => initSccsPlay(), sccsanalyze: () => initSccsAnalyze(),
   sccsassume: () => initSccsAssume(), sccsml: () => initSccsMl(),
-  whatif: () => drawWhatif("iv"), rddwhatif: () => drawWhatif("rdd"), didwhatif: () => drawWhatif("did"),
-  perrwhatif: () => drawWhatif("perr"), itswhatif: () => drawWhatif("its"), titwhatif: () => drawWhatif("tit"),
-  ccwwhatif: () => drawWhatif("ccw"), seqwhatif: () => drawWhatif("seq"), cctcwhatif: () => drawWhatif("cctc"),
-  ccwhatif: () => drawWhatif("cc"), sccswhatif: () => drawWhatif("sccs"),
+  whatif: () => drawWhatifPair("iv"), rddwhatif: () => drawWhatifPair("rdd"), didwhatif: () => drawWhatifPair("did"),
+  perrwhatif: () => drawWhatifPair("perr"), itswhatif: () => drawWhatifPair("its"), titwhatif: () => drawWhatifPair("tit"),
+  ccwwhatif: () => drawWhatifPair("ccw"), seqwhatif: () => drawWhatifPair("seq"), cctcwhatif: () => drawWhatifPair("cctc"),
+  ccwhatif: () => drawWhatifPair("cc"), sccswhatif: () => drawWhatifPair("sccs"),
   choose: () => initChoose(),
 };
 let curMethod = "iv", curSub = "learn";
@@ -1590,13 +1590,13 @@ const DNODES = {
     opts: [
       { l: { zh: "有，但只有發表的彙總結果（沒有個體資料）", en: "Yes, but only published summary results (no individual data)" }, to: "rEXTCTRL" },
       { l: { zh: "有，且拿得到個體層級資料", en: "Yes, and I can get its individual-level data" }, to: "rTRANS" },
-      { l: { zh: "都沒有 → 最後才是 RCT（可能要收原創資料）", en: "None → finally an RCT (you may need to collect original data)" }, to: "rNeedNew" },
+      { l: { zh: "都沒有 → 可能要收原創資料", en: "None → you may need to collect original data" }, to: "rNeedNew" },
     ],
   },
   rNeedNew: { rec: { kind: "fallback", badge: "★",
-    title: { zh: "建議：可能需要原創資料／一場新的研究", en: "Suggested: you likely need original data / a new study" },
-    why: { zh: "既沒有可借的準隨機變異、也沒有現成的 RCT——那就沒有捷徑了。誠實的選項是：設計並執行一場新的研究（理想是隨機試驗；不能隨機時，用 <b>target trial emulation</b> 明確設計一個觀察性分析去「模擬」一場理想試驗）。",
-           en: "With no borrowable quasi-random variation and no existing RCT, there is no shortcut. The honest option is to design and run a new study (ideally a randomised trial; when you can't randomise, use <b>target trial emulation</b> to explicitly design an observational analysis that emulates an ideal trial)." },
+    title: { zh: "建議：可能要收原創資料", en: "Suggested: you may need to collect original data" },
+    why: { zh: "既沒有可借的準隨機變異、也沒有現成的 RCT——那就沒有捷徑了，可能要收原創資料來回答這個問題。實作上可先寫清楚一場理想試驗該怎麼做（用 <b>target trial emulation</b> 把觀察性分析設計成「模擬」那場試驗），再去收能回答它的資料。",
+           en: "With no borrowable quasi-random variation and no existing RCT, there is no shortcut — you may need to collect original data to answer the question. In practice, first write down the ideal trial (use <b>target trial emulation</b> to design the observational analysis as an emulation of that trial), then collect data that can answer it." },
     scenario: { zh: "疫苗情境：手上既沒有隨機提醒、明確切點、政策時點，也沒有別處的 RCT——那就先寫清楚一場理想試驗該怎麼做，再去收能回答它的資料。",
                 en: "Vaccine scenario: no random reminder, sharp cutoff, policy timing, nor an RCT elsewhere — write down the ideal trial first, then go and collect data that can answer it." },
     watch: { zh: "別硬把不適合的設計套上去；先確認手上真的沒有任何準隨機來源，再決定收新資料。",
@@ -1675,7 +1675,7 @@ const FULLMAP = {
     q: { zh: "最後一步（沒辦法的辦法）：上面都不符合——你其實已有一場（別族群的）RCT 可以借嗎？", en: "Last step (last resort): nothing above fits — do you actually have an RCT (in another population) to borrow?" },
     forks: [
       { edge: { zh: "沒有現成 RCT", en: "no existing RCT" },
-        leaves: [{ key: "rNeedNew", cond: { zh: "可能要收原創資料／做新研究（或 target trial emulation）", en: "you may need original data / a new study (or target trial emulation)" }, tag: "新研究 ★", kind: "ex" }] },
+        leaves: [{ key: "rNeedNew", cond: { zh: "可能要收原創資料", en: "you may need to collect original data" }, tag: "收資料 ★", kind: "ex" }] },
       { edge: { zh: "有，但只有彙總結果", en: "yes, summary results only" },
         leaves: [{ key: "rEXTCTRL", cond: { zh: "把那場 RCT／外部資料當對照組", en: "borrow the RCT / external data as a control arm" }, tag: "external control ↗", kind: "ex" }] },
       { edge: { zh: "有，且有個體資料", en: "yes, with individual data" },
@@ -3021,8 +3021,8 @@ function ccwSceneMeta(sc) {
     start: tr("開始用藥（時間零）", "start of treatment (time zero)"),
     end: tr("追蹤結束", "end of follow-up"),
     span: tr("追蹤期間", "follow-up"),
-    dev: tr("持續用藥臂在「停藥」時設限；停藥臂在「沒有如期停藥」時設限。",
-            "the stay-on arm is censored at discontinuation; the discontinue arm if it fails to stop as assigned."),
+    dev: tr("持續用藥臂在「停藥」時設限；停藥臂在「沒有如期停藥」時設限。設限後用 unstabilized IPCW（分子=1）＋截斷加權——sustained 策略配無母數加權 KM 的標準作法。",
+            "the stay-on arm is censored at discontinuation; the discontinue arm if it fails to stop as assigned. The censoring is reweighted with unstabilized IPCW (numerator = 1) + truncation — the standard pairing for a sustained-strategy non-parametric weighted KM."),
   };
   return {  // grace
     start: tr("指標日", "index date"),
@@ -3321,7 +3321,10 @@ async function runCcwAnalyze() {
   try {
     const a = await postJSON(`${API}/api/ccw_analyze`, req);
     renderCcwAnalyze(a);
-    state.ccwDash = null;   // dashboard (④) is computed lazily when that tab opens (each full_ccw is ~3s under Pyodide)
+    // dashboard (④) is computed lazily when that tab opens (each full_ccw is ~3s under
+    // Pyodide). Invalidate it so a scenario change re-computes ④ with the new scenario.
+    state.ccwDash = null;
+    ccwAssumeReady = false;
   } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
 }
 function renderCcwAnalyze(a) {
@@ -4260,6 +4263,101 @@ function drawWhatif(method) {
   }), SCENE_CFG);
 }
 
+// ----------------------------------------------------------------------
+// SWIG (Single-World Intervention Graph) — same nodes/edges as the DAG, but the
+// treatment node is SPLIT into A∣a (left = observed/random A, right = the value a
+// we intervene to set) and the outcome becomes the counterfactual Yᵃ. Reads the
+// per-method intervention node + counterfactual symbol + exchangeability note here.
+// ----------------------------------------------------------------------
+const SWIG_META = {
+  iv:   { split: "A",  cf: "Yᵃ", note: { zh: "把治療設成 a → 反事實 Yᵃ。IV 的關鍵：U 開了後門，<b>A ⫫ Yᵃ 不成立</b>；改用工具 Z（與 U 無關、只經 A）在順從者上辨識。", en: "Set treatment to a → counterfactual Yᵃ. The IV point: U opens a backdoor so <b>A ⫫ Yᵃ fails</b>; instead Z (independent of U, acting only via A) identifies the effect in compliers." } },
+  rdd:  { split: "A",  cf: "Yᵃ", note: { zh: "把資格／治療設成 a → 反事實 Yᵃ。<b>只在斷點處</b> R 近似固定→A ⫫ Yᵃ <b>局部</b>成立（局部隨機化）。", en: "Set eligibility/treatment to a → Yᵃ. <b>Only at the cutoff</b> R is nearly fixed, so A ⫫ Yᵃ holds <b>locally</b> (local randomization)." } },
+  did:  { split: "A",  cf: "Yᵃ", note: { zh: "把政策設成 a → 反事實 Yᵃ。可交換性不直接成立，靠<b>平行趨勢</b>：受處置組『沒政策的 Yᵃ⁼⁰ 變化』＝對照組的變化。", en: "Set policy to a → Yᵃ. Exchangeability isn't direct; <b>parallel trends</b> supply it: the treated group's no-policy change in Yᵃ⁼⁰ equals the controls'." } },
+  perr: { split: "A",  cf: "Yᵃ", note: { zh: "把用藥設成 a → 反事實 Yᵃ。穩定體質 U 開後門→A ⫫ Yᵃ 不成立；用<b>事前期比值相除</b>消掉時間不變的 U。", en: "Set drug to a → Yᵃ. Stable frailty U opens a backdoor so A ⫫ Yᵃ fails; the <b>prior-period ratio</b> divides out time-fixed U." } },
+  its:  { split: "X",  cf: "Yˣ", note: { zh: "把介入設成 x → 反事實 Yˣ。沒有對照組；用介入前<b>趨勢外推</b>當 Yˣ⁼⁰，前提是同一時點沒有其他原因。", en: "Set intervention to x → Yˣ. No control group; the pre-trend <b>extrapolation</b> serves as Yˣ⁼⁰, assuming no co-occurring cause." } },
+  tit:  { split: "A",  cf: "Yᵃ", note: { zh: "把暴露設成 a → 反事實 Yᵃ。A ⫫ Yᵃ 不需全成立——只要沒有『跨層相關趨勢』的 U，OR=exp(β₁) 仍可辨識。", en: "Set exposure to a → Yᵃ. A ⫫ Yᵃ needn't fully hold — absent a U whose trend tracks exposure across strata, OR=exp(β₁) is still identified." } },
+  ccw:  { split: "A₁", cf: "Yᵍ", note: { zh: "把整個策略設成 ḡ（此處示意設 A₁=a₁）→ 反事實 Yᵍ。可交換性是<b>序列的</b>：每一步要條件在過去（含 L₁）才成立→用 IPCW。", en: "Set the whole strategy to ḡ (here illustrated by setting A₁=a₁) → Yᵍ. Exchangeability is <b>sequential</b>: it holds only conditional on the past (incl. L₁) at each step → use IPCW." } },
+  seq:  { split: "A",  cf: "Yᵃ", note: { zh: "把『當下啟動』設成 a → 反事實 Yᵃ。每場試驗內<b>條件在基線 Lₖ</b>，A ⫫ Yᵃ | Lₖ 成立（IPTW）；對齊時間零點。", en: "Set 'initiate now' to a → Yᵃ. Within each trial, <b>conditional on baseline Lₖ</b>, A ⫫ Yᵃ | Lₖ holds (IPTW); align time zero." } },
+  cctc: { split: "X",  cf: "Yˣ", note: { zh: "把危險窗暴露設成 x → 反事實 Yˣ。<b>條件在「人」</b>，個人固定 Uᵢ 相消→Xᵢ ⫫ Yˣ | 人；再用對照扣掉暴露時間趨勢。", en: "Set hazard-window exposure to x → Yˣ. <b>Conditional on the person</b>, fixed Uᵢ cancels → Xᵢ ⫫ Yˣ | person; controls then remove the exposure time trend." } },
+  cc:   { split: "A",  cf: "Yᵃ", note: { zh: "把暴露設成 a → 反事實 Yᵃ。可交換性＝已測 U 校正＋對照代表來源族群；OR 在<b>依結果抽樣</b>下仍≈世代效果。", en: "Set exposure to a → Yᵃ. Exchangeability = measured U adjusted + controls representing the source population; the OR still ≈ the cohort effect despite <b>sampling on the outcome</b>." } },
+  sccs: { split: "X",  cf: "Yˣ", note: { zh: "把『暴露時段』設成 x → 反事實 Yˣ。<b>條件在「人」</b>，所有時間不變的 Uᵢ 相消→Xᵢ ⫫ Yˣ | 人；年齡／季節用切分處理。", en: "Set 'exposed time' to x → Yˣ. <b>Conditional on the person</b>, all time-fixed Uᵢ cancel → Xᵢ ⫫ Yˣ | person; age/season handled by splitting." } },
+};
+
+const swigShown = new Set();
+function drawSwig(method) {
+  const id = "swigScene_" + method;
+  if (!document.getElementById(id)) return;
+  swigShown.add(method);
+  const cfg = WHATIF[method]; if (!cfg) return;
+  const meta = SWIG_META[method] || {};
+  const splitId = meta.split || "A";
+  const cfSym = meta.cf || "Yᵃ";
+  const setSym = (splitId[0] === "X") ? "x" : "a";       // intervention value label
+  const L = (o) => (o == null ? "" : (typeof o === "string" ? o : (lang() === "en" ? o.en : o.zh)));
+  const pos = {}; cfg.nodes.forEach((n) => { pos[n.id] = [n.x, n.y]; });
+  const HW = 0.46, HH = 0.30;                            // split-box half width / height
+  const sp = pos[splitId];
+  const shapes = [];
+  // keep dashed "conditioned-on" boxes
+  cfg.nodes.forEach((n) => { if (n.box) shapes.push({ type: "rect", x0: n.x - 0.5, x1: n.x + 0.5, y0: n.y - 0.34, y1: n.y + 0.34, line: { color: INK, width: 1.4, dash: "dot" }, fillcolor: "rgba(20,40,60,.05)" }); });
+  // the split (intervention) node: a two-tone box  [ A | a ]  (left = observed, right = set value)
+  if (sp) {
+    const [sx, sy] = sp;
+    shapes.push({ type: "rect", x0: sx - HW, x1: sx, y0: sy - HH, y1: sy + HH, line: { color: "#fff", width: 1.5 }, fillcolor: TEAL });           // observed A
+    shapes.push({ type: "rect", x0: sx, x1: sx + HW, y0: sy - HH, y1: sy + HH, line: { color: TEAL, width: 1.8 }, fillcolor: "#ffffff" });          // set value a
+    shapes.push({ type: "line", x0: sx, x1: sx, y0: sy - HH, y1: sy + HH, line: { color: TEAL, width: 1.5 } });
+  }
+  // endpoint on the split-box boundary facing (ox,oy); other nodes use their centre
+  const endAt = (nodeId, ox, oy) => {
+    if (nodeId !== splitId || !sp) return pos[nodeId];
+    const [cx, cy] = pos[nodeId], dx = ox - cx, dy = oy - cy;
+    return (Math.abs(dx) >= Math.abs(dy)) ? [cx + (dx > 0 ? HW : -HW), cy] : [cx, cy + (dy > 0 ? HH : -HH)];
+  };
+  const anns = [];
+  cfg.edges.forEach((e) => {
+    const ca = pos[e.a], cb = pos[e.b];
+    const [ax, ay] = endAt(e.a, cb[0], cb[1]);
+    const [x, y] = endAt(e.b, ca[0], ca[1]);
+    const s = WHATIF_EDGE[e.kind] || WHATIF_EDGE.causal;
+    anns.push({ x, y, ax, ay, xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true,
+      arrowhead: 3, arrowsize: 1.1, arrowwidth: s.w, arrowcolor: s.c,
+      standoff: (e.b === splitId ? 6 : 22), startstandoff: (e.a === splitId ? 6 : 22), text: "" });
+    if (e.label) {
+      const mx = (ax + x) / 2, my = (ay + y) / 2 + (Math.abs(ay - y) < 0.4 ? 0.24 : 0.05);
+      anns.push(Object.assign(_lbl(mx, my, L(e.label), s.c, 8), { xanchor: "center" }));
+    }
+  });
+  // split-box inner labels  A | a
+  if (sp) {
+    const [sx, sy] = sp;
+    anns.push(Object.assign(_lbl(sx - HW / 2, sy, splitId, "#fff", 10.5), { xanchor: "center", yanchor: "middle" }));
+    anns.push(Object.assign(_lbl(sx + HW / 2, sy, setSym, TEAL, 11), { xanchor: "center", yanchor: "middle" }));
+  }
+  // other nodes drawn as markers; the outcome node is relabelled to the counterfactual symbol
+  const others = cfg.nodes.filter((n) => n.id !== splitId);
+  const traces = [{ x: others.map((n) => n.x), y: others.map((n) => n.y), mode: "markers+text", type: "scatter",
+    text: others.map((n) => (n.role === "Y" ? cfSym : n.id)), textposition: "middle center",
+    textfont: { color: "#fff", size: 11 },
+    marker: { color: others.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 34, line: { color: "#fff", width: 1.5 } },
+    hoverinfo: "none", showlegend: false }];
+  cfg.nodes.forEach((n) => {
+    const lab = (n.id === splitId)
+      ? (lang() === "en" ? "intervention node A∣a" : "介入節點 A∣a")
+      : (n.role === "Y" ? cfSym + (lang() === "en" ? " (counterfactual)" : "（反事實）") : L(n.label));
+    anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.5 : n.y - 0.5, lab, INK, 8), { xanchor: "center" }));
+  });
+  anns.push(_lbl(2.15, -1.2, L(meta.note || cfg.note), INK, 9.5));
+  Plotly.react(id, traces, schemaLayout({
+    height: 320, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: false, range: [-0.5, 4.7], fixedrange: true },
+    yaxis: { visible: false, range: [-1.7, 3.3] },
+    margin: { t: 16, r: 12, b: 14, l: 12 },
+  }), SCENE_CFG);
+}
+
+// draw both the DAG and the SWIG for a method (used by PANEL_INIT + language re-render)
+function drawWhatifPair(method) { drawWhatif(method); drawSwig(method); }
+
 // ======================================================================
 // Sequential trials — tabs ①–⑤
 // ======================================================================
@@ -4591,7 +4689,8 @@ window.addEventListener("iv-lang", async () => {
   if (sccsAnalyzeReady) runSccsAnalyze();              // SCCS ③ analysis + dashboard
   else if (sccsAssumeReady) runSccsAssumptions(sccsState.req);
   if (sccsSelfCache) drawSccsSelf(sccsSelfCache);      // SCCS ⑤ ML (re-render cache)
-  whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if diagrams (re-render)
+  whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if DAGs (re-render)
+  swigShown.forEach((m) => drawSwig(m));                // ⑥ SWIGs (re-render)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
 });
 

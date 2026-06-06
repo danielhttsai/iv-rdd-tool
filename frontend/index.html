@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=63" />
+<link rel="stylesheet" href="/styles.css?v=64" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -2084,10 +2084,11 @@
       </div>
       <div class="tdef">
         <h4>反設限機率加權 <span class="en">IPCW</span></h4>
-        <p data-en="<b>Plain:</b> upweight the clones that were artificially censored away, in proportion to how likely that censoring was.<br /><b>Definition:</b> inverse-probability-of-censoring weights, modelled from covariates, that make the censored pseudo-population represent the full one.<br /><b>Why it matters:</b> the artificial censoring depends on who you are (age/frailty), so without weighting CCW would be biased; stabilized weights should average ≈ 1.<br /><b>Example:</b> weight ≈ 1 ÷ P(stayed adherent | covariates).<br /><b>Check:</b> weight distribution (tab ④, C4).">
+        <p data-en="<b>Plain:</b> upweight the clones that were artificially censored away, in proportion to how likely that censoring was.<br /><b>Definition:</b> inverse-probability-of-censoring weights, modelled from covariates, that make the censored pseudo-population represent the full one.<br /><b>Why it matters:</b> the artificial censoring depends on who you are (age/frailty), so without weighting CCW would be biased.<br /><b>Stabilized vs unstabilized:</b> here grace / early-vs-late use STABILIZED weights (marginal numerator, mean ≈ 1); the sustained stay-on-vs-discontinue strategy uses UNSTABILIZED weights (numerator = 1, mean &gt; 1) + truncation — the usual pairing for a non-parametric weighted KM. Both are valid (see ⑥).<br /><b>Example:</b> weight ≈ 1 ÷ P(stayed adherent | covariates).<br /><b>Check:</b> weight distribution (tab ④, C4).">
           <b>白話：</b>把被人為設限掉的複製品，依「被設限的機率」加重補回來。<br />
           <b>定義：</b>由共變項建模的反設限機率權重，讓被設限的偽母體能代表完整母體。<br />
-          <b>為什麼重要：</b>人為設限和「你是誰」（年齡／體弱）有關，不加權 CCW 就會偏；穩定化權重應平均 ≈ 1。<br />
+          <b>為什麼重要：</b>人為設限和「你是誰」（年齡／體弱）有關，不加權 CCW 就會偏。<br />
+          <b>穩定化 vs 未穩定化：</b>這裡 grace／早晚啟動用<b>穩定化</b>權重（邊際分子，平均 ≈ 1）；sustained 持續／停藥用<b>未穩定化</b>權重（分子=1，平均 &gt; 1）＋截斷——這是無母數加權 KM 的常見搭配。兩者都正確（見 ⑥）。<br />
           <b>例子：</b>權重 ≈ 1 ÷ P(維持遵循 | 共變項)。<br />
           <b>檢查：</b>權重分布（見 ④ 的 C4）。
         </p>
@@ -2938,7 +2939,9 @@
     <p class="lead" data-en="The whole point of causal inference is a <b>contrast of counterfactuals</b>: what would the outcome be <b>if everyone were treated</b> vs <b>if no one were treated</b>? We never see both worlds for the same person, so we need a design that makes the treated and untreated <b>comparable</b>. IV does <b>not</b> make everyone comparable — instead it borrows an (as-good-as) random nudge and reads off the effect <b>among the people that nudge moves</b>.">
       因果推論的核心是<b>兩個反事實的對比</b>：如果<b>大家都接種</b> vs 如果<b>大家都不接種</b>，結果會差多少？同一個人不可能同時看到兩個世界，所以要靠設計讓「接種與不接種的人<b>可比</b>」。IV 並<b>不</b>讓全體可比——而是借一個<b>近似隨機的推力</b>，把效果讀在<b>被這個推力推動的人</b>身上。
     </p>
-    <div class="card scene"><h3 data-en="The causal DAG behind IV — the instrument as a clean side door">IV 的因果結構圖（DAG）——工具像一條乾淨的側門</h3><div id="whatifScene_iv" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind IV — the instrument as a clean side door">IV 的因果結構圖（DAG）——工具像一條乾淨的側門</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_iv" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：治療節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_iv" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰. IV identifies it only for <b>compliers</b> — people who take the treatment when nudged and not otherwise. That's the <b>local average treatment effect (LATE)</b>, not the whole-population effect.">效果＝Yᵃ⁼¹ − Yᵃ⁼⁰。IV 只在<b>順從者</b>（被推力推了才接種、沒推就不接種的人）身上辨識它——這是<b>局部平均因果效果（LATE）</b>，不是全體的效果。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> for treatment is <b>not</b> assumed; instead the <b>instrument</b> is assumed unconfounded and to act only through treatment (exclusion). <b>Positivity</b>: the instrument actually shifts treatment in one direction (relevance + monotonicity). <b>Consistency</b>: a well-defined treatment.">這裡<b>不</b>假設治療本身可交換；而是假設<b>工具</b>無混淆、且只透過治療影響結果（排除限制）。<b>正性</b>：工具確實單方向移動治療（相關性＋單調性）。<b>一致性</b>：治療定義明確。</p></div>
@@ -2952,7 +2955,9 @@
     <p class="lead" data-en="We want the contrast of <b>Yᵃ⁼¹</b> (eligible) vs <b>Yᵃ⁼⁰</b> (not) — but eligibility is decided by a sharp rule (age ≥ 65). Right at the cutoff, the person just-below is an almost-perfect stand-in for the person just-above: it's like a tiny randomised experiment.">
       我們要的是<b>Yᵃ⁼¹</b>（有資格）vs <b>Yᵃ⁼⁰</b>（沒資格）的對比——但資格由一條尖銳規則（年齡 ≥ 65）決定。<b>剛好在斷點</b>，差一點點沒過的人，幾乎就是差一點點過了的人的替身：像一個小型隨機實驗。
     </p>
-    <div class="card scene"><h3 data-en="The causal DAG behind RDD — a jump that can only come from A">RDD 的因果結構圖（DAG）——跳階只能來自 A</h3><div id="whatifScene_rdd" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind RDD — a jump that can only come from A">RDD 的因果結構圖（DAG）——跳階只能來自 A</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_rdd" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：治療節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_rdd" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="Effect = Yᵃ⁼¹ − Yᵃ⁼⁰ <b>at the cutoff</b> (a local effect). Sharp RDD gives the eligibility effect for everyone at the threshold; fuzzy RDD gives the complier effect there (the cutoff as an instrument).">效果＝<b>斷點處</b>的 Yᵃ⁼¹ − Yᵃ⁼⁰（局部效果）。Sharp 給斷點處所有人的資格效果；Fuzzy 給斷點處順從者的效果（把門檻當工具）。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: local randomisation / continuity — just-below and just-above are otherwise alike. <b>Positivity</b>: there are people on both sides of the cutoff. <b>Consistency</b>: the policy is a well-defined intervention.">​<b>可交換性</b>：局部隨機化／連續性——斷點上下兩側其他條件幾乎相同。<b>正性</b>：切點兩側都有人。<b>一致性</b>：政策是明確的介入。</p></div>
@@ -2966,7 +2971,9 @@
     <p class="lead" data-en="For the treated group we want <b>Yᵃ⁼¹</b> (with the policy) vs their own <b>Yᵃ⁼⁰</b> (the policy never happened). We can't observe the second, so we borrow the control group's change as a stand-in for the treated group's would-be change.">
       對受處置組，我們要的是<b>Yᵃ⁼¹</b>（有政策）vs 他們自己的<b>Yᵃ⁼⁰</b>（政策從沒發生）。第二個看不到，於是借<b>對照組的變化</b>來頂替「受處置組沒政策本來會有的變化」。
     </p>
-    <div class="card scene"><h3 data-en="The treated group's missing counterfactual">受處置組那個看不到的反事實</h3><div id="whatifScene_did" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The treated group's missing counterfactual">受處置組那個看不到的反事實</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_did" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the policy node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：政策節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_did" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The <b>effect of treatment on the treated (ATT)</b>: in the treated group, observed post-change minus the change they would have had without the policy.">​<b>受處置者的效果（ATT）</b>：受處置組實際的前後變化，減掉他們「沒政策本來會有的變化」。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> takes the form of <b>parallel trends</b>: absent the policy, both groups would change by the same amount. <b>Positivity</b>: both groups exist pre and post. <b>Consistency</b>: a well-defined policy at a known time.">​<b>可交換性</b>以<b>平行趨勢</b>呈現：沒政策時兩組會一起變一樣多。<b>正性</b>：兩組前後期都有。<b>一致性</b>：政策在已知時點、定義明確。</p></div>
@@ -2980,7 +2987,9 @@
     <p class="lead" data-en="We want the treated group's <b>Yᵃ⁼¹</b> vs <b>Yᵃ⁼⁰</b>, but stable differences in frailty confound the contrast. PERR's trick: take the rate ratio in a <b>prior (untreated) period</b> and divide it out, so any <b>time-fixed, multiplicative</b> confounding cancels.">
       我們要受處置組的<b>Yᵃ⁼¹</b> vs <b>Yᵃ⁼⁰</b>，但穩定的體質差異會混淆對比。PERR 的把戲：在<b>事前（未處置）期</b>也算一次率比、再相除，讓<b>時間不變、乘法型</b>的混淆相消。
     </p>
-    <div class="card scene"><h3 data-en="Cancelling stable confounding by a ratio of ratios">用比值的比值消掉穩定混淆</h3><div id="whatifScene_perr" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="Cancelling stable confounding by a ratio of ratios">用比值的比值消掉穩定混淆</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_perr" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the drug node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：用藥節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_perr" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The treatment's effect on the event rate ratio, <b>net of time-invariant frailty</b>. PERR = (post rate ratio) ÷ (prior rate ratio).">治療對事件率比的效果，<b>扣掉時間不變的體質</b>。PERR＝（事後率比）÷（事前率比）。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> is achieved <b>only if</b> confounding is time-fixed and acts multiplicatively (then it divides out). <b>Positivity</b>: both groups have events pre and post. <b>Consistency</b>: a defined treatment period.">只有當混淆<b>時間不變、且乘法作用</b>時，才達成<b>可交換性</b>（這樣才會相除消掉）。<b>正性</b>：兩組事前事後都有事件。<b>一致性</b>：處置期定義清楚。</p></div>
@@ -2994,7 +3003,9 @@
     <p class="lead" data-en="The counterfactual <b>Yᵃ⁼⁰</b> here is a projection: take the pre-intervention trend and extrapolate it as &quot;what would have happened if the intervention had never occurred.&quot; The effect is how far the observed path departs from that projection.">
       這裡的反事實<b>Yᵃ⁼⁰</b>是一條投影：把介入前的趨勢外推，當作「如果沒介入會怎樣」。效果就是實際走勢偏離這條投影的幅度。
     </p>
-    <div class="card scene"><h3 data-en="The counterfactual is the projected pre-trend">反事實＝投影出的介入前趨勢</h3><div id="whatifScene_its" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The counterfactual is the projected pre-trend">反事實＝投影出的介入前趨勢</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_its" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the intervention node splits into X∣x and the outcome becomes the counterfactual Yˣ">反事實介入圖（SWIG）：介入節點拆成 X∣x、結果變成反事實 Yˣ</p><div id="swigScene_its" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The <b>level change</b> and <b>slope change</b> at the intervention: observed minus the extrapolated counterfactual trend.">介入點的<b>水準跳變</b>與<b>斜率改變</b>：實際值減去外推的反事實趨勢。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> here means <b>no co-occurring events</b> at the same time (so the only thing that changed is the intervention). <b>Positivity</b>: enough periods before and after. <b>Consistency</b>: a sharp, well-defined intervention time.">這裡的<b>可交換性</b>＝<b>沒有同時發生的時代事件</b>（唯一改變的只有這個介入）。<b>正性</b>：前後期數夠。<b>一致性</b>：介入時點尖銳、明確。</p></div>
@@ -3008,7 +3019,9 @@
     <p class="lead" data-en="If a drug truly causes an outcome, then where its uptake rises faster, the outcome should rise faster too. TiT compares the outcome trend across strata that adopt the drug at different speeds — a counterfactual logic that survives some unmeasured confounding.">
       如果一個藥真的致病，那在「採用率漲得快」的層，結果也該漲得快。TiT 比較不同採用速度的層之間的結果趨勢——這套反事實邏輯能扛住部分未測混淆。
     </p>
-    <div class="card scene"><h3 data-en="Does the outcome trend track the exposure trend?">結果趨勢有沒有跟著暴露趨勢走？</h3><div id="whatifScene_tit" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="Does the outcome trend track the exposure trend?">結果趨勢有沒有跟著暴露趨勢走？</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_tit" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the exposure node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：暴露節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_tit" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The exposure–outcome odds ratio, identified from how steeply outcomes rise in fast-adopting vs slow-adopting strata.">暴露–結果的勝算比，從「快採用 vs 慢採用」層的結果上升陡度差異辨識。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> is weakened to: no <b>unmeasured confounder whose trend correlates across strata</b>. <b>Positivity</b>: exposure varies over time and across strata. <b>Consistency</b>: a well-defined exposure; outcome rare.">​<b>可交換性</b>放寬成：沒有「<b>跨層相關趨勢</b>」的未測混淆。<b>正性</b>：暴露隨時間、跨層都有變化。<b>一致性</b>：暴露定義明確、結果罕見。</p></div>
@@ -3022,12 +3035,15 @@
     <p class="lead" data-en="The question is about <b>sustained strategies</b>: what if everyone followed &quot;start early&quot; (Yᵍ¹) vs &quot;start late&quot; (Yᵍ⁰)? Treatment unfolds over time, so naive grouping invites immortal-time bias. CCW clones everyone into both strategies at time zero, censors deviations, and re-weights — the g-methods recipe.">
       問題是關於<b>持續策略</b>：如果大家都「早起始」（Yᵍ¹）vs 都「晚起始」（Yᵍ⁰）會怎樣？治療是隨時間展開的，直接分組會招來 immortal-time 偏誤。CCW 在時間零點把每個人複製到兩種策略、偏離就設限、再加權——就是 g-methods 的配方。
     </p>
-    <div class="card scene"><h3 data-en="Counterfactual strategies, aligned at time zero">對齊時間零點的反事實策略</h3><div id="whatifScene_ccw" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="Counterfactual strategies, aligned at time zero">對齊時間零點的反事實策略</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_ccw" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A₁∣a and the outcome becomes the counterfactual Yᵍ (whole strategy ḡ)">反事實介入圖（SWIG）：治療節點拆成 A₁∣a、結果變成反事實 Yᵍ（整個策略 ḡ）</p><div id="swigScene_ccw" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The contrast of <b>treatment strategies</b> Yᵍ (e.g. early vs late initiation; stay-on vs discontinue) — a per-protocol effect over the whole population.">​<b>治療策略</b> Yᵍ 的對比（如早 vs 晚起始；持續 vs 停藥）——全體的依計畫效果。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Sequential (time-varying) exchangeability</b>: at each time, no unmeasured confounding of the next treatment step, handled by inverse-probability-of-censoring weights. <b>Positivity</b>: each strategy is possible at each time. <b>Consistency</b>: well-defined strategies + a clear time zero.">​<b>序列（時變）可交換性</b>：每個時點下一步治療無未測混淆，用反設限機率加權處理。<b>正性</b>：每個時點各策略都可能。<b>一致性</b>：策略定義明確＋明確時間零點。</p></div>
       <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>measured time-varying covariates</b> via IPCW (g-methods), plus <b>time-zero alignment</b> that removes immortal time. For &quot;early vs late&quot;, both arms eventually treat, so confounding by indication largely cancels.">來自<b>已測的時變共變項</b>（IPCW，g-methods），加上<b>時間零點對齊</b>消掉 immortal time。「早 vs 晚」時兩臂最終都治療，因適應症而生的混淆大幅相消。</p></div>
-      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Part III: time-varying treatments, IP weighting of marginal structural models, and target trial emulation. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">第三部：時變治療、邊際結構模型的 IP 加權、目標試驗模擬。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+      <div class="card"><h3 data-en="④ Stabilized vs unstabilized weights">④ 穩定化 vs 未穩定化權重</h3><p data-en="Both give the <b>same point estimate</b> here (the marginal numerator cancels in each month's weighted hazard) — they differ in variance. <b>Unstabilized</b> (numerator = 1, W = 1/P(uncensored)): recreates the full baseline population, <b>no constraint</b> on the outcome model — the natural fit for a <b>sustained</b> stay-on-vs-discontinue weighted KM, but extreme weights need <b>truncation</b>. <b>Stabilized</b> (marginal numerator): mean ≈ 1, narrower CIs, <b>but</b> any baseline covariate in the numerator must re-enter the outcome model → often forces a <b>parametric</b> model. So this tool uses unstabilized for sustained, stabilized for grace / early-vs-late.">兩者在這裡給<b>相同點估計</b>（邊際分子在每月加權風險中相消）——差別在變異。<b>未穩定化</b>（分子=1，W=1/未設限機率）：重建完整基線族群、對結果模型<b>無限制</b>——最適合 <b>sustained</b> 持續/停藥的加權 KM，但極端權重要<b>截斷</b>。<b>穩定化</b>（邊際分子）：平均≈1、區間較窄，<b>但</b>分子放的基線共變項必須回到結果模型→常被迫用<b>有母數</b>模型。所以本工具 sustained 用未穩定化、grace／早晚啟動用穩定化。</p></div>
+      <div class="card"><h3 data-en="⑤ In What If">⑤ 對應《What If》</h3><p data-en="Part III: time-varying treatments, IP weighting of marginal structural models, and target trial emulation (stabilized vs unstabilized weights are Ch. 12). Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">第三部：時變治療、邊際結構模型的 IP 加權、目標試驗模擬（穩定化 vs 未穩定化權重見第 12 章）。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
     </div>
   </section>
 
@@ -3036,7 +3052,9 @@
     <p class="lead" data-en="What if we could run the randomised trial we can't run? At each eligibility time, emulate a target trial: <b>initiate now</b> (Yᵃ⁼¹) vs <b>not yet</b> (Yᵃ⁼⁰), reset the clock to time zero, follow forward, then pool. This is target-trial emulation, and it sidesteps immortal-time bias.">
       如果能把「做不到的隨機試驗」做出來呢？在每個資格時點模擬一場目標試驗：<b>當下啟動</b>（Yᵃ⁼¹）vs <b>先不啟動</b>（Yᵃ⁼⁰），把時鐘歸零、往前追蹤、再合併。這就是目標試驗模擬，並避開 immortal-time 偏誤。
     </p>
-    <div class="card scene"><h3 data-en="One emulated trial per eligibility time, then pooled">每個資格時點一場模擬試驗，再合併</h3><div id="whatifScene_seq" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="One emulated trial per eligibility time, then pooled">每個資格時點一場模擬試驗，再合併</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_seq" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the initiation node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：啟動節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_seq" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The effect of a <b>point treatment decision</b> (treat now vs not), averaged over the eligibility-time trials.">​<b>點治療決定</b>（當下治療 vs 不治療）的效果，跨資格時點各試驗合併。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Baseline conditional exchangeability</b> within each emulated trial (adjust baseline covariates by IPTW). <b>Positivity</b>: at each time, eligible people can both initiate and not. <b>Consistency</b>: a clear time zero per trial — the heart of target-trial emulation.">每場模擬試驗內的<b>基線條件可交換性</b>（用 IPTW 校正基線共變項）。<b>正性</b>：每個時點合格者可啟動也可不啟動。<b>一致性</b>：每場有明確時間零點——目標試驗模擬的核心。</p></div>
@@ -3050,7 +3068,9 @@
     <p class="lead" data-en="Instead of comparing different people, compare the <b>same person with themselves</b>: was exposure higher in the hazard window just before the event (Yᵃ⁼¹) than in an earlier reference window (Yᵃ⁼⁰)? Being one's own control cancels everything that doesn't change over time. CCTC further removes the exposure's calendar-time trend.">
       不比不同的人，而是讓<b>同一個人跟自己比</b>：事件前的危險窗暴露（Yᵃ⁼¹）有沒有比更早的參考窗（Yᵃ⁼⁰）多？自己當對照，消掉所有不隨時間變的東西。CCTC 再扣掉暴露的日曆時間趨勢。
     </p>
-    <div class="card scene"><h3 data-en="The same person, hazard vs reference window">同一個人：危險窗 vs 參考窗</h3><div id="whatifScene_cctc" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The same person, hazard vs reference window">同一個人：危險窗 vs 參考窗</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_cctc" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the exposure node splits into X∣x and the outcome becomes the counterfactual Yˣ">反事實介入圖（SWIG）：暴露節點拆成 X∣x、結果變成反事實 Yˣ</p><div id="swigScene_cctc" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The effect of a <b>transient exposure</b> on the rate of an acute event, as a within-person odds ratio (with the time trend divided out by controls).">​<b>短暫暴露</b>對急性事件率的效果，以個人內勝算比表示（時間趨勢用對照除掉）。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Within-person exchangeability</b>: a person's windows are comparable except for exposure (so time-fixed confounding cancels). <b>Positivity</b>: the person is exposed in some windows, not others. <b>Consistency</b>: a transient, well-defined exposure window.">​<b>個人內可交換性</b>：同一人各窗除了暴露外可比（時間不變混淆相消）。<b>正性</b>：此人有些窗暴露、有些沒。<b>一致性</b>：暴露短暫、窗定義明確。</p></div>
@@ -3064,7 +3084,9 @@
     <p class="lead" data-en="A valid case-control study is just an <b>efficient sampling</b> of a cohort that emulates a target trial. The counterfactual contrast (Yᵃ⁼¹ vs Yᵃ⁼⁰) lives in the source population; we recover the odds ratio cheaply by measuring exposure only in cases and a representative sample of controls.">
       一個有效的病例對照，其實是對「模擬目標試驗的世代」做<b>有效率的抽樣</b>。反事實對比（Yᵃ⁼¹ vs Yᵃ⁼⁰）存在於來源族群；我們只在病例與一組有代表性的對照量暴露，就能省力地還原勝算比。
     </p>
-    <div class="card scene"><h3 data-en="The causal DAG behind case-control — sampling on the outcome">病例對照的因果結構圖（DAG）——依結果抽樣</h3><div id="whatifScene_cc" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The causal DAG behind case-control — sampling on the outcome">病例對照的因果結構圖（DAG）——依結果抽樣</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_cc" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the exposure node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：暴露節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_cc" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The exposure odds ratio (≈ the risk ratio when the outcome is rare), as an efficient estimate of the cohort/target-trial effect.">暴露勝算比（結果罕見時 ≈ 風險比），作為世代／目標試驗效果的有效率估計。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: measured confounders adjusted (no unmeasured confounding), and controls drawn from the source population. <b>Positivity</b>: exposure varies in both groups. <b>Consistency</b>: a well-defined exposure and time zero (new users, not prevalent).">​<b>可交換性</b>：已測混淆校正（無未測混淆）、對照取自來源族群。<b>正性</b>：兩組暴露都有變化。<b>一致性</b>：暴露與時間零點定義明確（新使用者、非既有使用者）。</p></div>
@@ -3078,7 +3100,9 @@
     <p class="lead" data-en="Use only people who had the event, and make each their own control: was the event more likely in their <b>exposed</b> time (Yᵃ⁼¹) than their <b>unexposed</b> time (Yᵃ⁼⁰)? A within-person before-after that cancels <b>every</b> time-fixed factor — genes, constitution, socioeconomics — automatically.">
       只用發生過事件的人，每個人當自己的對照：事件比較容易落在他的<b>暴露時段</b>（Yᵃ⁼¹）還是<b>非暴露時段</b>（Yᵃ⁼⁰）？這是個人內的前後比，<b>所有</b>不隨時間變的因子（基因、體質、社經）都自動相消。
     </p>
-    <div class="card scene"><h3 data-en="The same person, exposed vs unexposed time">同一個人：暴露時段 vs 非暴露時段</h3><div id="whatifScene_sccs" class="chart"></div></div>
+    <div class="card scene"><h3 data-en="The same person, exposed vs unexposed time">同一個人：暴露時段 vs 非暴露時段</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_sccs" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the exposed-time node splits into X∣x and the outcome becomes the counterfactual Yˣ">反事實介入圖（SWIG）：暴露時段節點拆成 X∣x、結果變成反事實 Yˣ</p><div id="swigScene_sccs" class="chart"></div></div>
     <div class="cards">
       <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The within-person <b>incidence rate ratio</b>: the event rate in the post-exposure risk window relative to baseline.">個人內的<b>相對速率（IRR）</b>：暴露後危險窗的事件率相對於基線。</p></div>
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> within person for all time-fixed factors (they cancel); time-varying ones (age, season) handled by splitting. <b>Positivity</b>: the person has both exposed and unexposed time. <b>Consistency</b>: a transient exposure that the event itself doesn't change.">個人內對所有時間不變因子<b>可交換</b>（自動相消）；時變因子（年齡、季節）靠切分。<b>正性</b>：此人有暴露也有非暴露時段。<b>一致性</b>：暴露短暫、且事件本身不改變日後暴露。</p></div>
@@ -3325,7 +3349,7 @@
   </footer>
 </main>
 
-<script src="i18n.js?v=63"></script>
-<script src="app.js?v=63"></script>
+<script src="i18n.js?v=64"></script>
+<script src="app.js?v=64"></script>
 </body>
 </html>

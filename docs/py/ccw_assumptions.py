@@ -160,45 +160,81 @@ def _c3_consistency(grace, lang="zh"):
 def _c4_weight_model(res, lang="zh"):
     we = res["weights"]["early"]; wl = res["weights"]["late"]
     mx = max(we["max"], wl["max"]); fx = max(we["frac_extreme"], wl["frac_extreme"])
-    metrics = [
-        {"name": t(lang, "穩定化權重平均（早／晚）", "Mean stabilized weight (early/late)"),
-         "value": f"{we['mean']:.2f} / {wl['mean']:.2f}",
-         "note": t(lang, "應接近 1；明顯偏離代表模型設定可疑", "should be ≈ 1; far from 1 means a suspect model")},
-        {"name": t(lang, "最大權重", "Largest weight"), "value": round(mx, 1),
-         "note": t(lang, "過大（如 >20）代表少數人主導估計", "very large (e.g. >20) means a few people dominate")},
-        {"name": t(lang, "極端權重比例（>10）", "Share of extreme weights (>10)"), "value": f"{fx*100:.1f}%",
-         "note": t(lang, "越高越不穩；可截斷或改善模型", "the higher the less stable; trim or improve the model")},
-    ]
-    if mx <= 12 and fx <= 0.01:
-        status = "green"
-        head = t(lang, "穩定化權重平均接近 1、沒有極端值 —— 反設限模型行為健康。",
-                 "Stabilized weights average ≈ 1 with no extremes — the censoring model behaves well.")
-    elif mx <= 30 and fx <= 0.05:
-        status = "amber"
-        head = t(lang, "權重有些偏大 —— 估計受少數人影響，建議截斷或加強模型。",
-                 "Some large weights — a few people sway the estimate; consider trimming or a better model.")
+    # sustained uses UNSTABILIZED weights (numerator = 1) → mean > 1 by design; the other
+    # scenarios use STABILIZED weights (marginal numerator) → mean ≈ 1.
+    unstab = res.get("scenario") == "sustained"
+    if unstab:
+        wname = t(lang, "未穩定化權重平均（持續／停藥）", "Mean unstabilized weight (sustain/discontinue)")
+        wnote = t(lang, "未穩定化權重（分子=1）的平均<b>本來就 >1</b>；看的是有沒有少數極端值",
+                  "unstabilized weights (numerator = 1) average <b>above 1 by design</b>; watch for a few extreme values")
     else:
-        status = "red"
-        head = t(lang, "權重極端 —— 反設限模型可能設定錯誤或正性不足，CCW 不穩。",
-                 "Extreme weights — the censoring model may be mis-specified or positivity is poor; CCW is unstable.")
+        wname = t(lang, "穩定化權重平均（早／晚）", "Mean stabilized weight (early/late)")
+        wnote = t(lang, "應接近 1；明顯偏離代表模型設定可疑", "should be ≈ 1; far from 1 means a suspect model")
+    metrics = [
+        {"name": wname, "value": f"{we['mean']:.2f} / {wl['mean']:.2f}", "note": wnote},
+        {"name": t(lang, "最大權重（截斷前）", "Largest weight (before truncation)"), "value": round(mx, 1),
+         "note": t(lang, "我們在 20 截斷，避免少數人主導估計", "we truncate at 20 so a few people don't dominate")},
+        {"name": t(lang, "極端權重比例（>10）", "Share of extreme weights (>10)"), "value": f"{fx*100:.1f}%",
+         "note": t(lang, "越高越不穩；靠截斷或改善模型控制", "the higher the less stable; controlled by truncation or a better model")},
+    ]
+    if unstab:
+        # unstabilized: large raw weights are expected; judge by share of extremes (we truncate)
+        if fx <= 0.05:
+            status = "green"
+            head = t(lang, "未穩定化權重平均 >1（正常），極端值很少且已截斷 —— 反設限模型行為健康。",
+                     "Unstabilized weights average >1 (expected); few extremes, and they are truncated — the censoring model behaves well.")
+        elif fx <= 0.12:
+            status = "amber"
+            head = t(lang, "未穩定化權重出現一些極端值 —— 靠截斷壓住，估計仍可能受少數人影響。",
+                     "Some extreme unstabilized weights — truncation caps them, but a few people may still sway the estimate.")
+        else:
+            status = "red"
+            head = t(lang, "極端權重很多 —— 反設限模型可能設定錯誤或正性不足，CCW 不穩。",
+                     "Many extreme weights — the censoring model may be mis-specified or positivity is poor; CCW is unstable.")
+    else:
+        if mx <= 12 and fx <= 0.01:
+            status = "green"
+            head = t(lang, "穩定化權重平均接近 1、沒有極端值 —— 反設限模型行為健康。",
+                     "Stabilized weights average ≈ 1 with no extremes — the censoring model behaves well.")
+        elif mx <= 30 and fx <= 0.05:
+            status = "amber"
+            head = t(lang, "權重有些偏大 —— 估計受少數人影響，建議截斷或加強模型。",
+                     "Some large weights — a few people sway the estimate; consider trimming or a better model.")
+        else:
+            status = "red"
+            head = t(lang, "權重極端 —— 反設限模型可能設定錯誤或正性不足，CCW 不穩。",
+                     "Extreme weights — the censoring model may be mis-specified or positivity is poor; CCW is unstable.")
+    plain = t(
+        lang,
+        "人為設限（偏離策略）不是隨機的，所以用<b>反設限機率加權（IPCW）</b>補回來。這裡 sustained（持續/停藥）"
+        "用<b>未穩定化權重</b>（分子=1，即 1/未設限機率）＋<b>截斷</b>，搭配無母數加權 KM——平均<b>本來就 >1</b>，"
+        "重點是極端值不要太多（靠截斷壓住）。其他情境用<b>穩定化權重</b>（分子＝邊際未設限機率），平均應≈1。"
+        "兩種都正確；差別在變異與極端權重。",
+        "Artificial censoring (deviating from a strategy) is not random, so we correct for it with "
+        "<b>inverse-probability-of-censoring weighting (IPCW)</b>. Here the sustained (stay-on/discontinue) strategy uses "
+        "<b>unstabilized weights</b> (numerator = 1, i.e. 1/uncensored-probability) + <b>truncation</b> with a "
+        "non-parametric weighted KM — so the mean is <b>above 1 by design</b>; what matters is that extremes stay rare "
+        "(capped by truncation). The other scenarios use <b>stabilized weights</b> (marginal numerator), whose mean should "
+        "be ≈ 1. Both are valid; they differ in variance and extreme-weight behaviour.",
+    ) if unstab else t(
+        lang,
+        "人為設限（偏離策略）不是隨機的，所以我們用<b>反設限機率加權（IPCW）</b>把它補回來。如果這個權重"
+        "模型設定正確，<b>穩定化權重的平均應該接近 1</b>，而且不該有少數人帶著超大的權重主宰整個估計。"
+        "上面的診斷就是在看這件事；若權重很極端，通常代表模型設定錯誤或正性不足。",
+        "Artificial censoring (deviating from a strategy) is not random, so we correct for it with "
+        "<b>inverse-probability-of-censoring weighting (IPCW)</b>. If that weight model is correctly specified, the "
+        "<b>stabilized weights should average ≈ 1</b>, and no handful of people should carry huge weights that "
+        "dominate the estimate. The diagnostics above check exactly this; very extreme weights usually signal "
+        "mis-specification or poor positivity.",
+    )
     return {
         "id": "C4",
         "title": t(lang, "反設限權重模型合理嗎？（可檢驗）",
                    "Is the censoring-weight model reasonable? (testable)"),
         "status": status, "headline": head,
-        "plain": t(
-            lang,
-            "人為設限（偏離策略）不是隨機的，所以我們用<b>反設限機率加權（IPCW）</b>把它補回來。如果這個權重"
-            "模型設定正確，<b>穩定化權重的平均應該接近 1</b>，而且不該有少數人帶著超大的權重主宰整個估計。"
-            "上面的診斷就是在看這件事；若權重很極端，通常代表模型設定錯誤或正性不足。",
-            "Artificial censoring (deviating from a strategy) is not random, so we correct for it with "
-            "<b>inverse-probability-of-censoring weighting (IPCW)</b>. If that weight model is correctly specified, the "
-            "<b>stabilized weights should average ≈ 1</b>, and no handful of people should carry huge weights that "
-            "dominate the estimate. The diagnostics above check exactly this; very extreme weights usually signal "
-            "mis-specification or poor positivity.",
-        ),
-        "term": t(lang, "專有名詞：反設限機率加權（IPCW）；穩定化權重（stabilized weights）；權重截斷（truncation）。",
-                  "Term: inverse-probability-of-censoring weighting (IPCW); stabilized weights; truncation."),
+        "plain": plain,
+        "term": t(lang, "專有名詞：反設限機率加權（IPCW）；穩定化／未穩定化權重（stabilized / unstabilized weights）；權重截斷（truncation）。",
+                  "Term: inverse-probability-of-censoring weighting (IPCW); stabilized / unstabilized weights; truncation."),
         "metrics": metrics,
     }
 
