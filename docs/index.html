@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=64" />
+<link rel="stylesheet" href="styles.css?v=65" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -12,7 +12,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span></div>
+  <div class="brand"><img class="brand-logo" src="assets/phdc-logo.png" alt="PHDc · Population Health Data Center" title="Population Health Data Center" /><span data-en="RWE &amp; Quasi-experimental toolbox">真實世界證據與準實驗工具箱</span> <span>IV</span> · <span>RDD</span> · <span>DiD</span> · <span>PERR</span> · <span>ITS</span> · <span>TiT</span> · <span>CCW</span> · <span>Seq</span> · <span>CCTC</span> · <span>CC</span> · <span>SCCS</span> · <span>ACNU</span></div>
   <nav class="tabs">
     <label class="method-pick"><span data-en="Method">方法</span>
       <select id="methodSelect">
@@ -27,6 +27,7 @@
         <option value="cctc" data-en="CCTC · Case-crossover &amp; time-control">CCTC · 案例交叉與時間對照</option>
         <option value="cc" data-en="CC · Case-control">CC · 病例對照</option>
         <option value="sccs" data-en="SCCS · Self-controlled case series">SCCS · 自身對照病例系列</option>
+        <option value="acnu" data-en="ACNU · Active-comparator new-user">ACNU · 主動對照新使用者</option>
       </select>
     </label>
     <div class="subtabs">
@@ -2934,6 +2935,151 @@
     </div>
   </section>
 
+  <!-- ===================== ACNU ① 是什麼 ===================== -->
+  <section id="acnulearn" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="ACNU: new users of drug A vs new users of an active comparator B">主動對照新使用者（ACNU）：A 的新使用者 vs 對照藥 B 的新使用者</h1>
+    <p class="lead" data-en="Does a new drug A raise the risk of an outcome? Comparing <b>A users vs non-users</b> is doubly biased: sicker patients get A (<b>confounding by indication</b>) and non-users are systematically healthier (<b>healthy-user</b> bias). The <b>active-comparator, new-user</b> design compares <b>new users of A</b> with <b>new users of an active comparator B</b> that treats the <b>same indication</b>. Both groups are indicated, both start at a clear time zero (first prescription), so confounding by indication and immortal-time / prevalent-user bias are largely removed; any residual severity difference is then handled with a propensity score.">
+      新藥 A 會不會提高某個結果的風險？拿<b>用 A 的人 vs 沒用藥的人</b>比會雙重偏誤：病情重的才會被開 A
+      （<b>因適應症而生的混淆</b>），而沒用藥的人通常比較健康（<b>healthy-user</b>）。<b>主動對照新使用者</b>設計改成比
+      <b>A 的新使用者</b> vs <b>主動對照藥 B</b>（治療<b>同一個適應症</b>）的新使用者：兩組都有這個病、都從明確的時間零點
+      （第一張處方）起跑，因適應症的混淆與 immortal-time／既有使用者偏誤就大幅消掉；殘留的嚴重度差再用傾向分數補掉。
+    </p>
+
+    <div class="card scene">
+      <h3 data-en="Why A-vs-B beats A-vs-non-users — severity is close for A and B">為什麼 A vs B 勝過 A vs 沒用藥 —— A 與 B 的嚴重度很接近</h3>
+      <div id="acnuScene" class="chart"></div>
+    </div>
+
+    <details class="term">
+      <summary data-en="Show terminology">看專有名詞解釋</summary>
+      <div class="tdef">
+        <h4>主動對照新使用者 <span class="en">active-comparator, new-user (ACNU)</span></h4>
+        <p data-en="<b>Plain:</b> compare new starters of drug A with new starters of a similar drug B used for the same indication.<br /><b>Definition:</b> a new-user cohort with an active comparator, time zero at first prescription, adjusted for residual confounding.<br /><b>Why it matters:</b> it removes confounding by indication + healthy-user + immortal-time bias that plague 'drug vs non-user' studies.<br /><b>Example:</b> a new antidiabetic A vs another antidiabetic B, both for type-2 diabetes.<br /><b>Origin:</b> Ray 2003 (new-user); Lund, Richardson &amp; Stürmer 2015 (ACNU).">
+          <b>白話：</b>比「剛開始用 A 的人」和「剛開始用同適應症的對照藥 B 的人」。<br />
+          <b>定義：</b>新使用者世代＋主動對照、時間零點＝第一張處方、再校正殘留混淆。<br />
+          <b>為什麼重要：</b>消掉「藥 vs 沒用藥」研究中的因適應症混淆＋healthy-user＋immortal-time 偏誤。<br />
+          <b>例子：</b>一種新降血糖藥 A vs 另一種降血糖藥 B（都治第二型糖尿病）。<br />
+          <b>源頭：</b>Ray 2003（new-user）；Lund, Richardson &amp; Stürmer 2015（ACNU）。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>因適應症而生的混淆 <span class="en">confounding by indication</span></h4>
+        <p data-en="<b>Plain:</b> the reason a drug is prescribed (disease severity) also affects the outcome, so treated and untreated differ by more than the drug.<br /><b>Definition:</b> confounding where the indication for treatment is itself a risk factor for the outcome.<br /><b>Why it matters:</b> it's the central threat in drug-safety studies; an active comparator with the same indication largely cancels it.<br /><b>Example:</b> sicker patients get the newer drug AND have more events.">
+          <b>白話：</b>開藥的理由（病情嚴重度）也會影響結果，所以用藥與沒用藥的人差的不只是藥。<br />
+          <b>定義：</b>「用藥的適應症」本身就是結果的風險因子所造成的混淆。<br />
+          <b>為什麼重要：</b>是藥物安全研究最核心的威脅；同適應症的主動對照能大幅相消它。<br />
+          <b>例子：</b>病情較重的人更會拿到新藥，也更容易發生事件。
+        </p>
+      </div>
+      <div class="tdef">
+        <h4>新使用者設計 <span class="en">new-user design</span></h4>
+        <p data-en="<b>Plain:</b> only include people at their <b>first</b> prescription, so everyone's clock starts at zero.<br /><b>Definition:</b> a cohort restricted to incident (new) users, with time zero at treatment start.<br /><b>Why it matters:</b> it avoids prevalent-user bias (survivors look healthier) and immortal time.<br /><b>Example:</b> exclude anyone already on the drug before the study window.">
+          <b>白話：</b>只收每個人的<b>第一張</b>處方，讓大家的時鐘都從零開始。<br />
+          <b>定義：</b>限制在新（起始）使用者、時間零點＝起始日的世代。<br />
+          <b>為什麼重要：</b>避免既有使用者偏誤（存活者看起來較健康）與 immortal time。<br />
+          <b>例子：</b>排除在研究窗之前就已經在用藥的人。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================== ACNU ② 互動講解 ===================== -->
+  <section id="acnuplay" class="panel">
+    <div class="banner" data-en="⚠ The built-in data is <b>purely fictional, synthetic demo data</b>, not real data, for teaching only.">⚠ 本工具的內建資料為<b>純屬虛構的合成示範資料</b>，非真實資料，僅供教學展示。</div>
+    <h1 data-en="Interactive: the active comparator starts far less biased">互動：主動對照一開始就少偏很多</h1>
+    <p class="lead" data-en="Drag the slider for how strongly disease <b>severity</b> drives the choice of A vs B (confounding by indication). The <b>naive A-vs-non-user</b> rate ratio is badly inflated even at zero (healthy-user gap); the <b>crude ACNU A-vs-B</b> contrast starts much closer and drifts up only as confounding grows; the <b>severity-adjusted ACNU</b> stays on the truth.">
+      拉動滑桿改變疾病<b>嚴重度</b>左右「拿 A 還是 B」的程度（因適應症的混淆）。<b>天真的 A vs 沒用藥</b>速率比就算在零也已經
+      嚴重偏高（healthy-user 差距）；<b>ACNU 粗 A vs B</b> 一開始就近很多、只隨混淆變強才漂；<b>校正嚴重度後的 ACNU</b> 穩在真值。
+    </p>
+
+    <div class="controls">
+      <label>
+        <span data-en="Confounding-by-indication strength:">因適應症的混淆強度：</span><b id="acnuConfVal">1.0</b>
+        <input type="range" id="acnuConfSlider" min="0" max="1.5" value="1" step="0.05" />
+        <small data-en="0 = severity doesn't affect the A-vs-B choice. Larger = sicker patients get A, so naive and crude ACNU drift up — while the adjusted ACNU stays on the truth.">0＝嚴重度不影響 A/B 選擇。越大＝病重者更拿 A，天真與粗 ACNU 往上漂——而校正後的 ACNU 停在真值。</small>
+      </label>
+    </div>
+
+    <div class="play-grid">
+      <div class="stat"><div class="stat-label" data-en="Naive: A vs non-users">天真：A vs 沒用藥</div><div class="stat-num" id="acnuNaive">–</div><div class="stat-foot" data-en="indication + healthy-user bias">適應症＋healthy-user 偏誤</div></div>
+      <div class="stat"><div class="stat-label" data-en="Crude ACNU: A vs B">ACNU 粗：A vs B</div><div class="stat-num" id="acnuCrude">–</div><div class="stat-foot" data-en="less biased (both indicated)">較不偏（都有病）</div></div>
+      <div class="stat"><div class="stat-label" data-en="Adjusted ACNU">ACNU 校正後</div><div class="stat-num" id="acnuAdj">–</div><div class="stat-foot" data-en="should hug the truth 1.6">應緊貼真值 1.6</div></div>
+    </div>
+
+    <div id="acnuPlayChart" class="chart"></div>
+    <p class="caption" id="acnuPlayReading"></p>
+  </section>
+
+  <!-- ===================== ACNU ③ 資料分析 ===================== -->
+  <section id="acnuanalyze" class="panel">
+    <h1 data-en="Data analysis: run an ACNU (rate ratio, A vs active comparator B)">資料分析：跑一次 ACNU（速率比，A vs 主動對照藥 B）</h1>
+    <p class="lead" data-en="Load the built-in cohort (one row per person: drug = A / B / none, disease severity, follow-up time, event). The tool computes the naive 'A vs non-users' rate ratio, the crude ACNU 'A vs B' rate ratio, and the severity-adjusted ACNU (a Poisson rate model), each with a 95% interval.">
+      載入內建世代（每列一個人：drug＝A／B／none、疾病嚴重度、追蹤人時、是否發生事件）。工具會算天真的「A vs 沒用藥」速率比、
+      ACNU 粗的「A vs B」速率比，以及校正嚴重度後的 ACNU（Poisson 速率模型），各附 95% 區間。
+    </p>
+
+    <div class="datasource">
+      <button id="useAcnuExample" class="btn primary" data-en="Load built-in cohort">載入內建世代範例</button>
+      <span class="or" data-en="or">或</span>
+      <label class="btn"><span data-en="Upload CSV">上傳 CSV</span><input type="file" id="acnuFileInput" accept=".csv" hidden /></label>
+      <span id="acnuDataStatus" class="muted" data-en="No data loaded yet">尚未載入資料</span>
+    </div>
+
+    <div id="acnuColMap" class="colmap hidden">
+      <div class="field"><label data-en="Drug (A/B/none)">用藥（A/B/none）</label><select id="acnuSelDrug"></select></div>
+      <div class="field"><label data-en="Event">事件</label><select id="acnuSelEvent"></select></div>
+      <div class="field"><label data-en="Follow-up time">追蹤人時</label><select id="acnuSelFu"></select></div>
+      <button id="runAcnuAnalyze" class="btn primary" data-en="Run ACNU analysis">執行 ACNU 分析</button>
+    </div>
+
+    <div id="acnuAnalyzeOut" class="hidden">
+      <h2 data-en="Rate ratio: naive vs ACNU vs adjusted">速率比：天真 vs ACNU vs 校正後</h2>
+      <div class="result-cards" id="acnuAnalyzeCards"></div>
+      <div id="acnuAnalyzeChart" class="chart"></div>
+      <p class="caption" data-en="The naive 'A vs non-users' bar is far above the truth; restricting to new users of an active comparator (A vs B) gets much closer, and adjusting for severity lands on the dashed truth line.">
+        天真「A vs 沒用藥」遠高於真值；限制在主動對照的新使用者（A vs B）就近多了，再校正嚴重度後落在虛線真值上。
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== ACNU ④ 假設檢驗 ===================== -->
+  <section id="acnuassume" class="panel">
+    <h1 data-en="Can we trust this ACNU? Five checks">這個 ACNU 可不可信？五道體檢</h1>
+    <p class="lead" data-en="The identifying assumptions are mostly about study <b>design</b> (blue cards): the comparator must share the indication, both groups must be new users with an aligned time zero, and the comparator should be neutral for the outcome. The testable ones are how balanced A and B are on severity and whether there are enough events. Green = fine, amber = watch out, red = problem, blue = needs domain judgement.">
+      核心假設大多關於研究<b>設計</b>（藍卡）：對照藥要同適應症、兩組都要是新使用者且時間零點對齊、對照藥對結果要中性。
+      可檢的是 A 與 B 的嚴重度平不平衡、事件數夠不夠。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
+    </p>
+    <div id="acnuOverall" class="overall hidden"></div>
+    <div id="acnuAssumeCards" class="assume-cards"></div>
+    <p id="acnuAssumeHint" class="muted" data-en="Loading…">載入中…</p>
+  </section>
+
+  <!-- ===================== ACNU ⑤ 用 AI 強化 ===================== -->
+  <section id="acnuml" class="panel">
+    <h1 data-en="Boost with AI: a machine-learning propensity score">用 AI 強化：機器學習傾向分數</h1>
+    <p class="lead" data-en="After the active comparator removes most confounding, A and B still carry <b>residual confounding</b> to adjust with a <b>propensity score (PS)</b>. When the A-vs-B choice depends <b>non-linearly</b> on covariates (a severity × age threshold interaction), a main-effects <b>logistic PS</b> is mis-specified and adjusts imperfectly; a <b>gradient-boosting PS</b> (the spirit of hdPS / ML-PS) captures the non-linearity and pulls the rate ratio back to the truth.">
+      主動對照削掉大半混淆後，A 與 B 之間還有<b>殘留混淆</b>要用<b>傾向分數（PS）</b>校正。當「拿 A 還是 B」的決定和共變項是
+      <b>非線性</b>關係（嚴重度 × 年齡的閾值交互作用）時，只放主效應的<b>邏輯斯 PS</b> 設定錯誤、校正不乾淨；改用
+      <b>梯度提升 PS</b>（hdPS／ML-PS 的精神）抓到非線性，把速率比拉回真值。
+    </p>
+    <button id="runAcnuPs" class="btn primary" data-en="Run the real ML (first run loads the ML package, ~5–10s)">跑真正的 ML（首次需載入 ML 套件，約 5–10 秒）</button>
+    <div id="acnuPsOut" class="hidden">
+      <div id="acnuPsChart" class="chart"></div>
+      <p class="caption" id="acnuPsReading"></p>
+    </div>
+
+    <h2 data-en="Notes from the literature">文獻中的注意事項</h2>
+    <div class="cards">
+      <div class="card"><h3 data-en="① The design does most of the work">① 設計做了大半的事</h3>
+        <p data-en="The active-comparator new-user design removes confounding by indication and immortal time by <b>design</b>, before any modelling. The ML propensity score only mops up the <b>residual</b> severity imbalance between A and B.">主動對照新使用者設計靠<b>設計本身</b>消掉因適應症的混淆與 immortal time，還沒建模就先成立。ML 傾向分數只是把 A 與 B 之間<b>殘留</b>的嚴重度差補掉。</p></div>
+      <div class="card"><h3 data-en="② ML-PS needs overlap &amp; honest validation">② ML-PS 要有重疊、要誠實驗證</h3>
+        <p data-en="A flexible PS can over-fit; check covariate <b>overlap</b> (positivity), trim/clip extreme weights, and validate balance after weighting. A higher AUC is not the goal — covariate balance is.">彈性 PS 會過擬合；要檢查共變項<b>重疊</b>（正性）、截斷極端權重、加權後再看平衡。AUC 高不是目的——共變項平衡才是。</p></div>
+      <div class="card"><h3 data-en="③ It estimates A relative to B">③ 估的是 A『相對 B』</h3>
+        <p data-en="Even a perfect PS still estimates A's effect <b>relative to the comparator B</b>, not vs 'no drug'. Choose a comparator that is neutral for the outcome, or fold its effect into the interpretation.">就算 PS 完美，估的仍是 A <b>相對於對照藥 B</b> 的效應，不是相對於「沒用藥」。要挑對結果中性的對照藥，否則把它的效應納入解讀。</p></div>
+    </div>
+  </section>
+
   <!-- ===================== ⑥ What if（每法一個面板）===================== -->
   <!-- 內容為原創白話改寫的因果推論概念，標註出處《Causal Inference: What If》(Hernán & Robins 2020)，未照抄原文。 -->
 
@@ -3111,6 +3257,22 @@
       <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b> within person for all time-fixed factors (they cancel); time-varying ones (age, season) handled by splitting. <b>Positivity</b>: the person has both exposed and unexposed time. <b>Consistency</b>: a transient exposure that the event itself doesn't change.">個人內對所有時間不變因子<b>可交換</b>（自動相消）；時變因子（年齡、季節）靠切分。<b>正性</b>：此人有暴露也有非暴露時段。<b>一致性</b>：暴露短暫、且事件本身不改變日後暴露。</p></div>
       <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From <b>conditioning on the person</b>: a conditional-Poisson likelihood drops each person's baseline rate, so all stable confounding disappears by construction. The catch: the event must not alter later exposure.">來自<b>條件在「人」上</b>：條件 Poisson 概似消掉每個人的基線速率，所有穩定混淆依設計消失。代價：事件不可改變日後暴露。</p></div>
       <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Self-controlled designs &amp; conditional exchangeability; confounding chapters. Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">自我對照設計與條件可交換性；混淆章。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
+    </div>
+  </section>
+
+  <section id="acnuwhatif" class="panel">
+    <h1 data-en="⑥ What if…? ACNU in the language of counterfactuals">⑥ 如果……？用反事實的語言看「主動對照新使用者 ACNU」</h1>
+    <p class="lead" data-en="What if everyone took drug A (Yᵃ⁼¹) vs everyone took the comparator B (Yᵃ⁼⁰)? Comparing A users with non-users fails because severity (the indication) opens a backdoor and non-users are a healthier population. ACNU restores comparability by restricting to an <b>indicated</b> population (new users of A vs B) and adjusting the residual severity.">
+      如果大家都用藥 A（Yᵃ⁼¹）vs 都用對照藥 B（Yᵃ⁼⁰）會怎樣？拿用 A 的人和沒用藥的人比會失敗，因為嚴重度（適應症）開了後門、而沒用藥的人是更健康的族群。ACNU 靠<b>限制在有適應症的族群</b>（A 的新使用者 vs B 的新使用者）＋校正殘留嚴重度，把可比性救回來。
+    </p>
+    <div class="card scene"><h3 data-en="Confounding by indication, blocked by an active comparator">因適應症的混淆，用主動對照擋住</h3>
+      <p class="caption" data-en="Causal structure (DAG)">因果結構圖（DAG）</p><div id="whatifScene_acnu" class="chart"></div>
+      <p class="caption" data-en="Counterfactual intervention graph (SWIG): the treatment node splits into A∣a and the outcome becomes the counterfactual Yᵃ">反事實介入圖（SWIG）：治療節點拆成 A∣a、結果變成反事實 Yᵃ</p><div id="swigScene_acnu" class="chart"></div></div>
+    <div class="cards">
+      <div class="card"><h3 data-en="① Counterfactuals &amp; the estimand">① 反事實與估計目標</h3><p data-en="The effect of <b>drug A vs an active comparator B</b> on the outcome rate, in the indicated new-user population — a relative (A-vs-B) effect, not vs 'no drug'.">在有適應症的新使用者族群中，<b>藥 A vs 主動對照藥 B</b> 對結果率的效應——是相對（A vs B）效應，不是相對於「沒用藥」。</p></div>
+      <div class="card"><h3 data-en="② Exchangeability · positivity · consistency">② 可交換性 · 正性 · 一致性</h3><p data-en="<b>Exchangeability</b>: after restricting to the same indication and adjusting severity, A vs B are comparable (no unmeasured confounding). <b>Positivity</b>: both drugs are plausible choices for these patients. <b>Consistency</b>: new users, a clear time zero (first prescription).">​<b>可交換性</b>：限制在同適應症＋校正嚴重度後，A 與 B 可比（無未測混淆）。<b>正性</b>：這些病人兩種藥都可能拿。<b>一致性</b>：新使用者、明確時間零點（第一張處方）。</p></div>
+      <div class="card"><h3 data-en="③ Where the &quot;exchangeability&quot; is borrowed from">③ 可交換性從哪借來</h3><p data-en="From an <b>active comparator with the same indication</b> (which narrows severity), the <b>new-user</b> design (aligned time zero, no immortal time), and a <b>propensity score</b> for the residual severity gap between A and B.">來自<b>同適應症的主動對照</b>（縮小嚴重度範圍）、<b>新使用者</b>設計（對齊時間零點、無 immortal time），加上對 A、B 殘留嚴重度差的<b>傾向分數</b>校正。</p></div>
+      <div class="card"><h3 data-en="④ In What If">④ 對應《What If》</h3><p data-en="Confounding &amp; exchangeability; the new-user active-comparator design as a target-trial emulation (Ch. 22). Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020). Free book online.">混淆與可交換性；新使用者主動對照設計即目標試驗模擬（第 22 章）。Hernán &amp; Robins, <i>Causal Inference: What If</i> (2020)。<a href="https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/" target="_blank" rel="noopener">免費電子書</a>。</p></div>
     </div>
   </section>
 
@@ -3348,11 +3510,15 @@
       <li data-ref="sccs"><b data-en="Clinical application">臨床應用</b> · Lai, D., Lim, D., Lu, J., et al. (2024). Risk of myocarditis after three doses of COVID-19 mRNA vaccines: a self-controlled case series study. <i>Journal of Evidence-Based Medicine.</i> <span data-en="〔SCCS for vaccine safety〕">〔SCCS 用於疫苗安全〕</span></li>
       <li data-ref="sccs"><b data-en="Extensions">方法延伸</b> · Farrington, C. P., &amp; Whitaker, H. J. (2006). Semiparametric analysis of case series data (with discussion). <i>Journal of the Royal Statistical Society: Series C, 55</i>(5), 553–594. · Farrington, C. P., Whitaker, H. J., &amp; Hocine, M. N. (2009). Case series analysis for censored, perturbed, or curtailed post-event exposures. <i>Biostatistics, 10</i>(1), 3–16. <span data-en="〔semiparametric &amp; event-dependent SCCS〕">〔半參數與事件相依 SCCS〕</span></li>
       <li data-ref="sccs"><b data-en="Software">軟體</b> · Ghebremichael-Weldeselassie, Y. <i>SCCS</i> R package v1.5 (CRAN, 2021) · OHDSI <i>SelfControlledCaseSeries</i> (R, OMOP CDM) · STATA <code>xtpoisson … fe</code> · SAS macros (SCCS.sas / Poisreg.sas / element.sas, Spiessens &amp; Haguinet). <span data-en="〔code, datasets &amp; worked examples on sccs-studies.info〕">〔程式、資料集與教學範例見 sccs-studies.info〕</span></li>
+      <li data-ref="acnu"><b data-en="Design">方法</b> · Lund, J. L., Richardson, D. B., &amp; Stürmer, T. (2015). The active comparator, new user study design in pharmacoepidemiology: historical foundations and contemporary application. <i>Current Epidemiology Reports, 2</i>(4), 221–228. <span data-en="〔the canonical ACNU design — ACNU tabs ①–④〕">〔ACNU 設計經典 —— ACNU 分頁 ①–④〕</span></li>
+      <li data-ref="acnu">Ray, W. A. (2003). Evaluating medication effects outside of clinical trials: new-user designs. <i>American Journal of Epidemiology, 158</i>(9), 915–920. <span data-en="〔the new-user design〕">〔新使用者設計〕</span></li>
+      <li data-ref="acnu">Yoshida, K., Solomon, D. H., &amp; Kim, S. C. (2015). Active-comparator design and new-user design in observational studies. <i>Nature Reviews Rheumatology, 11</i>(7), 437–441. <span data-en="〔practical overview〕">〔實務綜論〕</span></li>
+      <li data-ref="acnu"><b data-en="AI / machine learning">AI／機器學習</b> · Schneeweiss, S., Rassen, J. A., Glynn, R. J., et al. (2009). High-dimensional propensity score adjustment in studies of treatment effects using health care claims data. <i>Epidemiology, 20</i>(4), 512–522. <span data-en="〔hdPS / ML propensity score — ACNU tab ⑤〕">〔hdPS／機器學習傾向分數 —— ACNU 分頁 ⑤〕</span></li>
     </ul>
   </footer>
 </main>
 
-<script src="i18n.js?v=64"></script>
-<script src="app.js?v=64"></script>
+<script src="i18n.js?v=65"></script>
+<script src="app.js?v=65"></script>
 </body>
 </html>

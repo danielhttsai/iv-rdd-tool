@@ -12,7 +12,7 @@
 
   // Pyodide 套件版本需與 index.html 載入的 pyodide.js 相符
   var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
-  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "api"];
+  var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "acnu_core", "acnu_gen", "acnu_assumptions", "acnu_ml", "api"];
 
   var pyodide = null;
   var routeFn = null;
@@ -134,6 +134,8 @@
       ["POST", "/api/cc_analyze", "{}", JSON.stringify({ source: "example_cc", lang: "zh" })],
       ["GET", "/api/sccs_example", "{}", "{}"],
       ["POST", "/api/sccs_analyze", "{}", JSON.stringify({ source: "example_sccs", lang: "zh" })],
+      ["GET", "/api/acnu_example", "{}", "{}"],
+      ["POST", "/api/acnu_analyze", "{}", JSON.stringify({ source: "example_acnu", lang: "zh" })],
     ];
     for (var i = 0; i < calls.length; i++) {
       try { routeFn(calls[i][0], calls[i][1], calls[i][2], calls[i][3]); }
@@ -165,7 +167,7 @@
       }
     }
 
-    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf" || path === "/api/cc_forest" || path === "/api/sccs_selfmatch") {
+    if (path === "/api/ml_forbidden" || path === "/api/did_dml" || path === "/api/its_mlcf" || path === "/api/cc_forest" || path === "/api/sccs_selfmatch" || path === "/api/acnu_psml") {
       setStatus && null; // sklearn 首次載入(無遮罩,由按鈕顯示「計算中」)
       await ensureSklearn();
     }

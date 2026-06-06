@@ -10,7 +10,7 @@ const tr = (zh, en) => window.IV.tr(zh, en);
 const lang = () => window.IV.lang;
 
 // ----- navigation: method dropdown + sub-tabs -----
-const METHOD_PREFIX = { iv: "", rdd: "rdd", did: "did", tit: "tit", its: "its", perr: "perr", ccw: "ccw", cctc: "cctc", seq: "seq", cc: "cc", sccs: "sccs" };
+const METHOD_PREFIX = { iv: "", rdd: "rdd", did: "did", tit: "tit", its: "its", perr: "perr", ccw: "ccw", cctc: "cctc", seq: "seq", cc: "cc", sccs: "sccs", acnu: "acnu" };
 const PANEL_INIT = {
   play: () => refreshPlay(), ml: () => initMl(),
   rddplay: () => initRdd(), rddanalyze: () => initRddAnalyze(),
@@ -33,10 +33,12 @@ const PANEL_INIT = {
   ccassume: () => initCcAssume(), ccml: () => initCcMl(),
   sccslearn: () => initSccsLearn(), sccsplay: () => initSccsPlay(), sccsanalyze: () => initSccsAnalyze(),
   sccsassume: () => initSccsAssume(), sccsml: () => initSccsMl(),
+  acnulearn: () => initAcnuLearn(), acnuplay: () => initAcnuPlay(), acnuanalyze: () => initAcnuAnalyze(),
+  acnuassume: () => initAcnuAssume(), acnuml: () => initAcnuMl(),
   whatif: () => drawWhatifPair("iv"), rddwhatif: () => drawWhatifPair("rdd"), didwhatif: () => drawWhatifPair("did"),
   perrwhatif: () => drawWhatifPair("perr"), itswhatif: () => drawWhatifPair("its"), titwhatif: () => drawWhatifPair("tit"),
   ccwwhatif: () => drawWhatifPair("ccw"), seqwhatif: () => drawWhatifPair("seq"), cctcwhatif: () => drawWhatifPair("cctc"),
-  ccwhatif: () => drawWhatifPair("cc"), sccswhatif: () => drawWhatifPair("sccs"),
+  ccwhatif: () => drawWhatifPair("cc"), sccswhatif: () => drawWhatifPair("sccs"), acnuwhatif: () => drawWhatifPair("acnu"),
   choose: () => initChoose(),
 };
 let curMethod = "iv", curSub = "learn";
@@ -1527,14 +1529,14 @@ const DNODES = {
     watch: { zh: "最關鍵的是<b>混淆時間不變且為乘法尺度</b>（P1）；事前期事件數要夠多，否則基準不穩。",
              en: "The key assumption is <b>time-invariant, multiplicative confounding</b> (P1); the prior window needs enough events or the benchmark is unstable." } } },
   // common / external designs (reference)
-  rACC: { rec: { kind: "external", badge: "↗",
-    title: { zh: "建議：對照藥物世代研究（active comparator cohort）↗", en: "Suggested: active comparator cohort ↗" },
-    why: { zh: "你有藥理相近的對照可比，用「新使用者＋活性對照」設計能大幅降低適應症混淆與 immortal time bias。",
-           en: "With a pharmacologically similar comparator, a new-user active-comparator design sharply cuts confounding by indication and immortal-time bias." },
-    scenario: { zh: "疫苗情境：不用「打 vs 不打」比，而是比「打 A 廠牌 vs 打 B 廠牌」的新接種者——兩組都願意接種、體質較接近。",
-                en: "Vaccine scenario: instead of 'vaccinated vs not', compare new recipients of brand A vs brand B — both groups chose to vaccinate, so they're more alike." },
-    watch: { zh: "↗ 常見研究設計，本工具箱未實作。常可結合 <b>target trial emulation</b> 把分析設計成模擬一場試驗。",
-             en: "↗ A common design, not implemented here. Often combined with <b>target trial emulation</b>." } } },
+  rACC: { rec: { kind: "toolbox", method: "acnu", badge: "ACNU ✓",
+    title: { zh: "建議：主動對照新使用者 ACNU ✓（本工具）", en: "Suggested: Active-Comparator, New-User (ACNU) ✓ (this tool)" },
+    why: { zh: "你有藥理／適應症相近的對照藥可比——用「<b>新使用者＋主動對照</b>（A 的新使用者 vs B 的新使用者）」設計，兩組都有這個病、都剛起始、時間零點明確，能大幅削掉<b>因適應症的混淆</b>與 immortal-time／既有使用者偏誤；殘留的嚴重度差再用傾向分數校正。",
+           en: "With a pharmacologically / indication-similar comparator, a <b>new-user active-comparator</b> design (new users of A vs new users of B) puts both groups in the same indicated population with a clear time zero, sharply cutting <b>confounding by indication</b> and immortal-time / prevalent-user bias; residual severity is then handled by a propensity score." },
+    scenario: { zh: "疫苗情境：不用「打 vs 不打」比，而是比「打 A 廠牌 vs 打 B 廠牌」的新接種者——兩組都願意接種、體質較接近（見「ACNU」分頁 ①–⑥）。",
+                en: "Vaccine scenario: instead of 'vaccinated vs not', compare new recipients of brand A vs brand B — both groups chose to vaccinate, so they're more alike (see the ACNU tabs ①–⑥)." },
+    watch: { zh: "✓ 本工具箱已實作。需要一個<b>同適應症、對該結果中性</b>的對照藥；估的是 A『相對 B』的效應。常可結合 <b>target trial emulation</b>。",
+             en: "✓ Implemented in this toolbox. Needs a comparator that shares the indication and is <b>neutral for the outcome</b>; you estimate A's effect <b>relative to B</b>. Often combined with <b>target trial emulation</b>." } } },
   rSCCS: { rec: { kind: "toolbox", method: "sccs", badge: "SCCS ✓",
     title: { zh: "建議：自身對照病例系列 SCCS ✓（本工具）", en: "Suggested: self-controlled case series (SCCS) ✓ (this tool)" },
     why: { zh: "結果是急性、短暫事件、暴露有明確時窗——SCCS <b>只用 case</b>、用「<b>個人自身</b>」當對照，把每個人切成接種後的危險窗與基線期比較，<b>自動消掉所有不隨時間變的混淆</b>（基因、體質、社經）。時變因子（年齡、季節）用切分處理。",
@@ -1638,7 +1640,7 @@ const FULLMAP = {
                 { key: "rRDD", cond: { zh: "分數上的明確門檻（年齡 65／指標）", en: "a sharp cutoff on a score" }, tag: "RDD ✓", kind: "tb" },
                 { key: "rDiD", cond: { zh: "政策某時點開啟＋有對照組", en: "policy at a known time + control group" }, tag: "DiD ✓", kind: "tb" },
                 { key: "rITS", cond: { zh: "政策某時點＋單一群體、前後多時點", en: "policy at a time + single population, many points" }, tag: "ITS ✓", kind: "tb" },
-                { key: "rACC", cond: { zh: "有藥理相近的活性對照（打 A vs 打 B）", en: "a similar active comparator (A vs B)" }, tag: "對照藥物世代 ↗", kind: "ex" },
+                { key: "rACC", cond: { zh: "有藥理相近的活性對照（打 A vs 打 B）", en: "a similar active comparator (A vs B)" }, tag: "ACNU ✓", kind: "tb" },
                 { key: "rPERR", cond: { zh: "前後事件率＋混淆乘法穩定", en: "before/after rates + stable multiplicative confounding" }, tag: "PERR ✓", kind: "tb" },
                 { key: "rCCW", cond: { zh: "診斷後動態／持續策略（早 vs 晚、密集用藥）", en: "sustained/dynamic strategy (early vs late, intensive)" }, tag: "CCW ✓", kind: "tb" },
                 { key: "rSEQ", cond: { zh: "點治療，但多時點陸續收案", en: "point treatment, eligible at many times" }, tag: "序列試驗 ✓", kind: "tb" },
@@ -1824,8 +1826,8 @@ function drawChooseChart() {
 const CITE = {
   authors: "Methodology Working Group, Population Health Data Center, National Cheng Kung University; Tsai DH-T, Lai EC-C.",
   publisher: "Population Health Data Center, National Cheng Kung University",
-  titleZh: "真實世界證據與準實驗工具箱（IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS）線上教學工具",
-  titleEn: "RWE and Quasi-experimental Toolbox (IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS) — Online Teaching Tool",
+  titleZh: "真實世界證據與準實驗工具箱（IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU）線上教學工具",
+  titleEn: "RWE and Quasi-experimental Toolbox (IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU) — Online Teaching Tool",
   year: "2026",
   url: "https://danielhttsai.github.io/iv-rdd-tool/",
 };
@@ -1843,6 +1845,7 @@ const METHOD_REF = {
   seq:  { zh: "序列試驗", en: "Sequential trials", src: "Hernán & Robins (target trial); Danaei et al.; Gran et al." },
   cc:   { zh: "病例對照", en: "Case-control", src: "Dickerman et al. (2020), IJE; Shomal Zadeh et al. (2020); Schauberger et al. (2024)" },
   sccs: { zh: "自身對照病例系列 SCCS", en: "Self-controlled case series (SCCS)", src: "Whitaker, Farrington & Musonda (2006); Petersen, Douglas & Whitaker (2016); sccs-studies.info" },
+  acnu: { zh: "主動對照新使用者 ACNU", en: "Active-Comparator, New-User (ACNU)", src: "Lund, Richardson & Stürmer (2015); Ray (2003); Yoshida, Solomon & Kim (2015)" },
 };
 let refsContext = "iv";   // which page's references/citation to show
 
@@ -4139,6 +4142,223 @@ function drawSccsSelf(s) {
 }
 
 // ======================================================================
+// ACNU — Active-Comparator, New-User — tabs ①–⑤
+// ======================================================================
+const acnuState = { source: null, columns: [], req: null };
+let acnuLearnReady = false, acnuPlayReady = false, acnuAnalyzeReady = false,
+    acnuAssumeReady = false, acnuPsCache = null;
+
+// ① learn scene: three groups on a SEVERITY axis. Non-users sit far to the healthy
+// side; A and B (both indicated) are close together — that closeness is why ACNU's
+// crude contrast is far less biased than 'A vs non-users'.
+function drawSceneAcnu() {
+  if (!document.getElementById("acnuScene")) return;
+  const groups = [
+    { k: "none", sev: -0.51, col: "#9aa6b2", lbl: tr("沒用藥（healthy-user）", "non-users (healthy-user)") },
+    { k: "B", sev: -0.09, col: SLATE, lbl: tr("對照藥 B 新使用者", "comparator B new users") },
+    { k: "A", sev: 0.75, col: TEAL, lbl: tr("研究藥 A 新使用者", "drug A new users") },
+  ];
+  Plotly.react("acnuScene", [{
+    x: groups.map((g) => g.sev), y: groups.map((g) => g.lbl), type: "bar", orientation: "h",
+    marker: { color: groups.map((g) => g.col) },
+    text: groups.map((g) => (g.sev >= 0 ? "+" : "") + g.sev.toFixed(2)), textposition: "outside",
+  }], schemaLayout({
+    height: 290,
+    xaxis: { visible: true, title: tr("平均疾病嚴重度（混淆因子）", "mean disease severity (the confounder)"), range: [-1.0, 1.3], zeroline: true },
+    yaxis: { visible: true, automargin: true },
+    margin: { t: 16, r: 18, b: 44, l: 12 },
+    annotations: [{ x: 0.33, y: 2, xref: "x", yref: "y", ax: -0.51, ay: 0, axref: "x", ayref: "y",
+      showarrow: true, arrowhead: 3, arrowcolor: "#c0504d", arrowwidth: 2, text: "" },
+      { x: -0.3, y: 2.42, xref: "x", yref: "y", showarrow: false, font: { color: "#c0504d", size: 9.5 },
+        text: tr("天真：A vs 沒用藥（差距大→偏）", "naive: A vs non-users (big gap → biased)") },
+      { x: 0.33, y: 1.55, xref: "x", yref: "y", showarrow: false, font: { color: TEAL, size: 9.5 },
+        text: tr("ACNU：A vs B（差距小→較不偏）", "ACNU: A vs B (small gap → less biased)") }],
+  }), SCENE_CFG);
+}
+function initAcnuLearn() { if (acnuLearnReady) return; acnuLearnReady = true; drawSceneAcnu(); }
+
+// ② interactive — confounding-by-indication slider
+const acnuConfSlider = document.getElementById("acnuConfSlider");
+let acnuPlayTimer = null;
+function initAcnuPlay() { if (acnuPlayReady) return; acnuPlayReady = true; refreshAcnuPlay(); }
+function scheduleAcnuPlay() {
+  document.getElementById("acnuConfVal").textContent = Number(acnuConfSlider.value).toFixed(2);
+  clearTimeout(acnuPlayTimer); acnuPlayTimer = setTimeout(refreshAcnuPlay, 250);
+}
+if (acnuConfSlider) acnuConfSlider.addEventListener("input", scheduleAcnuPlay);
+async function refreshAcnuPlay() {
+  const conf = acnuConfSlider ? Number(acnuConfSlider.value) : 1.0;
+  let d;
+  try { d = await getJSON(`${API}/api/acnu_interactive?conf=${conf}&lang=${lang()}`); } catch (e) { return; }
+  state.acnuPlay = d;
+  const set = (id, v, col) => { const el = document.getElementById(id); if (el) { el.textContent = fmt(v, 2); if (col) el.style.color = col; } };
+  set("acnuNaive", d.naive_irr, RED);
+  set("acnuCrude", d.crude_irr, Math.abs(d.crude_irr - d.true_hr) < 0.4 ? TEAL : AMBER);
+  set("acnuAdj", d.adj_irr, Math.abs(d.adj_irr - d.true_hr) < 0.2 ? TEAL : AMBER);
+  const rd = document.getElementById("acnuPlayReading"); if (rd) rd.innerHTML = d.reading;
+  drawAcnuPlay(d);
+}
+function drawAcnuPlay(d) {
+  if (!document.getElementById("acnuPlayChart")) return;
+  const g = d.grid;
+  Plotly.react("acnuPlayChart", [
+    { x: g.conf, y: g.naive, mode: "lines+markers", type: "scatter", name: tr("天真：A vs 沒用藥", "naive: A vs non-users"), line: { color: RED, width: 3 }, marker: { size: 5 } },
+    { x: g.conf, y: g.crude, mode: "lines+markers", type: "scatter", name: tr("ACNU 粗：A vs B", "crude ACNU: A vs B"), line: { color: AMBER, width: 3 }, marker: { size: 5 } },
+    { x: g.conf, y: g.adj, mode: "lines+markers", type: "scatter", name: tr("ACNU 校正後", "adjusted ACNU"), line: { color: TEAL, width: 3 }, marker: { size: 5 } },
+    { x: [d.conf], y: [d.crude_irr], mode: "markers", type: "scatter", marker: { color: INK, size: 11, symbol: "x" }, showlegend: false },
+  ], sceneLayout({
+    height: 300, legend: { orientation: "h", y: 1.18 }, margin: { t: 30, r: 18, b: 44, l: 50 },
+    xaxis: { title: tr("因適應症的混淆強度", "confounding-by-indication strength") },
+    yaxis: { title: tr("速率比", "rate ratio"), range: [0, Math.max(...g.naive) * 1.12] },
+    shapes: [{ type: "line", x0: g.conf[0], x1: g.conf[g.conf.length - 1], y0: g.true_hr, y1: g.true_hr, line: { color: GREEN, width: 2, dash: "dash" } }],
+    annotations: [{ x: g.conf[g.conf.length - 1], y: g.true_hr, text: tr("真值 " + g.true_hr, "truth " + g.true_hr), showarrow: false, yshift: 11, xanchor: "right", font: { color: GREEN, size: 11 } }],
+  }), SCENE_CFG);
+}
+
+// ③ analyze
+function initAcnuAnalyze() { if (acnuAnalyzeReady) return; acnuAnalyzeReady = true; document.getElementById("useAcnuExample").click(); }
+function acnuFillSelects(cols) {
+  const opts = cols.map((c) => `<option value="${c}">${c}</option>`).join("");
+  ["acnuSelDrug", "acnuSelEvent", "acnuSelFu"].forEach((id) => document.getElementById(id).innerHTML = opts);
+  document.getElementById("acnuColMap").classList.remove("hidden");
+}
+function acnuApplyDefaults(d) {
+  if (!d) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (v != null && el) el.value = v; };
+  set("acnuSelDrug", d.drug); set("acnuSelEvent", d.event); set("acnuSelFu", d.futime);
+}
+document.getElementById("useAcnuExample").addEventListener("click", async () => {
+  const st = document.getElementById("acnuDataStatus");
+  try {
+    const d = await getJSON(`${API}/api/acnu_example`);
+    acnuState.source = "example_acnu"; acnuState.columns = d.columns;
+    st.textContent = tr(`已載入內建範例（${d.n} 人，合成虛構）`, `Loaded built-in example (${d.n} people, synthetic)`);
+    acnuFillSelects(d.columns); acnuApplyDefaults(d.defaults);
+    runAcnuAnalyze();
+  } catch (e) { st.textContent = tr("載入失敗：", "Load failed: ") + e.message; }
+});
+document.getElementById("acnuFileInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const st = document.getElementById("acnuDataStatus"); st.textContent = tr("上傳中…", "Uploading…");
+  try {
+    const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail);
+    const d = await r.json();
+    acnuState.source = d.token; acnuState.columns = d.columns;
+    st.textContent = tr(`已上傳「${file.name}」（${d.n} 列）`, `Uploaded "${file.name}" (${d.n} rows)`);
+    acnuFillSelects(d.columns);
+  } catch (e) { st.textContent = tr("上傳失敗：", "Upload failed: ") + e.message; }
+});
+function acnuCurrentMapping() {
+  const v = (id) => document.getElementById(id).value;
+  return { source: acnuState.source, drug: v("acnuSelDrug"), event: v("acnuSelEvent"),
+    futime: v("acnuSelFu"), covariates: ["severity", "comorbidity"], lang: lang() };
+}
+const runAcnuBtn = document.getElementById("runAcnuAnalyze");
+if (runAcnuBtn) runAcnuBtn.addEventListener("click", runAcnuAnalyze);
+async function runAcnuAnalyze() {
+  const req = acnuCurrentMapping();
+  if (!req.source) return;
+  acnuState.req = req;
+  try {
+    const a = await postJSON(`${API}/api/acnu_analyze`, req);
+    renderAcnuAnalyze(a);
+    runAcnuAssumptions(req);
+  } catch (e) { alert(tr("分析失敗：", "Analysis failed: ") + e.message); }
+}
+function renderAcnuAnalyze(a) {
+  document.getElementById("acnuAnalyzeOut").classList.remove("hidden");
+  const cards = [
+    [tr("ACNU 校正後（A vs B，因果）", "adjusted ACNU (A vs B, causal)"), a.adj_irr, a.interpretation, true],
+    [tr("天真：A vs 沒用藥（偏）", "naive: A vs non-users (biased)"), a.naive_irr,
+      tr("被 healthy-user 與因適應症的混淆嚴重撐大。", "badly inflated by healthy-user + confounding by indication."), false],
+    [tr("真值（A 相對 B 的速率比）", "Truth (A-vs-B rate ratio)"), a.true_hr,
+      tr("主動對照＋新使用者＋傾向分數校正應還原它。", "active comparator + new-user + PS adjustment should recover it."), false],
+  ];
+  document.getElementById("acnuAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${fmt(v, 2)}×</div><p>${desc}</p></div>`
+  ).join("");
+  drawAcnuAnalyze(a);
+}
+function drawAcnuAnalyze(a) {
+  if (!document.getElementById("acnuAnalyzeChart")) return;
+  const labels = [tr("天真<br>A vs 沒用藥", "naive<br>A vs none"), tr("ACNU 粗<br>A vs B", "crude ACNU<br>A vs B"),
+    tr("ACNU 校正<br>A vs B", "adjusted ACNU<br>A vs B"), tr("真值", "truth")];
+  const vals = [a.naive_irr, a.crude_irr, a.adj_irr, a.true_hr];
+  Plotly.react("acnuAnalyzeChart", [{
+    x: labels, y: vals, type: "bar", marker: { color: [RED, AMBER, TEAL, GREEN] },
+    text: vals.map((v) => fmt(v, 2) + "×"), textposition: "outside",
+  }], sceneLayout({
+    height: 300, margin: { t: 22, r: 16, b: 46, l: 50 },
+    yaxis: { title: tr("速率比", "rate ratio"), range: [0, Math.max(...vals) * 1.18] },
+    shapes: [{ type: "line", x0: -0.5, x1: 3.5, y0: a.true_hr, y1: a.true_hr, line: { color: GREEN, width: 2, dash: "dash" } }],
+  }), SCENE_CFG);
+}
+
+// ④ assumptions
+function initAcnuAssume() {
+  if (acnuAssumeReady) return;
+  acnuAssumeReady = true;
+  runAcnuAssumptions(acnuState.req || { source: "example_acnu", lang: lang() });
+}
+async function runAcnuAssumptions(req) {
+  const body = req ? { ...req, lang: lang() } : { source: "example_acnu", lang: lang() };
+  let out;
+  try { out = await postJSON(`${API}/api/acnu_assumptions`, body); } catch (e) { return; }
+  state.acnuDash = out;
+  renderAcnuAssumptions(out);
+}
+function renderAcnuAssumptions(out) {
+  const hint = document.getElementById("acnuAssumeHint"); if (hint) hint.classList.add("hidden");
+  const ov = document.getElementById("acnuOverall");
+  const worst = worstStatus(out.checks);
+  const head = {
+    green: tr("可測項目通過；關鍵設計假設仍需領域判斷。", "Testable checks pass; key design assumptions need domain judgement."),
+    amber: tr("有項目需要留意，請展開卡片細看。", "Some items need attention — expand the cards."),
+    red: tr("有項目不符，結果要保守看待。", "Some items fail — interpret with caution."),
+    info: tr("多數核心假設關乎設計、不可檢驗。", "Most core assumptions are about design and untestable."),
+  }[worst];
+  ov.classList.remove("hidden"); ov.className = `overall st-${worst}`; ov.style.background = "#fff";
+  ov.innerHTML = `<span class="dot bg-${worst}"></span> ${head}`;
+  document.getElementById("acnuAssumeCards").innerHTML = out.checks.map((c) => {
+    const metrics = c.metrics.map((m) => `<li>${m.name}<b>${m.value === null ? "–" : m.value}</b><span>${m.note || ""}</span></li>`).join("");
+    return `<div class="acard st-${c.status}"><h3><span class="dot bg-${c.status}"></span>${c.title}
+      <span class="badge bg-${c.status}">${statusText(c.status)}</span></h3>
+      <p class="headline"><b>${c.headline}</b></p><p class="plain">${c.plain}</p>
+      <ul class="metrics">${metrics}</ul>
+      <details class="term"><summary>${tr("看專有名詞解釋", "Show term explanation")}</summary><p>${c.term}</p></details></div>`;
+  }).join("");
+}
+
+// ⑤ real ML (ML propensity score) — button-triggered (loads sklearn)
+function initAcnuMl() { if (acnuPsCache) drawAcnuPs(acnuPsCache); }
+const runAcnuPsBtn = document.getElementById("runAcnuPs");
+if (runAcnuPsBtn) runAcnuPsBtn.addEventListener("click", async () => {
+  const btn = runAcnuPsBtn; const old = btn.textContent;
+  btn.disabled = true; btn.textContent = tr("計算中（載入 ML 套件）…", "Computing (loading ML package)…");
+  try {
+    const s = await getJSON(`${API}/api/acnu_psml?lang=${lang()}`);
+    acnuPsCache = s; drawAcnuPs(s);
+  } catch (e) { alert(tr("計算失敗：", "Failed: ") + e.message); }
+  finally { btn.disabled = false; btn.textContent = old; }
+});
+function drawAcnuPs(s) {
+  document.getElementById("acnuPsOut").classList.remove("hidden");
+  if (document.getElementById("acnuPsChart")) {
+    Plotly.react("acnuPsChart", [{
+      x: s.bars.labels, y: s.bars.values, type: "bar", marker: { color: [RED, AMBER, TEAL, GREEN] },
+      text: s.bars.values.map((v) => v.toFixed(2) + "×"), textposition: "outside",
+    }], sceneLayout({
+      height: 300, margin: { t: 22, r: 16, b: 50, l: 50 },
+      yaxis: { title: tr("速率比 IRR", "rate ratio"), range: [0, Math.max(...s.bars.values) * 1.18] },
+      shapes: [{ type: "line", x0: -0.5, x1: 3.5, y0: s.true_hr, y1: s.true_hr, line: { color: GREEN, width: 2, dash: "dash" } }],
+    }), SCENE_CFG);
+  }
+  document.getElementById("acnuPsReading").innerHTML = s.reading;
+}
+
+// ======================================================================
 // ⑥ What if — every method in the language of counterfactuals
 // (original plain-language take on Hernán & Robins, Causal Inference: What If;
 //  no text is copied from the book). One small counterfactual-contrast diagram
@@ -4222,6 +4442,12 @@ const WHATIF = {
       { id: "Ag", x: 0.5, y: 2.5, role: "T", label: { zh: "年齡/季節", en: "age / season" } }],
     edges: [{ a: "X", b: "Y", kind: "effect" }, { a: "U", b: "Y", kind: "cancel", label: { zh: "條件在人→相消", en: "conditioned → cancels" } }, { a: "Ag", b: "Y", kind: "bias", label: { zh: "切分調整", en: "split out" } }],
     note: { zh: "只用 case、<b>條件在「人」</b>：所有時間不變的 Uᵢ 自動相消（入框）；會隨時間變的（年齡、季節）用<b>切分</b>調整。", en: "Cases only, <b>conditioning on the person</b>: all time-fixed Uᵢ cancel (boxed); time-varying factors (age, season) are handled by <b>splitting</b>." } },
+  acnu: { nodes: [
+      { id: "A", x: 1.7, y: 1.1, role: "A", label: { zh: "新使用者：A vs 對照藥 B", en: "new users: A vs comparator B" } },
+      { id: "Y", x: 3.6, y: 1.1, role: "Y", label: { zh: "結果", en: "outcome Y" } },
+      { id: "S", x: 2.65, y: 2.5, role: "X", box: true, label: { zh: "疾病嚴重度 S（校正）", en: "severity S (adjusted)" } }],
+    edges: [{ a: "A", b: "Y", kind: "effect" }, { a: "S", b: "A", kind: "bias", label: { zh: "因適應症而生的混淆", en: "confounding by indication" } }, { a: "S", b: "Y", kind: "bias" }],
+    note: { zh: "嚴重度 S 同時影響『拿 A 還是對照藥 B』與結果＝<b>因適應症的混淆</b>。<b>主動對照</b>（同適應症）讓 S 範圍變窄、<b>新使用者</b>對齊時間零點；殘留的 S 用<b>傾向分數校正（入框）</b>→ A ⫫ Y | S。", en: "Severity S drives both 'A vs comparator B' and the outcome = <b>confounding by indication</b>. An <b>active comparator</b> (same indication) narrows the range of S and the <b>new-user</b> design aligns time zero; residual S is removed by <b>adjusting on the propensity score (boxed)</b> → A ⫫ Y | S." } },
 };
 
 const WHATIF_COL = { A: TEAL, Y: "#c0504d", U: "#5b7aa8", Z: "#f59e0b", X: "#b45309", T: "#64748b", L: "#7c5fae", S: "#94a3b8" };
@@ -4281,6 +4507,7 @@ const SWIG_META = {
   cctc: { split: "X",  cf: "Yˣ", note: { zh: "把危險窗暴露設成 x → 反事實 Yˣ。<b>條件在「人」</b>，個人固定 Uᵢ 相消→Xᵢ ⫫ Yˣ | 人；再用對照扣掉暴露時間趨勢。", en: "Set hazard-window exposure to x → Yˣ. <b>Conditional on the person</b>, fixed Uᵢ cancels → Xᵢ ⫫ Yˣ | person; controls then remove the exposure time trend." } },
   cc:   { split: "A",  cf: "Yᵃ", note: { zh: "把暴露設成 a → 反事實 Yᵃ。可交換性＝已測 U 校正＋對照代表來源族群；OR 在<b>依結果抽樣</b>下仍≈世代效果。", en: "Set exposure to a → Yᵃ. Exchangeability = measured U adjusted + controls representing the source population; the OR still ≈ the cohort effect despite <b>sampling on the outcome</b>." } },
   sccs: { split: "X",  cf: "Yˣ", note: { zh: "把『暴露時段』設成 x → 反事實 Yˣ。<b>條件在「人」</b>，所有時間不變的 Uᵢ 相消→Xᵢ ⫫ Yˣ | 人；年齡／季節用切分處理。", en: "Set 'exposed time' to x → Yˣ. <b>Conditional on the person</b>, all time-fixed Uᵢ cancel → Xᵢ ⫫ Yˣ | person; age/season handled by splitting." } },
+  acnu: { split: "A",  cf: "Yᵃ", note: { zh: "把『用 A（vs 對照藥 B）』設成 a → 反事實 Yᵃ。可交換性靠<b>主動對照＋新使用者</b>把 S 範圍縮小，再<b>校正嚴重度 S</b>達成：A ⫫ Yᵃ | S。", en: "Set 'take A (vs comparator B)' to a → counterfactual Yᵃ. Exchangeability comes from the <b>active comparator + new-user</b> design narrowing S, then <b>adjusting for severity S</b>: A ⫫ Yᵃ | S." } },
 };
 
 const swigShown = new Set();
@@ -4689,6 +4916,11 @@ window.addEventListener("iv-lang", async () => {
   if (sccsAnalyzeReady) runSccsAnalyze();              // SCCS ③ analysis + dashboard
   else if (sccsAssumeReady) runSccsAssumptions(sccsState.req);
   if (sccsSelfCache) drawSccsSelf(sccsSelfCache);      // SCCS ⑤ ML (re-render cache)
+  if (acnuLearnReady) drawSceneAcnu();                 // ACNU ① learn scene
+  if (acnuPlayReady) refreshAcnuPlay();                // ACNU ② interactive
+  if (acnuAnalyzeReady) runAcnuAnalyze();              // ACNU ③ analysis + dashboard
+  else if (acnuAssumeReady) runAcnuAssumptions(acnuState.req);
+  if (acnuPsCache) drawAcnuPs(acnuPsCache);            // ACNU ⑤ ML (re-render cache)
   whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if DAGs (re-render)
   swigShown.forEach((m) => drawSwig(m));                // ⑥ SWIGs (re-render)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree

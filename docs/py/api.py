@@ -51,6 +51,9 @@ import cc_assumptions
 import sccs_core
 import sccs_gen
 import sccs_assumptions
+import acnu_core
+import acnu_gen
+import acnu_assumptions
 
 EXAMPLE_DEFAULTS = {
     "outcome": "health_score_change",
@@ -910,6 +913,60 @@ def _sccs_selfmatch(q: dict) -> dict:
     return sccs_ml.self_matched_demo(seed=int(q.get("seed", 31)), lang=q.get("lang", "zh"))
 
 
+# ---------------------------------------------------------------------------
+# ACNU (active-comparator, new-user, 主動對照新使用者)
+# ---------------------------------------------------------------------------
+ACNU_DEFAULTS = {"drug": "drug", "event": "event", "futime": "futime",
+                 "covariates": ["severity", "comorbidity"]}
+
+
+def _load_acnu(source: str) -> pd.DataFrame:
+    if source in ("example_acnu", "example"):
+        return acnu_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise ValueError("找不到資料，請重新上傳。")
+    return df
+
+
+def _acnu_example() -> dict:
+    df = acnu_gen.generate()
+    return {
+        "columns": list(df.columns), "defaults": ACNU_DEFAULTS, "n": len(df),
+        "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "drug": "drug（A＝研究藥／B＝主動對照藥／none＝沒用藥）",
+            "severity": "severity（疾病嚴重度；混淆因子）／comorbidity",
+            "event": "event＋futime（追蹤內是否發生結果、追蹤人時）",
+        },
+    }
+
+
+def _acnu_analyze(req: dict) -> dict:
+    df = _load_acnu(req.get("source", "example_acnu"))
+    cov = req.get("covariates") or ["severity", "comorbidity"]
+    return acnu_core.full_acnu(df, req.get("drug", "drug"), req.get("event", "event"),
+                               req.get("futime", "futime"), covariates=tuple(cov),
+                               lang=req.get("lang", "zh"))
+
+
+def _acnu_assumptions(req: dict) -> dict:
+    df = _load_acnu(req.get("source", "example_acnu"))
+    return acnu_assumptions.run_dashboard(df, req.get("drug", "drug"), req.get("event", "event"),
+                                          req.get("futime", "futime"), lang=req.get("lang", "zh"))
+
+
+def _acnu_interactive(q: dict) -> dict:
+    conf = float(np.clip(float(q.get("conf", 1.0)), 0.0, 1.5))
+    return acnu_core.acnu_interactive(conf, lang=q.get("lang", "zh"))
+
+
+def _acnu_psml(q: dict) -> dict:
+    import acnu_ml
+    return acnu_ml.ps_ml_demo(seed=int(q.get("seed", 41)), lang=q.get("lang", "zh"))
+
+
 def _tit_interactive(q: dict) -> dict:
     trend = float(np.clip(float(q.get("trend", 1.0)), 0.2, 1.5))
     df = tit_gen.generate(n=2500, trend=trend)   # smaller sample → snappy slider
@@ -988,6 +1045,11 @@ _ROUTES = {
     ("POST", "/api/sccs_assumptions"): lambda q, b: _sccs_assumptions(b),
     ("GET", "/api/sccs_interactive"): lambda q, b: _sccs_interactive(q),
     ("GET", "/api/sccs_selfmatch"): lambda q, b: _sccs_selfmatch(q),
+    ("GET", "/api/acnu_example"): lambda q, b: _acnu_example(),
+    ("POST", "/api/acnu_analyze"): lambda q, b: _acnu_analyze(b),
+    ("POST", "/api/acnu_assumptions"): lambda q, b: _acnu_assumptions(b),
+    ("GET", "/api/acnu_interactive"): lambda q, b: _acnu_interactive(q),
+    ("GET", "/api/acnu_psml"): lambda q, b: _acnu_psml(q),
 }
 
 

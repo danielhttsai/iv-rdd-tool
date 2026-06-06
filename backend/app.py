@@ -52,6 +52,10 @@ import sccs_core
 import sccs_gen
 import sccs_assumptions
 import sccs_ml
+import acnu_core
+import acnu_gen
+import acnu_assumptions
+import acnu_ml
 import seq_core
 import seq_gen
 import seq_assumptions
@@ -1019,6 +1023,69 @@ def sccs_interactive(hv: float = 1.0, lang: str = "zh"):
 def sccs_selfmatch(seed: int = 31, lang: str = "zh"):
     """SCCS ⑤: real sklearn self-matched learning (effect heterogeneity)."""
     return _clean(sccs_ml.self_matched_demo(seed=seed, lang=lang))
+
+
+# ---------------------------------------------------------------------------
+# ACNU (active-comparator, new-user)
+# ---------------------------------------------------------------------------
+class AcnuRequest(BaseModel):
+    source: str = "example_acnu"
+    drug: str = "drug"
+    event: str = "event"
+    futime: str = "futime"
+    covariates: list[str] | None = None
+    lang: str = "zh"
+
+
+def _load_acnu(source: str) -> pd.DataFrame:
+    if source in ("example_acnu", "example"):
+        return acnu_gen.generate()
+    df = _UPLOADS.get(source)
+    if df is None:
+        raise HTTPException(404, "找不到資料，請重新上傳。")
+    return df
+
+
+@app.get("/api/acnu_example")
+def acnu_example():
+    df = acnu_gen.generate()
+    return _clean({
+        "columns": list(df.columns),
+        "defaults": {"drug": "drug", "event": "event", "futime": "futime",
+                     "covariates": ["severity", "comorbidity"]},
+        "n": len(df), "synthetic": True, "disclaimer": DISCLAIMER,
+        "preview": df.head(8).to_dict(orient="records"),
+        "story": {
+            "drug": "drug（A＝研究藥／B＝主動對照藥／none＝沒用藥）",
+            "severity": "severity（疾病嚴重度；混淆因子）／comorbidity",
+            "event": "event＋futime（追蹤內是否發生結果、追蹤人時）",
+        },
+    })
+
+
+@app.post("/api/acnu_analyze")
+def acnu_analyze(req: AcnuRequest):
+    df = _load_acnu(req.source)
+    cov = tuple(req.covariates or ["severity", "comorbidity"])
+    return _clean(acnu_core.full_acnu(df, req.drug, req.event, req.futime,
+                                      covariates=cov, lang=req.lang))
+
+
+@app.post("/api/acnu_assumptions")
+def acnu_assumptions_check(req: AcnuRequest):
+    df = _load_acnu(req.source)
+    return _clean(acnu_assumptions.run_dashboard(df, req.drug, req.event, req.futime, lang=req.lang))
+
+
+@app.get("/api/acnu_interactive")
+def acnu_interactive(conf: float = 1.0, lang: str = "zh"):
+    return _clean(acnu_core.acnu_interactive(float(np.clip(conf, 0.0, 1.5)), lang=lang))
+
+
+@app.get("/api/acnu_psml")
+def acnu_psml(seed: int = 41, lang: str = "zh"):
+    """ACNU ⑤: real sklearn ML propensity score (cleans up residual confounding)."""
+    return _clean(acnu_ml.ps_ml_demo(seed=seed, lang=lang))
 
 
 @app.get("/api/tit_interactive")
