@@ -345,6 +345,16 @@ select { padding: .45rem; border: 1px solid var(--line); border-radius: 8px; fon
 .tdef p b { color: var(--z); font-weight: 700; }
 .tdef code { background: #eef4f2; border: 1px solid var(--line); border-radius: 5px; padding: .05rem .35rem; font-size: .82rem; color: #14283c; white-space: nowrap; }
 .tdef .tform { margin-top: .3rem; }
+/* ⑦ SAS code walkthrough */
+pre.sas { background: #0f1f2e; color: #e6edf3; padding: .8rem 1rem; border-radius: 10px;
+  overflow-x: auto; margin: .5rem 0 .2rem; box-shadow: var(--shadow); }
+pre.sas code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .82rem; line-height: 1.55; white-space: pre; color: inherit; background: none;
+  border: none; padding: 0; }
+pre.sas .cm { color: #8aa6bf; font-style: italic; }   /* SAS comment */
+pre.sas .kw { color: #6fd0c0; font-weight: 600; }      /* PROC / keyword */
+.sas-note { background: #fff8e6; border: 1px solid #f0d68c; border-radius: 10px;
+  padding: .7rem .9rem; font-size: .85rem; color: #6b5618; margin: .2rem 0 1rem; }
 
 .hidden { display: none !important; }
 
