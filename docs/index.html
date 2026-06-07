@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=69" />
+<link rel="stylesheet" href="styles.css?v=70" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=29"></script>
@@ -3596,6 +3596,20 @@
     <h1 data-en="⑦ SAS code: the key steps for IV (2SLS)">⑦ SAS 程式：工具變數 IV（2SLS）的關鍵步驟</h1>
     <p class="lead" data-en="Two procedures do the work: check the instrument is strong, then run two-stage least squares with the instrument standing in for the treatment.">兩個程序就夠：先確認工具夠強，再用兩階段最小平方（2SLS）讓工具頂替治療。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* raw = one row per person-visit. Collapse to ONE row per person:        */</span>
+<span class="cm">/* instrument + baseline covariates + a change-score outcome.             */</span>
+proc sql;
+   create table iv as
+   select pid,
+          max(Z)                                as Z,    <span class="cm">/* instrument (e.g. random reminder) */</span>
+          max(A)                                as A,    <span class="cm">/* treated by end of window */</span>
+          max(case when visit=0 then age end)   as age,
+          max(case when last_visit then y end)
+            - max(case when visit=0 then y end) as Y     <span class="cm">/* change from baseline to last */</span>
+   from raw group by pid;
+quit;</code></pre>
+      <p data-en="IV is cross-sectional: collapse the repeated visits to one row per person — instrument and baseline from the first visit, the outcome as a baseline-to-last change.">IV 是橫斷面：把重複的回診收成每人一列——工具與基線取自第一次回診，結果取「基線到最後一次」的變化量。</p></div>
     <div class="card"><h3 data-en="Step 1 — first-stage strength (weak-instrument check)">步驟 1 — 第一階段強度（弱工具檢查）</h3>
       <pre class="sas"><code><span class="cm">/* regress treatment A on the instrument Z + covariates */</span>
 proc reg data=iv;
@@ -3616,6 +3630,15 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for RDD">⑦ SAS 程式：斷點回歸 RDD 的關鍵步驟</h1>
     <p class="lead" data-en="Restrict to a window around the cutoff, centre the running variable, and fit a local linear regression with an interaction; the jump at the cutoff is the effect.">把資料限制在斷點附近的視窗、把跑分變數置中，再配帶交互作用的局部線性迴歸；斷點處的跳幅就是效應。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* keep each person's INDEX record: the running variable (age at index), */</span>
+<span class="cm">/* whether they were treated, and the outcome.                          */</span>
+proc sql;
+   create table rdd as
+   select pid, age_at_index as age, treated as D, outcome as Y
+   from raw where visit_type = 'index';
+quit;</code></pre>
+      <p data-en="RDD needs one row per person carrying the running variable and the outcome; pick the index record from the longitudinal file (Step 1 then keeps a window around the cutoff).">RDD 需要每人一列、帶著跑分變數與結果；從縱貫檔取出 index 紀錄即可（Step 1 再取斷點附近的視窗）。</p></div>
     <div class="card"><h3 data-en="Step 1 — window + centre the running variable">步驟 1 — 取視窗＋把跑分變數置中</h3>
       <pre class="sas"><code>data band; set rdd;
    if abs(age - 65) &lt;= &amp;h;        <span class="cm">/* keep a bandwidth window around cutoff 65 */</span>
@@ -3634,6 +3657,19 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for DiD">⑦ SAS 程式：差異中的差異 DiD 的關鍵步驟</h1>
     <p class="lead" data-en="One regression with a treat×post interaction gives the DiD/ATT; cluster-robust standard errors by unit; an event study checks parallel trends.">一條帶 treat×post 交互作用的迴歸就給出 DiD／ATT；用單位做群集穩健標準誤；事件研究檢查平行趨勢。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* raw person-month records → a unit x period PANEL (collapse to means). */</span>
+proc sql;
+   create table panel as
+   select community as id, period,
+          mean(outcome)     as Y,
+          max(ever_treated) as treat        <span class="cm">/* unit ever gets the policy */</span>
+   from raw group by community, period;
+quit;
+data did; set panel;
+   post = (period &gt;= policy_period);        <span class="cm">/* before vs after the switch */</span>
+run;</code></pre>
+      <p data-en="DiD needs a balanced unit×period panel: collapse the longitudinal records to one row per community-period (means/counts), then flag treated and post.">DiD 需要單位×期別的面板：把縱貫紀錄收成每「社區×期別」一列（平均／計數），再標記 treat 與 post。</p></div>
     <div class="card"><h3 data-en="Step 1 — the DiD interaction with clustered SE">步驟 1 — DiD 交互作用＋群集標準誤</h3>
       <pre class="sas"><code>proc genmod data=did;
    class id;
@@ -3654,6 +3690,15 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for PERR">⑦ SAS 程式：事前事件率比 PERR 的關鍵步驟</h1>
     <p class="lead" data-en="Fit a Poisson rate model on person-period rows; the group×period interaction is exactly the prior-event-rate-ratio (a ratio of rate ratios).">在「人×期間」的列上配 Poisson 速率模型；group×period 交互作用正好就是事前事件率比（比值的比值）。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* split each person's follow-up at treatment start into a PRIOR and a    */</span>
+<span class="cm">/* POST period — long format: events + person-time per period, by group.  */</span>
+data perr; set cohort;
+   group=trt;
+   period='prior'; events=ev_prior; logpt=log(pt_prior); output;
+   period='post';  events=ev_post;  logpt=log(pt_post);  output;
+run;</code></pre>
+      <p data-en="PERR compares pre vs post rate ratios, so each person contributes two rows (prior, post) with that period's event count and log person-time as an offset.">PERR 比的是事前 vs 事後率比，所以每人貢獻兩列（prior、post），各帶該期的事件數與 log 人時（當 offset）。</p></div>
     <div class="card"><h3 data-en="Step 1 — Poisson rate model with an offset">步驟 1 — 帶 offset 的 Poisson 速率模型</h3>
       <pre class="sas"><code><span class="cm">/* one row per group x period: events + log(person-time) */</span>
 proc genmod data=perr;
@@ -3672,6 +3717,15 @@ estimate 'PERR (log)' group*period 1 / exp;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for ITS">⑦ SAS 程式：中斷時間序列 ITS 的關鍵步驟</h1>
     <p class="lead" data-en="Build a step and a post-slope term, then fit a segmented regression that models residual autocorrelation (PROC AUTOREG).">做出「水準階」與「介入後斜率」兩個項，再用能處理殘差自相關的分段迴歸（PROC AUTOREG）。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* raw daily / person-level records → one row per calendar PERIOD with    */</span>
+<span class="cm">/* the aggregated outcome (an equally-spaced time series).                */</span>
+proc sql;
+   create table its as
+   select period as t, sum(event) as Y, sum(n) as denom
+   from raw group by period order by t;
+quit;</code></pre>
+      <p data-en="ITS is a single time series: aggregate the longitudinal records into one row per equally-spaced period (counts or rates). Step 1 then codes the interruption.">ITS 是一條時間序列：把縱貫紀錄聚合成「每個等距期間一列」（計數或率）。Step 1 再編碼中斷點。</p></div>
     <div class="card"><h3 data-en="Step 1 — code the interruption">步驟 1 — 編碼中斷點</h3>
       <pre class="sas"><code>data its; set its;
    level = (t &gt;= t0);            <span class="cm">/* 0 before, 1 after intervention */</span>
@@ -3689,6 +3743,16 @@ run;   <span class="cm">/* level = level change, trend = slope change */</span><
     <h1 data-en="⑦ SAS code: the key steps for Trend-in-Trend">⑦ SAS 程式：趨勢中的趨勢 TiT 的關鍵步驟</h1>
     <p class="lead" data-en="There is no canned SAS procedure: aggregate to time × CPE-stratum cells, then maximise a binomial likelihood with PROC NLMIXED; the causal odds ratio is exp(β₁).">SAS 沒有現成程序：先把資料聚合成「時間 × 累積暴露機率層」的細格，再用 PROC NLMIXED 最大化二項概似；因果勝算比＝exp(β₁)。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b> only — TiT has no built-in SAS proc; NLMIXED maximises the likelihood by hand.">僅<b>關鍵步驟</b>示意——TiT 沒有內建 SAS 程序，靠 NLMIXED 自行最大化概似。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to analysis-ready">步驟 0 — 從縱貫（長格式）資料整理成可分析格式</h3>
+      <pre class="sas"><code><span class="cm">/* 1) cumulative-prob-of-exposure (CPE) per person from baseline covars,  */</span>
+<span class="cm">/*    then cut into 5 strata.                                             */</span>
+proc logistic data=base;
+   model ever_exposed(event='1') = age sex comorbidity;
+   output out=cpe p=cpe_p;
+run;
+proc rank data=cpe groups=5 out=cpe; var cpe_p; ranks cpe_stratum; run;
+<span class="cm">/* 2) merge cpe_stratum back onto the period x person longitudinal rows   */</span></code></pre>
+      <p data-en="TiT first needs a CPE stratum per person (from baseline covariates); merge it onto the longitudinal period×person rows, then Step 1 aggregates to time×stratum cells.">TiT 先要每人一個 CPE 層（由基線共變項算）；把它併回「期別×人」的縱貫列，Step 1 再聚合成「時間×層」細格。</p></div>
     <div class="card"><h3 data-en="Step 1 — aggregate to time × stratum cells">步驟 1 — 聚合成「時間 × 層」細格</h3>
       <pre class="sas"><code><span class="cm">/* assign each person a CPE stratum from baseline covariates, then count */</span>
 proc means data=tit noprint nway;
@@ -3711,6 +3775,23 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for Clone-Censor-Weight">⑦ SAS 程式：複製-設限-加權 CCW 的關鍵步驟</h1>
     <p class="lead" data-en="Clone each person into both strategy arms, censor a clone when it deviates, fit a pooled-logistic IPCW model for that artificial censoring, then a weighted survival analysis.">把每個人複製到兩個策略臂、偏離時設限、用 pooled-logistic 配 IPCW，再做加權存活分析。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal dispensings to one row per person">步驟 0 — 從縱貫的領藥紀錄整理成每人一列</h3>
+      <pre class="sas"><code><span class="cm">/* raw = one row per dispensing (pid fill_date days_supply) + event date. */</span>
+<span class="cm">/* Derive each person's treatment start/stop month and event month.       */</span>
+proc sql;
+   create table cohort as
+   select pid, index_date,
+          min(fill_date)               as start_date format=date9.,
+          max(fill_date + days_supply) as stop_date  format=date9.,
+          min(event_date)              as event_date format=date9.
+   from rx group by pid, index_date;
+quit;
+data cohort; set cohort;
+   start_month = intck('month', index_date, start_date);
+   stop_month  = intck('month', index_date, stop_date);
+   event_month = intck('month', index_date, event_date);
+run;</code></pre>
+      <p data-en="The hardest reshape: turn many dispensing rows into one row per person carrying the treatment episode (start/stop) and the event month. Step 1 then clones into both strategies and expands to person-months using these dates.">最難的整形：把多筆領藥列收成每人一列、帶著治療起訖（start/stop）與事件月。Step 1 再用這些日期複製到兩臂、展開成「人月」。</p></div>
     <div class="card"><h3 data-en="Step 1 — clone into both strategies, expand to person-months">步驟 1 — 複製到兩臂、展開成「人月」</h3>
       <pre class="sas"><code>data clones; set cohort;
    do arm = 'early','late'; output; end;     <span class="cm">/* one copy per strategy */</span>
@@ -3734,6 +3815,15 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for Sequential trials">⑦ SAS 程式：序列試驗 Seq 的關鍵步驟</h1>
     <p class="lead" data-en="Stack one emulated trial per eligibility time (resetting time zero), then fit a stratified survival model with person-cluster-robust SEs (people re-enter several trials).">每個資格時點堆疊一場模擬試驗（時間零點歸零），再配分層存活模型、用個人叢集穩健標準誤（同一人可重複收案）。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to one row per person">步驟 0 — 從縱貫資料整理成每人一列</h3>
+      <pre class="sas"><code><span class="cm">/* claims/visits → one row per person with the month they (would) start   */</span>
+<span class="cm">/* treatment and their event month (relative to a common baseline).       */</span>
+proc sql;
+   create table cohort as
+   select pid, min(init_month) as start_month, min(event_month) as event_month
+   from raw group by pid;
+quit;</code></pre>
+      <p data-en="Sequential trials reuse the same people across many start times, so first reduce the longitudinal data to one row per person with their key months; Step 1 then stacks one emulated trial per eligibility month.">序列試驗會在多個起始時點重複用到同一群人，所以先把縱貫資料收成每人一列、帶關鍵月份；Step 1 再每個資格月堆疊一場模擬試驗。</p></div>
     <div class="card"><h3 data-en="Step 1 — stack the emulated trials">步驟 1 — 堆疊各場模擬試驗</h3>
       <pre class="sas"><code>data trials; set cohort;
    do k = 1 to 12;                       <span class="cm">/* one trial per eligibility month */</span>
@@ -3756,6 +3846,14 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for case-crossover / CCTC">⑦ SAS 程式：案例交叉與時間對照 CCTC 的關鍵步驟</h1>
     <p class="lead" data-en="Conditional logistic with each person as their own stratum gives the case-crossover OR; dividing by a control series' OR removes the exposure time trend (CCTC).">以「每個人一個分層」的條件 logistic 得到案例交叉 OR；再除以對照序列的 OR 扣掉暴露的時間趨勢（CCTC）。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to within-person windows">步驟 0 — 從縱貫資料整理成個人內的時窗</h3>
+      <pre class="sas"><code><span class="cm">/* for each CASE, look back from the event date against the Rx history:   */</span>
+<span class="cm">/* exposure in the HAZARD window vs an earlier REFERENCE window.          */</span>
+data cco; set cases;
+   y=1; exposed = exp_between(event_date-7,  event_date-1);  output;  <span class="cm">/* hazard */</span>
+   y=0; exposed = exp_between(event_date-35, event_date-29); output;  <span class="cm">/* reference */</span>
+run;</code></pre>
+      <p data-en="Turn each case's longitudinal exposure history into two within-person windows — a hazard window just before the event and an earlier reference window (exp_between checks the dispensing file).">把每個 case 的縱貫暴露史整成兩個個人內時窗——事件前的危險窗與更早的參考窗（exp_between 比對領藥檔）。</p></div>
     <div class="card"><h3 data-en="Step 1 — case-crossover (conditional logistic)">步驟 1 — 案例交叉（條件 logistic）</h3>
       <pre class="sas"><code>proc logistic data=cco;
    strata pid;                   <span class="cm">/* each person = one stratum (own control) */</span>
@@ -3772,6 +3870,17 @@ run;   <span class="cm">/* exp(beta) = case-crossover OR */</span></code></pre>
     <h1 data-en="⑦ SAS code: the key steps for Case-control">⑦ SAS 程式：病例對照 CC 的關鍵步驟</h1>
     <p class="lead" data-en="For a matched study, conditional logistic (stratified by matched set) gives the adjusted odds ratio; unmatched, plain logistic with covariates.">配對研究用條件 logistic（以配對組分層）得校正勝算比；非配對則用帶共變項的一般 logistic。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal data to cases + controls">步驟 0 — 從縱貫資料整理成病例＋對照</h3>
+      <pre class="sas"><code><span class="cm">/* cases = people with the outcome; sample/match controls from the source */</span>
+<span class="cm">/* population; then look back over claims for exposure before index date.  */</span>
+proc sql;
+   create table cc as
+   select a.pid, a.case, a.match_id, a.age, a.sex,
+          (exists (select 1 from rx b
+                   where b.pid=a.pid and b.date &lt; a.index_date)) as exposed
+   from sampled a;
+quit;</code></pre>
+      <p data-en="Case-control samples on the outcome: assemble cases + (matched) controls, then derive each person's exposure by looking back over the longitudinal claims before their index date.">病例對照是依結果抽樣：先組好病例＋（配對）對照，再回頭看每個人 index 日期前的縱貫領藥紀錄決定暴露。</p></div>
     <div class="card"><h3 data-en="Step 1 — matched: conditional logistic">步驟 1 — 配對：條件 logistic</h3>
       <pre class="sas"><code>proc logistic data=cc;
    strata match_id;              <span class="cm">/* conditional likelihood within matched sets */</span>
@@ -3789,6 +3898,15 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for SCCS">⑦ SAS 程式：自身對照病例系列 SCCS 的關鍵步驟</h1>
     <p class="lead" data-en="Split each case's follow-up into exposure and age intervals, then fit a conditional Poisson with the person as the stratum; the exposure-group coefficient is the incidence rate ratio.">把每個 case 的追蹤切成暴露與年齡分段，再以「人」為分層配條件 Poisson；暴露組係數即相對速率（IRR）。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b> — the official SCCS.sas / Poisreg.sas macros (sccs-studies.info) implement this fully."><b>關鍵步驟</b>示意——官方 SCCS.sas／Poisreg.sas 巨集（sccs-studies.info）有完整實作。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal records to cases with key day-numbers">步驟 0 — 從縱貫紀錄整理成「帶關鍵天數」的 case</h3>
+      <pre class="sas"><code><span class="cm">/* SCCS uses CASES only: keep people with the event, and attach each      */</span>
+<span class="cm">/* person's key day-numbers (obs start/end, vaccination day, event day).  */</span>
+proc sql;
+   create table cases as
+   select pid, obs_start, obs_end, vacc_day, event_day
+   from records where event_day is not null;
+quit;</code></pre>
+      <p data-en="SCCS keeps only people who had the event; reduce the longitudinal records to one row per case carrying the day-numbers. Step 1 then splits each person's time into exposure and age intervals.">SCCS 只留發生過事件的人；把縱貫紀錄收成每個 case 一列、帶關鍵天數。Step 1 再把每人的時間切成暴露與年齡分段。</p></div>
     <div class="card"><h3 data-en="Step 1 — split into person-interval rows">步驟 1 — 切成「人 × 分段」列</h3>
       <pre class="sas"><code><span class="cm">/* one row per person x (exposure group expgr) x (age group agegr); */</span>
 <span class="cm">/* with nevents in the interval and loginterval = log(interval length) */</span></code></pre>
@@ -3807,6 +3925,18 @@ run;   <span class="cm">/* exp(expgr) = incidence rate ratio (risk window vs bas
     <h1 data-en="⑦ SAS code: the key steps for ACNU">⑦ SAS 程式：主動對照新使用者 ACNU 的關鍵步驟</h1>
     <p class="lead" data-en="Restrict to new users of A vs an active comparator B, estimate a propensity score, then weight (or match) and fit the outcome model for the A-vs-B effect.">限制在 A 的新使用者 vs 主動對照藥 B 的新使用者，估傾向分數，再加權（或配對）配結果模型，得 A 相對 B 的效應。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal claims to a new-user cohort">步驟 0 — 從縱貫處方紀錄整理成新使用者世代</h3>
+      <pre class="sas"><code><span class="cm">/* first-ever fill of A or B = time zero (t0), requiring a clean baseline  */</span>
+<span class="cm">/* (no use during a washout) = a NEW user.                                */</span>
+proc sql;
+   create table acnu as
+   select pid, drug, min(fill_date) as t0 format=date9.
+   from rx where drug in ('A','B')
+   group by pid, drug
+   having min(fill_date) &gt; washout_end;       <span class="cm">/* no prior use = new user */</span>
+quit;
+<span class="cm">/* then attach covariates measured in the window BEFORE t0, follow forward */</span></code></pre>
+      <p data-en="ACNU is a new-user design: from the longitudinal claims, take each person's first fill of A or B as time zero (after a clean washout), then measure baseline covariates in the pre-t0 window.">ACNU 是新使用者設計：從縱貫處方取每人「A 或 B 的第一張處方」當時間零點（需先有乾淨的洗滌期），再在 t0 前的窗測基線共變項。</p></div>
     <div class="card"><h3 data-en="Step 1 — propensity score (A vs B among new users)">步驟 1 — 傾向分數（新使用者中 A vs B）</h3>
       <pre class="sas"><code>proc logistic data=acnu;
    model drugA(event='1') = severity age comorbidity;
@@ -3828,6 +3958,19 @@ run;</code></pre>
     <h1 data-en="⑦ SAS code: the key steps for PNU">⑦ SAS 程式：盛行新使用者 PNU 的關鍵步驟</h1>
     <p class="lead" data-en="Bring prevalent users back by matching on time-since-start: a time-conditional propensity score, then match within time-since-start bands, then the outcome model.">用「距起始時間」把盛行使用者納回來：算時間條件傾向分數，在距起始時間分層內配對，再配結果模型。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal claims to time-since-start">步驟 0 — 從縱貫處方算出「距起始時間」</h3>
+      <pre class="sas"><code><span class="cm">/* at a cross-sectional entry date, classify current A users and compute   */</span>
+<span class="cm">/* time-since-start (0 = incident/new user; &gt;0 = prevalent user).         */</span>
+proc sql;                                       <span class="cm">/* each person's first-ever fill */</span>
+   create table firstfill as
+   select pid, min(fill_date) as first_fill from rx where drug='A' group by pid;
+quit;
+data pnu; merge current_users firstfill; by pid;
+   tss       = intck('month', first_fill, entry_date);   <span class="cm">/* time-since-start */</span>
+   prevalent = (tss &gt; 0);
+   tss_band  = min(int(tss/6), 5);             <span class="cm">/* time-since-start bands for matching */</span>
+run;</code></pre>
+      <p data-en="PNU's whole point is keeping prevalent users: from the longitudinal claims compute each person's time-since-start at the entry date, and band it — that band drives the time-conditional matching in Step 1.">PNU 的重點是留住盛行使用者：從縱貫處方算出每人在 entry 日的「距起始時間」並分層——這個分層就是 Step 1 時間條件配對的依據。</p></div>
     <div class="card"><h3 data-en="Step 1 — time-conditional propensity score">步驟 1 — 時間條件傾向分數</h3>
       <pre class="sas"><code>proc logistic data=pnu;
    class tss_band;               <span class="cm">/* time-since-start band */</span>
@@ -3850,6 +3993,22 @@ run;
     <h1 data-en="⑦ SAS code: the key steps for Negative Control / Proximal">⑦ SAS 程式：陰性對照與近端因果 NC 的關鍵步驟</h1>
     <p class="lead" data-en="First a falsification regression (A on the negative-control outcome should be ~0); then proximal two-stage least squares using the negative-control pair to correct for unmeasured confounding.">先做偽陽性查核（A 對陰性對照結果應 ~0）；再用陰性對照對做近端兩階段最小平方（P2SLS）校正未測混淆。</p>
     <div class="sas-note" data-en="Illustrative <b>key steps</b>, not a full runnable program — swap in your own dataset / variable names.">教學用的<b>關鍵步驟</b>示意，非可直接執行的完整程式；資料集／變數名稱請換成你自己的。</div>
+    <div class="card"><h3 data-en="Step 0 — from longitudinal records to one analysis row per person">步驟 0 — 從縱貫紀錄整理成每人一列</h3>
+      <pre class="sas"><code><span class="cm">/* assemble A (exposure), Y (outcome), X (covariates) PLUS the two controls: */</span>
+<span class="cm">/* W = negative-control OUTCOME (A cannot cause), Z = NC EXPOSURE (proxy U).  */</span>
+proc sql;
+   create table nc as
+   select c.pid,
+          c.vaccinated                   as A,    <span class="cm">/* exposure of interest */</span>
+          c.outcome_event                as Y,    <span class="cm">/* true outcome         */</span>
+          c.age                          as X,    <span class="cm">/* measured covariate   */</span>
+          (e.pid is not null)            as W,    <span class="cm">/* NCO: event A can't cause */</span>
+          (z.pid is not null)            as Z     <span class="cm">/* NCE: proxy for U         */</span>
+   from cohort c
+      left join nco_events e on e.pid=c.pid and e.event_date &lt; c.index_date  <span class="cm">/* pre-exposure → A-proof */</span>
+      left join nce_rx     z on z.pid=c.pid and z.fill_date  &lt; c.index_date;
+quit;</code></pre>
+      <p data-en="The method hinges on choosing W and Z from the longitudinal records: W must be an outcome A cannot affect (e.g. a pre-exposure event), Z an exposure that cannot affect Y — both sharing the unmeasured U. Assemble them with A, Y, X as one row per person before Step 1.">整個方法成敗在於從縱貫紀錄挑出 W 與 Z：W 必須是 A 不可能影響的結果（如接種前事件），Z 必須是不可能影響 Y 的暴露，且兩者都與未測混淆 U 相關。先把它們和 A、Y、X 整理成每人一列，再進 Step 1。</p></div>
     <div class="card"><h3 data-en="Step 1 — detection (A → NCO should be ~0)">步驟 1 — 偵測（A 對陰性對照結果 W 應 ~0）</h3>
       <pre class="sas"><code>proc reg data=nc;
    model W = A X;                <span class="cm">/* the vaccine cannot cause W; a nonzero coef = bias signal */</span>
@@ -4196,7 +4355,7 @@ run;</code></pre>
   </footer>
 </main>
 
-<script src="i18n.js?v=69"></script>
-<script src="app.js?v=69"></script>
+<script src="i18n.js?v=70"></script>
+<script src="app.js?v=70"></script>
 </body>
 </html>
