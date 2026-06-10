@@ -189,6 +189,9 @@ b { color: #0b1020; }
 .fc-head.a { background: var(--z); }
 .fc-head.b { background: #7c3aed; }
 .fc-head.c { background: #b45309; }
+a.xref { color: var(--z); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+a.xref:hover { color: #2c5b47; }
+.chiprow { line-height: 2.1; font-size: .98rem; }
 .fc-q { background: #fff; border: 2px solid #94a3b8; border-radius: 12px; padding: .55rem .8rem;
   font-weight: 700; text-align: center; box-shadow: var(--shadow); }
 .fc-q::before { content: "◇ "; color: #94a3b8; }

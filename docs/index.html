@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=82" />
+<link rel="stylesheet" href="styles.css?v=83" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=31"></script>
@@ -4428,7 +4428,7 @@ run;
 
     <div class="card info">
       <h3 data-en="Start from your data: which database do you have?">先從你的資料出發：你手上是哪種資料庫？</h3>
-      <p data-en="Which design you <b>can</b> run is decided by your data. A near-universal <b>claims</b> database powers self-controlled designs (SCCS/CCTC), rare-outcome cohort/case-control and PERR; an <b>EHR</b> with lab values powers active-comparator and mediation; <b>long traceability</b> powers new-user / PNU / CCW; a <b>biobank</b> powers IV / Mendelian randomization; a <b>policy/eligibility cutoff</b> powers RDD / DiD / ITS. See the dedicated <b>Databases</b> tab for the feature→design map and a directory of pharmacoepidemiology databases (AsPEN).">你<b>能</b>用哪個設計，是你的資料決定的。近全人口<b>理賠</b>撐得起自我對照（SCCS/CCTC）、罕見結果的世代／病例對照與 PERR；含檢驗值的 <b>EHR</b> 撐得起主動對照與中介；<b>長期可追溯</b>撐得起新使用者／PNU／CCW；<b>生物資料庫</b>撐得起工具變數／孟德爾隨機化；<b>政策／資格切點</b>撐得起 RDD／DiD／ITS。完整的「特性→設計」對應與藥物流行病學資料庫名錄（AsPEN）見專屬的<b>「資料庫」</b>分頁。</p>
+      <p data-en="Which design you <b>can</b> run is decided by your data. A near-universal <b>claims</b> database powers self-controlled designs (SCCS/CCTC), rare-outcome cohort/case-control and PERR; an <b>EHR</b> with lab values powers active-comparator and mediation; <b>long traceability</b> powers new-user / PNU / CCW; a <b>biobank</b> powers IV / Mendelian randomization; a <b>policy/eligibility cutoff</b> powers RDD / DiD / ITS. See the dedicated <b><a class="xref" data-tab="db">Databases</a></b> tab for the feature→design map and a directory of pharmacoepidemiology databases (AsPEN).">你<b>能</b>用哪個設計，是你的資料決定的。近全人口<b>理賠</b>撐得起自我對照（SCCS/CCTC）、罕見結果的世代／病例對照與 PERR；含檢驗值的 <b>EHR</b> 撐得起主動對照與中介；<b>長期可追溯</b>撐得起新使用者／PNU／CCW；<b>生物資料庫</b>撐得起工具變數／孟德爾隨機化；<b>政策／資格切點</b>撐得起 RDD／DiD／ITS。完整的「特性→設計」對應與藥物流行病學資料庫名錄（AsPEN）見專屬的<b><a class="xref" data-tab="db">「資料庫」</a></b>分頁。</p>
     </div>
 
     <div class="card scene">
@@ -4651,7 +4651,7 @@ run;
   <!-- ===================== 9. 資料庫 → 研究設計強項 ===================== -->
   <section id="dbpanel" class="panel">
     <h1 data-en="Which database do you have — and which designs it powers">資料庫：你手上的資料庫，撐得起哪些設計</h1>
-    <p class="lead" data-en="A study design is only as good as the data behind it. Real-world databases differ in <b>type</b> (claims, EHR, registry, biobank), <b>coverage</b> (a national near-census vs a sample), <b>linkage</b> (to deaths, hospital, lab, genomes) and <b>longitudinal traceability</b> — and those features decide which of the designs in this toolbox you can actually run. Below: how database features map to design strengths, then a directory of pharmacoepidemiology databases (from the AsPEN network).">設計再好，也只能跟得上背後的資料。真實世界資料庫差別在<b>類型</b>（理賠、EHR、登錄、生物資料庫）、<b>涵蓋</b>（全國近普查 vs 抽樣）、<b>連結</b>（死亡、住院、檢驗、基因）與<b>長期可追溯性</b>——這些特性決定你<b>實際能跑</b>工具箱裡哪些設計。以下先講「資料庫特性 → 設計強項」，再附一份藥物流行病學資料庫名錄（取自 AsPEN 網絡）。</p>
+    <p class="lead" data-en="A study design is only as good as the data behind it. Real-world databases differ in <b>type</b> (claims, EHR, registry, biobank), <b>coverage</b> (a national near-census vs a sample), <b>linkage</b> (to deaths, hospital, lab, genomes) and <b>longitudinal traceability</b> — and those features decide which of the designs in this toolbox you can actually run. Below: how database features map to design strengths, then a directory of pharmacoepidemiology databases (from the AsPEN network).">設計再好，也只能跟得上背後的資料。真實世界資料庫差別在<b>類型</b>（理賠、EHR、登錄、生物資料庫）、<b>涵蓋</b>（全國近普查 vs 抽樣）、<b>連結</b>（死亡、住院、檢驗、基因）與<b>長期可追溯性</b>——這些特性決定你<b>實際能跑</b>工具箱裡哪些設計。以下先講「資料庫特性 → 設計強項」，再附一份藥物流行病學資料庫名錄（取自 AsPEN 網路）。</p>
 
     <h2 data-en="Database features → which designs they power">資料庫特性 → 撐得起哪些設計</h2>
     <div class="cards">
@@ -4663,7 +4663,12 @@ run;
       <div class="card"><h3 data-en="Policy / eligibility cutoffs">政策／資格切點</h3><p data-en="When the database captures a <b>policy date</b>, a <b>reimbursement threshold</b>, or an <b>age-eligibility cutoff</b>, you can borrow a quasi-random structure: <b>RDD</b> (a sharp cutoff), <b>DiD</b> (policy + control group), <b>ITS</b> (a single series over time).">當資料庫記到<b>政策日</b>、<b>給付門檻</b>或<b>年齡資格切點</b>，就能借準隨機結構：<b>RDD</b>（明確切點）、<b>DiD</b>（政策＋對照組）、<b>ITS</b>（單一序列的時間趨勢）。</p></div>
     </div>
 
-    <h2 data-en="A directory of pharmacoepidemiology databases (AsPEN network &amp; partners)">藥物流行病學資料庫名錄（AsPEN 網絡與夥伴）</h2>
+    <p class="caption" data-en="Designs named above — click to jump to that method's tabs:">上面提到的各設計，點一下前往該方法的分頁：</p>
+    <p class="chiprow">
+      <a class="xref" data-m="iv">IV</a> · <a class="xref" data-m="rdd">RDD</a> · <a class="xref" data-m="did">DiD</a> · <a class="xref" data-m="perr">PERR</a> · <a class="xref" data-m="its">ITS</a> · <a class="xref" data-m="tit">TiT</a> · <a class="xref" data-m="ccw">CCW</a> · <a class="xref" data-m="seq">Seq</a> · <a class="xref" data-m="cctc">CCTC</a> · <a class="xref" data-m="cc">CC</a> · <a class="xref" data-m="sccs">SCCS</a> · <a class="xref" data-m="acnu">ACNU</a> · <a class="xref" data-m="pnu">PNU</a> · <a class="xref" data-m="nc">NC</a> · <a class="xref" data-m="med">MED</a>
+    </p>
+
+    <h2 data-en="A directory of pharmacoepidemiology databases (AsPEN network &amp; partners)">藥物流行病學資料庫名錄（AsPEN 網路與夥伴）</h2>
     <p class="caption" data-en="Compiled from the AsPEN database directory (phd-center.github.io/AsPEN) and Sturkenboom &amp; Schink (2020). Coverage and strengths are approximate, for orientation.">整理自 AsPEN 資料庫名錄（phd-center.github.io/AsPEN）與 Sturkenboom &amp; Schink（2020）。涵蓋與強項為約略值，供定位用。</p>
     <div class="table-wrap">
       <table class="cmp">
@@ -4672,7 +4677,7 @@ run;
           <th data-en="Coverage">涵蓋</th><th data-en="Strength / good for">強項／適合</th>
         </tr></thead>
         <tbody>
-          <tr><td colspan="4" class="famhdr" data-en="East Asia · AsPEN network">東亞 · AsPEN 網絡</td></tr>
+          <tr><td colspan="4" class="famhdr" data-en="East Asia · AsPEN network">東亞 · AsPEN 網路</td></tr>
           <tr><td data-en="Taiwan NHIRD">台灣 健保資料庫 NHIRD</td><td data-en="Claims">理賠</td><td data-en="~23M, &gt;99% since 2000">~2300萬，&gt;99%，自 2000</td><td data-en="National census-like claims + now lab/imaging; rare outcomes, self-controlled, sequential">全國普查式理賠＋現含檢驗／影像；罕見結果、自我對照、序列試驗</td></tr>
           <tr><td data-en="Taiwan CGRD">台灣 長庚 CGRD</td><td data-en="Multi-hospital EHR">多院 EHR</td><td data-en="~1.5M since 2011">~150萬，自 2011</td><td data-en="Lab values &amp; clinical detail → indication adjustment, ACNU, mediation">檢驗值與臨床細節→適應症校正、ACNU、中介</td></tr>
           <tr><td data-en="Taiwan Biobank (TWB)">台灣人體生物資料庫 TWB</td><td data-en="Biobank">生物資料庫</td><td data-en="~200K (target 1M)">~20萬（目標百萬）</td><td data-en="Genomes + lifestyle + clinical → IV / Mendelian randomization">基因＋生活型態＋臨床→工具變數／孟德爾隨機化</td></tr>
@@ -4690,7 +4695,7 @@ run;
         </tbody>
       </table>
     </div>
-    <p class="caption" data-en="Cross-regional networks (e.g. AsPEN; NeuroGEN — Tsai et al.) run the <b>same protocol</b> across several of these databases and meta-analyse, trading single-database depth for breadth, generalisability and replication.">跨區域網絡（如 AsPEN；NeuroGEN —— Tsai 等）會把<b>同一套協定</b>跑在上述多個資料庫上再做合併分析，以單一資料庫的深度換取廣度、可推論性與可重複性。</p>
+    <p class="caption" data-en="Cross-regional networks (e.g. AsPEN; NeuroGEN — Tsai et al.) run the <b>same protocol</b> across several of these databases and meta-analyse, trading single-database depth for breadth, generalisability and replication.">跨區域網路（如 AsPEN；NeuroGEN —— Tsai 等）會把<b>同一套協定</b>跑在上述多個資料庫上再做合併分析，以單一資料庫的深度換取廣度、可推論性與可重複性。</p>
   </section>
 
   <!-- ===================== 參考文獻 / References ===================== -->
@@ -4803,7 +4808,7 @@ run;
   </footer>
 </main>
 
-<script src="i18n.js?v=82"></script>
-<script src="app.js?v=82"></script>
+<script src="i18n.js?v=83"></script>
+<script src="app.js?v=83"></script>
 </body>
 </html>

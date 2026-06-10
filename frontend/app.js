@@ -85,6 +85,16 @@ if (dataTab) dataTab.addEventListener("click", () => {
   showPanel("dbpanel");
   if (typeof filterRefs === "function") filterRefs("db");
 });
+// Delegated handler for in-content cross links (.xref) — survives i18n innerHTML swaps.
+// <a class="xref" data-m="sccs">SCCS</a> → go to that method; data-tab="db" → Databases tab.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest("a.xref");
+  if (!a) return;
+  e.preventDefault();
+  if (a.dataset.m) gotoMethod(a.dataset.m, "learn");
+  else if (a.dataset.tab === "db" && dataTab) dataTab.click();
+  else if (a.dataset.tab === "choose") chooseTab.click();
+});
 
 async function getJSON(url) {
   const r = await fetch(url);
