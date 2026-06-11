@@ -2049,8 +2049,8 @@ function drawChooseChart() {
 const CITE = {
   authors: "Methodology Working Group, Population Health Data Center, National Cheng Kung University; Tsai DH-T, Lai EC-C.",
   publisher: "Population Health Data Center, National Cheng Kung University",
-  titleZh: "真實世界證據與準實驗工具箱（IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan）線上教學工具",
-  titleEn: "RWE and Quasi-experimental Toolbox (IV · RDD · DiD · PERR · ITS · TiT · CCW · Seq · CCTC · CC · SCCS · ACNU · PNU · NC · MED · PS · TMLE · GM · TND · PSSA · TreeScan) — Online Teaching Tool",
+  titleZh: "真實世界證據與準實驗工具箱線上教學工具",
+  titleEn: "RWE and Quasi-experimental Toolbox — Online Teaching Tool",
   year: "2026",
   url: "https://danielhttsai.github.io/phdc-rwe-tool/",
 };
@@ -6202,7 +6202,7 @@ function renderPssaAnalyze(a) {
          "discordant pairs: A-then-B = " + a.a_index_first + ", B-then-A = " + a.b_marker_first + "."), false],
   ];
   document.getElementById("pssaAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
-    `<div class="rcard${hl ? " hl" : ""}"><h4>${t}</h4><div class="rnum">${v}</div><p>${desc}</p></div>`).join("");
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${v}</div><p>${desc}</p></div>`).join("");
   drawPssaAnalyze(a);
 }
 function drawPssaAnalyze(a) {
@@ -6377,7 +6377,7 @@ function renderTscanAnalyze(a) {
          "strongest node: " + a.target_label + (a.target_hit ? " (= the one with a real excess)." : ".")), false],
   ];
   document.getElementById("tscanAnalyzeCards").innerHTML = cards.map(([t, v, desc, hl]) =>
-    `<div class="rcard${hl ? " hl" : ""}"><h4>${t}</h4><div class="rnum">${v}</div><p>${desc}</p></div>`).join("");
+    `<div class="rc ${hl ? "highlight" : ""}"><h3>${t}</h3><div class="big">${v}</div><p>${desc}</p></div>`).join("");
   drawTscanAnalyze(a);
   renderTscanTable(a);
 }

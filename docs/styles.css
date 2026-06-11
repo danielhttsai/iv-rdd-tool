@@ -214,7 +214,7 @@ a.xref:hover { color: #2c5b47; border-bottom-style: solid; }
 .fc-note { background: #eff6ff; border: 1px dashed #93c5fd; border-radius: 10px; padding: .5rem .8rem;
   font-size: .82rem; color: #1e3a8a; text-align: center; line-height: 1.6; }
 
-main { max-width: 1180px; margin: 0 auto; padding: 1.5rem 2rem; }
+main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
 .panel { display: none; animation: fade .25s; }
 .panel.active { display: block; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
@@ -384,7 +384,7 @@ pre.sas .kw { color: #6fd0c0; font-weight: 600; }      /* PROC / keyword */
 
 /* references / citation footer */
 .refs {
-  max-width: 1180px; margin: 2rem auto 3rem; padding: 1.4rem 1.5rem;
+  max-width: 1280px; margin: 2rem auto 3rem; padding: 1.4rem 1.5rem;
   background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
 }
 .refs h2 { margin-top: 0; }
