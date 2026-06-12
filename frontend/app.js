@@ -3651,42 +3651,43 @@ function renderCcwAnalyze(a) {
 function drawCcwBaseline(elId) {
   elId = elId || "ccwBaselineScene";
   if (!document.getElementById(elId)) return;
+  // nodes spread WIDE to fill each box (no grey dead-space on the sides), bigger markers
   const N = [
-    { id: "L₀", x: 2.5, y: 3.0, c: GREEN,  up: 1, lab: { zh: "基線混淆 L₀（t=0 就量到）", en: "baseline L₀ (seen at t=0)" } },
-    { id: "A",  x: 1.4, y: 1.6, c: SLATE,        lab: { zh: "策略臂（早/晚）", en: "strategy arm" } },
-    { id: "Y",  x: 3.6, y: 1.6, c: PURPLE,       lab: { zh: "結果 Y", en: "outcome Y" } },
-    { id: "Lₜ", x: 7.5, y: 3.0, c: AMBER,  up: 1, lab: { zh: "時變混淆 Lₜ（寬限期內才出現）", en: "time-varying Lₜ (appears in grace)" } },
-    { id: "Aₜ", x: 6.4, y: 1.6, c: SLATE,        lab: { zh: "窗內是否接種 Aₜ", en: "initiate in window Aₜ" } },
-    { id: "Y₂", x: 8.6, y: 1.6, c: PURPLE, disp: "Y", lab: { zh: "結果 Y", en: "outcome Y" } },
+    { id: "L₀", x: 2.5, y: 3.35, c: GREEN,  up: 1, lab: { zh: "基線混淆 L₀（t=0 就量到）", en: "baseline L₀ (seen at t=0)" } },
+    { id: "A",  x: 0.95, y: 1.35, c: SLATE,        lab: { zh: "策略臂（早/晚）", en: "strategy arm" } },
+    { id: "Y",  x: 4.05, y: 1.35, c: PURPLE,       lab: { zh: "結果 Y", en: "outcome Y" } },
+    { id: "Lₜ", x: 7.5, y: 3.35, c: AMBER,  up: 1, lab: { zh: "時變混淆 Lₜ（寬限期內才出現）", en: "time-varying Lₜ (appears in grace)" } },
+    { id: "Aₜ", x: 5.95, y: 1.35, c: SLATE,        lab: { zh: "窗內是否接種 Aₜ", en: "initiate in window Aₜ" } },
+    { id: "Y₂", x: 9.05, y: 1.35, c: PURPLE, disp: "Y", lab: { zh: "結果 Y", en: "outcome Y" } },
   ];
   const pos = {}; N.forEach((n) => (pos[n.id] = [n.x, n.y]));
   const L = (o) => (lang() === "en" ? o.en : o.zh);
   const arrow = (a, b, color, w, faded) => ({ x: pos[b][0], y: pos[b][1], ax: pos[a][0], ay: pos[a][1],
-    xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true, arrowhead: 3, arrowsize: 1,
-    arrowwidth: w, arrowcolor: color, standoff: 20, startstandoff: 20, text: "", opacity: faded ? 0.55 : 1 });
+    xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true, arrowhead: 3, arrowsize: 1.1,
+    arrowwidth: w, arrowcolor: color, standoff: 26, startstandoff: 26, text: "", opacity: faded ? 0.55 : 1 });
   const shapes = [
-    { type: "rect", x0: 0.3, x1: 4.7, y0: 0.55, y1: 3.7, fillcolor: "rgba(46,139,111,.08)", line: { color: "rgba(46,139,111,.40)", width: 1, dash: "dot" }, layer: "below" },
-    { type: "rect", x0: 5.3, x1: 9.7, y0: 0.55, y1: 3.7, fillcolor: "rgba(220,38,38,.06)", line: { color: "rgba(220,38,38,.35)", width: 1, dash: "dot" }, layer: "below" },
+    { type: "rect", x0: 0.15, x1: 4.85, y0: 0.5, y1: 4.0, fillcolor: "rgba(46,139,111,.08)", line: { color: "rgba(46,139,111,.40)", width: 1, dash: "dot" }, layer: "below" },
+    { type: "rect", x0: 5.15, x1: 9.85, y0: 0.5, y1: 4.0, fillcolor: "rgba(220,38,38,.06)", line: { color: "rgba(220,38,38,.35)", width: 1, dash: "dot" }, layer: "below" },
   ];
   const anns = [
-    arrow("L₀", "A", "#94a3b8", 1.6, true), arrow("L₀", "Y", "#94a3b8", 1.6, true), arrow("A", "Y", TEAL, 2.2, false),
-    arrow("Lₜ", "Aₜ", RED, 2.2, false), arrow("Lₜ", "Y₂", RED, 2.2, false), arrow("Aₜ", "Y₂", TEAL, 2.2, false),
+    arrow("L₀", "A", "#94a3b8", 2.0, true), arrow("L₀", "Y", "#94a3b8", 2.0, true), arrow("A", "Y", TEAL, 2.8, false),
+    arrow("Lₜ", "Aₜ", RED, 2.8, false), arrow("Lₜ", "Y₂", RED, 2.8, false), arrow("Aₜ", "Y₂", TEAL, 2.8, false),
   ];
-  anns.push(Object.assign(_lbl(2.5, 3.98, L({ zh: "基線適應症混淆 → 處理得到 ✓", en: "baseline confounding → removed ✓" }), "#1d6f57", 10.5), { xanchor: "center" }));
-  anns.push(Object.assign(_lbl(7.5, 3.98, L({ zh: "寬限期之後的時變混淆 → 處理不到 ✗", en: "post-grace time-varying → not removed ✗" }), "#b91c1c", 10.5), { xanchor: "center" }));
-  anns.push(Object.assign(_lbl(2.5, 2.34, L({ zh: "複製＋baseline IPCW：後門關上", en: "clone + baseline IPCW: door closed" }), "#1d6f57", 8.5), { xanchor: "center" }));
-  anns.push(Object.assign(_lbl(7.5, 2.34, L({ zh: "baseline 權重看不到 Lₜ：後門仍開", en: "baseline weights blind to Lₜ: door open" }), "#b91c1c", 8.5), { xanchor: "center" }));
-  N.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.up ? n.y + 0.42 : n.y - 0.42, L(n.lab), INK, 8), { xanchor: "center" })));
-  anns.push(Object.assign(_lbl(5, 0.2, L({ zh: "灰虛線＝被擋住的後門；紅實線＝仍打開的後門。要關掉右邊，得把 Lₜ 放進「時變 IPCW」（Maringe 2020；Gaber 2024）。", en: "grey dashed = blocked back door; red = still-open back door. Closing the right one needs Lₜ in a time-varying IPCW (Maringe 2020; Gaber 2024)." }), INK, 9),
-    { width: 620, align: "center", xanchor: "center", yanchor: "top" }));
+  anns.push(Object.assign(_lbl(2.5, 4.32, L({ zh: "基線適應症混淆 → 處理得到 ✓", en: "baseline confounding → removed ✓" }), "#1d6f57", 12.5), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(7.5, 4.32, L({ zh: "寬限期之後的時變混淆 → 處理不到 ✗", en: "post-grace time-varying → not removed ✗" }), "#b91c1c", 12.5), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(2.5, 2.45, L({ zh: "複製＋baseline IPCW：後門關上", en: "clone + baseline IPCW: door closed" }), "#1d6f57", 10), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(7.5, 2.45, L({ zh: "baseline 權重看不到 Lₜ：後門仍開", en: "baseline weights blind to Lₜ: door open" }), "#b91c1c", 10), { xanchor: "center" }));
+  N.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.up ? n.y + 0.5 : n.y - 0.5, L(n.lab), INK, 9.5), { xanchor: "center" })));
+  anns.push(Object.assign(_lbl(5, 0.12, L({ zh: "灰虛線＝被擋住的後門；紅實線＝仍打開的後門。要關掉右邊，得把 Lₜ 放進「時變 IPCW」（Maringe 2020；Gaber 2024）。", en: "grey dashed = blocked back door; red = still-open back door. Closing the right one needs Lₜ in a time-varying IPCW (Maringe 2020; Gaber 2024)." }), INK, 10),
+    { width: 760, align: "center", xanchor: "center", yanchor: "top" }));
   const traces = [{ x: N.map((n) => n.x), y: N.map((n) => n.y), mode: "markers+text", type: "scatter",
-    text: N.map((n) => n.disp || n.id), textposition: "middle center", textfont: { color: "#fff", size: 10 },
-    marker: { color: N.map((n) => n.c), size: 30, line: { color: "#fff", width: 1.5 } }, hoverinfo: "none", showlegend: false }];
+    text: N.map((n) => n.disp || n.id), textposition: "middle center", textfont: { color: "#fff", size: 14 },
+    marker: { color: N.map((n) => n.c), size: 42, line: { color: "#fff", width: 1.5 } }, hoverinfo: "none", showlegend: false }];
   Plotly.react(elId, traces, schemaLayout({
-    height: 340, shapes, annotations: anns, showlegend: false,
+    height: 420, shapes, annotations: anns, showlegend: false,
     xaxis: { visible: false, range: [0, 10], fixedrange: true },
-    yaxis: { visible: false, range: [-0.5, 4.2] },
-    margin: { t: 14, r: 10, b: 10, l: 10 },
+    yaxis: { visible: false, range: [-0.55, 4.7] },
+    margin: { t: 10, r: 8, b: 8, l: 8 },
   }), SCENE_CFG);
 }
 
@@ -6885,18 +6886,18 @@ function drawWhatif(method) {
   });
   // node markers + ids inside; full label beside
   const traces = [{ x: cfg.nodes.map((n) => n.x), y: cfg.nodes.map((n) => n.y), mode: "markers+text", type: "scatter",
-    text: cfg.nodes.map((n) => n.id), textposition: "middle center", textfont: { color: "#fff", size: 11 },
-    marker: { color: cfg.nodes.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 34, line: { color: "#fff", width: 1.5 } },
+    text: cfg.nodes.map((n) => n.id), textposition: "middle center", textfont: { color: "#fff", size: 14 },
+    marker: { color: cfg.nodes.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 44, line: { color: "#fff", width: 1.5 } },
     hoverinfo: "none", showlegend: false }];
-  cfg.nodes.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.5 : n.y - 0.5, L(n.label), INK, 8), { xanchor: "center" })));
+  cfg.nodes.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.58 : n.y - 0.58, L(n.label), INK, 9.5), { xanchor: "center" })));
   // wrap the note to the plot width so long text never overlaps the nodes/labels
-  anns.push(Object.assign(_lbl(2.1, -0.78, L(cfg.note), INK, 9.5),
-    { width: 560, align: "center", xanchor: "center", yanchor: "top" }));
+  anns.push(Object.assign(_lbl(1.95, -0.95, L(cfg.note), INK, 10.5),
+    { width: 720, align: "center", xanchor: "center", yanchor: "top" }));
   Plotly.react(id, traces, schemaLayout({
-    height: 360, shapes, annotations: anns, showlegend: false,
-    xaxis: { visible: false, range: [-0.5, 4.7], fixedrange: true },
-    yaxis: { visible: false, range: [-2.7, 3.3] },
-    margin: { t: 16, r: 12, b: 16, l: 12 },
+    height: 440, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: false, range: [-0.7, 4.9], fixedrange: true },
+    yaxis: { visible: false, range: [-2.9, 3.4] },
+    margin: { t: 12, r: 8, b: 10, l: 8 },
   }), SCENE_CFG);
 }
 
@@ -6943,7 +6944,7 @@ function drawSwig(method) {
   const setSym = (splitId[0] === "X") ? "x" : "a";       // intervention value label
   const L = (o) => (o == null ? "" : (typeof o === "string" ? o : (lang() === "en" ? o.en : o.zh)));
   const pos = {}; cfg.nodes.forEach((n) => { pos[n.id] = [n.x, n.y]; });
-  const HW = 0.46, HH = 0.30;                            // split-box half width / height
+  const HW = 0.56, HH = 0.38;                            // split-box half width / height
   const sp = pos[splitId];
   const shapes = [];
   // keep dashed "conditioned-on" boxes
@@ -6978,30 +6979,30 @@ function drawSwig(method) {
   // split-box inner labels  A | a
   if (sp) {
     const [sx, sy] = sp;
-    anns.push(Object.assign(_lbl(sx - HW / 2, sy, splitId, "#fff", 10.5), { xanchor: "center", yanchor: "middle" }));
-    anns.push(Object.assign(_lbl(sx + HW / 2, sy, setSym, TEAL, 11), { xanchor: "center", yanchor: "middle" }));
+    anns.push(Object.assign(_lbl(sx - HW / 2, sy, splitId, "#fff", 13), { xanchor: "center", yanchor: "middle" }));
+    anns.push(Object.assign(_lbl(sx + HW / 2, sy, setSym, TEAL, 13.5), { xanchor: "center", yanchor: "middle" }));
   }
   // other nodes drawn as markers; the outcome node is relabelled to the counterfactual symbol
   const others = cfg.nodes.filter((n) => n.id !== splitId);
   const traces = [{ x: others.map((n) => n.x), y: others.map((n) => n.y), mode: "markers+text", type: "scatter",
     text: others.map((n) => (n.role === "Y" ? cfSym : n.id)), textposition: "middle center",
-    textfont: { color: "#fff", size: 11 },
-    marker: { color: others.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 34, line: { color: "#fff", width: 1.5 } },
+    textfont: { color: "#fff", size: 14 },
+    marker: { color: others.map((n) => WHATIF_COL[n.role] || "#94a3b8"), size: 44, line: { color: "#fff", width: 1.5 } },
     hoverinfo: "none", showlegend: false }];
   cfg.nodes.forEach((n) => {
     const lab = (n.id === splitId)
       ? (lang() === "en" ? "intervention node A∣a" : "介入節點 A∣a")
       : (n.role === "Y" ? cfSym + (lang() === "en" ? " (counterfactual)" : "（反事實）") : L(n.label));
-    anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.5 : n.y - 0.5, lab, INK, 8), { xanchor: "center" }));
+    anns.push(Object.assign(_lbl(n.x, n.y >= 1.8 ? n.y + 0.58 : n.y - 0.58, lab, INK, 9.5), { xanchor: "center" }));
   });
   // wrap the note to the plot width so long text never overlaps the nodes/labels
-  anns.push(Object.assign(_lbl(2.1, -0.78, L(meta.note || cfg.note), INK, 9.5),
-    { width: 560, align: "center", xanchor: "center", yanchor: "top" }));
+  anns.push(Object.assign(_lbl(1.95, -0.95, L(meta.note || cfg.note), INK, 10.5),
+    { width: 720, align: "center", xanchor: "center", yanchor: "top" }));
   Plotly.react(id, traces, schemaLayout({
-    height: 360, shapes, annotations: anns, showlegend: false,
-    xaxis: { visible: false, range: [-0.5, 4.7], fixedrange: true },
-    yaxis: { visible: false, range: [-2.7, 3.3] },
-    margin: { t: 16, r: 12, b: 16, l: 12 },
+    height: 440, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: false, range: [-0.7, 4.9], fixedrange: true },
+    yaxis: { visible: false, range: [-2.9, 3.4] },
+    margin: { t: 12, r: 8, b: 10, l: 8 },
   }), SCENE_CFG);
 }
 
