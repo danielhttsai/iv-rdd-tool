@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="styles.css?v=108" />
+<link rel="stylesheet" href="styles.css?v=109" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script src="pyodide-bridge.js?v=44"></script>
@@ -2187,6 +2187,18 @@
       「誰遵循哪個策略」無未測混淆。其餘：正性（最明確可檢的一項）、策略與寬限期定義清楚、權重模型合理、
       時間零點對齊正確。綠燈沒問題、黃燈要留意、紅燈有狀況、藍燈需領域判斷。
     </p>
+
+    <div class="card info">
+      <h3 data-en="What CCW can and cannot remove: baseline vs after the grace period">CCW 擋得掉什麼、擋不掉什麼：基線 vs 寬限期之後</h3>
+      <p data-en="CCW's two moves each kill one bias. <b>Cloning</b> puts every person into both strategy arms <b>at time zero</b>, so the two arms are <b>identical at t=0</b> — any <b>confounding by indication that is captured at baseline (L₀)</b> is balanced by construction. <b>Censoring-on-deviation + IPCW</b> then re-weights on the baseline covariates to repair the informative censoring. Together this cleanly removes <b>baseline</b> confounding by indication and immortal-time bias. <br>But <b>IPCW can only see the variables you put in the weight model</b>. If <b>who actually initiates during the grace period</b> is driven by a <b>time-varying</b> factor Lₜ that <b>only appears after baseline</b> (a worsening condition, a new lab result…) and Lₜ also affects the outcome, that is <b>time-varying confounding</b> — invisible at baseline, so <b>baseline weights cannot remove it</b>, and deviations after the grace period stay confounded. To handle it you must put Lₜ into a <b>time-varying IPCW</b> (weights updated over follow-up). Maringe et al. (2020) and Gaber et al. (2024) both draw exactly this line.">
+        CCW 的兩個動作各擋掉一種偏誤。<b>複製</b>把每個人在<b>時間零點</b>同時放進兩個策略臂——所以兩臂在 t=0 <b>完全相同</b>，凡是「在基線就量得到」的<b>適應症混淆 L₀</b>都被自動平衡掉；<b>偏離就設限＋IPCW</b> 再照基線共變項加權、補回因設限流失的人。合起來能乾淨處理<b>基線的</b>適應症混淆與 immortal-time 偏誤。<br>但 <b>IPCW 只看得到你放進權重模型的變數</b>。如果「誰在<b>寬限期內</b>真的去接種」是被<b>寬限期之後才出現</b>的<b>時變</b>因素 Lₜ（例如病情惡化、新的檢驗結果）驅動，而 Lₜ 又會影響結果——這是<b>時變混淆</b>，在基線根本看不到，<b>只靠 baseline 權重擋不掉</b>，寬限期之後的偏離仍然被混淆。要處理它，得把 Lₜ 放進<b>時變 IPCW</b>（隨追蹤時間更新的權重）。Maringe 等（2020）與 Gaber 等（2024）都明確畫出這條界線。
+      </p>
+      <div id="ccwBaselineScene" class="chart"></div>
+      <p class="caption" data-en="Left — baseline confounder L₀: cloning makes both arms identical at t=0 and baseline IPCW weights on L₀, so the back door is closed (✓). Right — a confounder Lₜ that only emerges after baseline (during the grace period): baseline weights can't see it, so it stays open (✗ — needs time-varying IPCW).">
+        左——基線混淆 L₀：複製讓兩臂在 t=0 完全相同、baseline IPCW 又依 L₀ 加權，後門關上（✓）。右——只在基線之後（寬限期內）才出現的混淆 Lₜ：baseline 權重看不到它，後門仍開著（✗，需時變 IPCW）。
+      </p>
+    </div>
+
     <div id="ccwOverall" class="overall hidden"></div>
     <div id="ccwAssumeCards" class="assume-cards"></div>
     <p id="ccwAssumeHint" class="muted" data-en="Loading…">載入中…</p>
@@ -6128,7 +6140,7 @@ HR.WCE(fit, vecnum = rep(1,24), vecdenom = rep(0,24))   <span class="cm"># HR: s
   </footer>
 </main>
 
-<script src="i18n.js?v=108"></script>
-<script src="app.js?v=108"></script>
+<script src="i18n.js?v=109"></script>
+<script src="app.js?v=109"></script>
 </body>
 </html>

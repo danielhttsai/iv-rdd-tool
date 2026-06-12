@@ -3643,10 +3643,58 @@ function renderCcwAnalyze(a) {
   ccwCurveInto("ccwAnalyzeChart", a.curve);
 }
 
+// ④ schematic — WHY CCW only removes BASELINE confounding by indication.
+// Left: L₀ measured at t=0 → cloning + baseline IPCW close the back door (✓).
+// Right: Lₜ emerges after baseline (during the grace period) → baseline weights are
+// blind to it, so the back door stays open (✗ — needs time-varying IPCW).
+// (Maringe et al. 2020; Gaber et al. 2024)
+function drawCcwBaseline(elId) {
+  elId = elId || "ccwBaselineScene";
+  if (!document.getElementById(elId)) return;
+  const N = [
+    { id: "L₀", x: 2.5, y: 3.0, c: GREEN,  up: 1, lab: { zh: "基線混淆 L₀（t=0 就量到）", en: "baseline L₀ (seen at t=0)" } },
+    { id: "A",  x: 1.4, y: 1.6, c: SLATE,        lab: { zh: "策略臂（早/晚）", en: "strategy arm" } },
+    { id: "Y",  x: 3.6, y: 1.6, c: PURPLE,       lab: { zh: "結果 Y", en: "outcome Y" } },
+    { id: "Lₜ", x: 7.5, y: 3.0, c: AMBER,  up: 1, lab: { zh: "時變混淆 Lₜ（寬限期內才出現）", en: "time-varying Lₜ (appears in grace)" } },
+    { id: "Aₜ", x: 6.4, y: 1.6, c: SLATE,        lab: { zh: "窗內是否接種 Aₜ", en: "initiate in window Aₜ" } },
+    { id: "Y₂", x: 8.6, y: 1.6, c: PURPLE, disp: "Y", lab: { zh: "結果 Y", en: "outcome Y" } },
+  ];
+  const pos = {}; N.forEach((n) => (pos[n.id] = [n.x, n.y]));
+  const L = (o) => (lang() === "en" ? o.en : o.zh);
+  const arrow = (a, b, color, w, faded) => ({ x: pos[b][0], y: pos[b][1], ax: pos[a][0], ay: pos[a][1],
+    xref: "x", yref: "y", axref: "x", ayref: "y", showarrow: true, arrowhead: 3, arrowsize: 1,
+    arrowwidth: w, arrowcolor: color, standoff: 20, startstandoff: 20, text: "", opacity: faded ? 0.55 : 1 });
+  const shapes = [
+    { type: "rect", x0: 0.3, x1: 4.7, y0: 0.55, y1: 3.7, fillcolor: "rgba(46,139,111,.08)", line: { color: "rgba(46,139,111,.40)", width: 1, dash: "dot" }, layer: "below" },
+    { type: "rect", x0: 5.3, x1: 9.7, y0: 0.55, y1: 3.7, fillcolor: "rgba(220,38,38,.06)", line: { color: "rgba(220,38,38,.35)", width: 1, dash: "dot" }, layer: "below" },
+  ];
+  const anns = [
+    arrow("L₀", "A", "#94a3b8", 1.6, true), arrow("L₀", "Y", "#94a3b8", 1.6, true), arrow("A", "Y", TEAL, 2.2, false),
+    arrow("Lₜ", "Aₜ", RED, 2.2, false), arrow("Lₜ", "Y₂", RED, 2.2, false), arrow("Aₜ", "Y₂", TEAL, 2.2, false),
+  ];
+  anns.push(Object.assign(_lbl(2.5, 3.98, L({ zh: "基線適應症混淆 → 處理得到 ✓", en: "baseline confounding → removed ✓" }), "#1d6f57", 10.5), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(7.5, 3.98, L({ zh: "寬限期之後的時變混淆 → 處理不到 ✗", en: "post-grace time-varying → not removed ✗" }), "#b91c1c", 10.5), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(2.5, 2.34, L({ zh: "複製＋baseline IPCW：後門關上", en: "clone + baseline IPCW: door closed" }), "#1d6f57", 8.5), { xanchor: "center" }));
+  anns.push(Object.assign(_lbl(7.5, 2.34, L({ zh: "baseline 權重看不到 Lₜ：後門仍開", en: "baseline weights blind to Lₜ: door open" }), "#b91c1c", 8.5), { xanchor: "center" }));
+  N.forEach((n) => anns.push(Object.assign(_lbl(n.x, n.up ? n.y + 0.42 : n.y - 0.42, L(n.lab), INK, 8), { xanchor: "center" })));
+  anns.push(Object.assign(_lbl(5, 0.2, L({ zh: "灰虛線＝被擋住的後門；紅實線＝仍打開的後門。要關掉右邊，得把 Lₜ 放進「時變 IPCW」（Maringe 2020；Gaber 2024）。", en: "grey dashed = blocked back door; red = still-open back door. Closing the right one needs Lₜ in a time-varying IPCW (Maringe 2020; Gaber 2024)." }), INK, 9),
+    { width: 620, align: "center", xanchor: "center", yanchor: "top" }));
+  const traces = [{ x: N.map((n) => n.x), y: N.map((n) => n.y), mode: "markers+text", type: "scatter",
+    text: N.map((n) => n.disp || n.id), textposition: "middle center", textfont: { color: "#fff", size: 10 },
+    marker: { color: N.map((n) => n.c), size: 30, line: { color: "#fff", width: 1.5 } }, hoverinfo: "none", showlegend: false }];
+  Plotly.react(elId, traces, schemaLayout({
+    height: 340, shapes, annotations: anns, showlegend: false,
+    xaxis: { visible: false, range: [0, 10], fixedrange: true },
+    yaxis: { visible: false, range: [-0.5, 4.2] },
+    margin: { t: 14, r: 10, b: 10, l: 10 },
+  }), SCENE_CFG);
+}
+
 // ---- ④ assumptions ----
 function initCcwAssume() {
   if (ccwAssumeReady) return;
   ccwAssumeReady = true;
+  drawCcwBaseline();   // baseline-vs-time-varying confounding schematic (static teaching)
   if (state.ccwDash) { renderCcwAssumptions(state.ccwDash); return; }   // reuse if already computed
   runCcwAssumptions(ccwState.req || { source: "example_ccw", lang: lang() });
 }
@@ -7274,6 +7322,7 @@ window.addEventListener("iv-lang", async () => {
   if (ccwPlayReady) refreshCcwPlay();                  // CCW ② interactive
   if (ccwAnalyzeReady) runCcwAnalyze();                // CCW ③ analysis + dashboard
   else if (ccwAssumeReady) runCcwAssumptions(ccwState.req);
+  if (ccwAssumeReady) drawCcwBaseline();               // CCW ④ baseline-confounding schematic
   if (state.ccwGrace) refreshCcwGrace();               // CCW ⑤ grace sensitivity (re-render)
   if (cctcLearnReady) drawSceneCctc();                 // CCTC ① learn scene
   if (cctcPlayReady) refreshCctcPlay();                // CCTC ② interactive

@@ -318,7 +318,7 @@ select { padding: .45rem; border: 1px solid var(--line); border-radius: 8px; fon
 
 /* assumptions */
 .overall { padding: 1rem 1.2rem; border-radius: 14px; font-weight: 700; margin: 1rem 0; box-shadow: var(--shadow); }
-.assume-cards { display: grid; gap: 1rem; }
+.assume-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); align-items: start; }
 .acard { background: #fff; border: 1px solid var(--line); border-left-width: 6px; border-radius: 14px; padding: 1rem 1.2rem; box-shadow: var(--shadow); }
 .acard h3 { display: flex; align-items: center; gap: .5rem; }
 .badge { font-size: .72rem; padding: .15rem .5rem; border-radius: 999px; color: #fff; font-weight: 700; }
