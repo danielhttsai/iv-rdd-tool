@@ -84,6 +84,7 @@ function showMethodSub() {
   if (dataTab) dataTab.classList.remove("active");
   subtabBtns.forEach((b) => b.classList.toggle("active", b.dataset.sub === curSub));
   showPanel(METHOD_PREFIX[curMethod] + curSub);
+  if (curSub === "analyze") renderDataPreview(curMethod);   // ③: show the real data rows on top
   if (typeof filterRefs === "function") filterRefs(curMethod);
 }
 methodSelect.addEventListener("change", () => { curMethod = methodSelect.value; showMethodSub(); });
@@ -123,7 +124,7 @@ const _MLINK = { SCCS: "sccs", CCTC: "cctc", ACNU: "acnu", PNU: "pnu", CCW: "ccw
 const _MTOKENS = Object.keys(_MLINK).sort((a, b) => b.length - a.length);
 const _MRE = new RegExp("\\b(" + _MTOKENS.join("|") + ")\\b", "g");
 function _panelMethod(id) {
-  const subs = ["learn", "play", "analyze", "assume", "ml", "whatif", "sas"];
+  const subs = ["learn", "play", "analyze", "assume", "ml", "whatif"];
   for (const sub of subs) { if (id.endsWith(sub)) { const pre = id.slice(0, -sub.length); return pre === "" ? "iv" : pre; } }
   return null;
 }
@@ -179,6 +180,45 @@ async function postJSON(url, body) {
   return r.json();
 }
 const fmt = (x, d = 2) => (x === null || x === undefined || Number.isNaN(x) ? "–" : Number(x).toFixed(d));
+
+// ----------------------------------------------------------------------
+// ③ "What the actual data looks like" — a real data-row table at the top of
+// each analyse panel, built from the example endpoint's `columns` + `preview`
+// (df.head(8)). The container is created dynamically (no per-method HTML), and
+// the rows are cached so re-opening / language-toggling is cheap.
+// ----------------------------------------------------------------------
+const _previewCache = {};
+async function renderDataPreview(method) {
+  const prefix = METHOD_PREFIX[method];
+  const panel = document.getElementById(prefix + "analyze");
+  if (!panel) return;
+  let box = document.getElementById(prefix + "analyze_preview");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = prefix + "analyze_preview";
+    box.className = "data-preview";
+    const h1 = panel.querySelector("h1");
+    if (h1) h1.insertAdjacentElement("afterend", box);
+    else panel.insertAdjacentElement("afterbegin", box);
+  }
+  let data = _previewCache[method];
+  if (!data) {
+    const ep = prefix ? `${API}/api/${prefix}_example` : `${API}/api/example`;
+    try { data = await getJSON(ep); _previewCache[method] = data; }
+    catch (e) { return; }
+  }
+  const cols = data.columns || [];
+  const rows = (data.preview || []).slice(0, 6);
+  if (!cols.length || !rows.length) { box.innerHTML = ""; return; }
+  const cell = (v) => (typeof v === "number" ? (Number.isInteger(v) ? v : Math.round(v * 100) / 100)
+                       : (v == null ? "" : String(v)));
+  const thead = "<tr>" + cols.map((c) => `<th>${c}</th>`).join("") + "</tr>";
+  const tbody = rows.map((r) => "<tr>" + cols.map((c) => `<td>${cell(r[c])}</td>`).join("") + "</tr>").join("");
+  box.innerHTML =
+    `<h3 class="dp-title">${tr("實際資料長什麼樣子（內建範例的前幾列）", "What the actual data looks like (first rows of the built-in example)")}</h3>` +
+    `<div class="dp-scroll"><table class="dp-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>` +
+    `<p class="caption">${tr("每一列是一個觀測（人／人-時段）；下面就用這份資料跑分析。純屬合成的示範資料。", "Each row is one observation (person / person-period); the analysis below runs on exactly this data. Purely synthetic demo data.")}</p>`;
+}
 
 // ======================================================================
 // 2. Interactive teaching
@@ -7413,6 +7453,7 @@ window.addEventListener("iv-lang", async () => {
   else if (wceAssumeReady) runWceAssumptions();
   whatifShown.forEach((m) => drawWhatif(m));            // ⑥ What-if DAGs (re-render)
   swigShown.forEach((m) => drawSwig(m));                // ⑥ SWIGs (re-render)
+  if (curSub === "analyze") renderDataPreview(curMethod); // ③ data-preview table (re-translate header/caption)
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
   autolinkMethods();                                   // re-apply inline method cross-links (applyStatic wiped them)
 });

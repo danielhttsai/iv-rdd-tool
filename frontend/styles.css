@@ -245,6 +245,18 @@ main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
 .whatif-col { min-width: 0; }
 .diagnote { margin: .4rem 0 .2rem; line-height: 1.6; }
 @media (max-width: 760px) { .whatif-pair { grid-template-columns: 1fr; } }
+/* ③ data preview — a real data-row table at the top of the analyse panel */
+.data-preview { margin: .4rem 0 1.2rem; }
+.data-preview .dp-title { font-size: 1rem; margin: .2rem 0 .5rem; }
+.dp-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.dp-table { border-collapse: collapse; width: 100%; font-size: .85rem; white-space: nowrap; }
+.dp-table th, .dp-table td { padding: .35rem .6rem; text-align: right; border-bottom: 1px solid var(--line); }
+.dp-table th { background: #f3f6fb; color: #334155; font-weight: 600; position: sticky; top: 0; }
+.dp-table tbody tr:nth-child(even) { background: #fafcff; }
+.dp-table td:first-child, .dp-table th:first-child { text-align: left; color: var(--muted); }
+/* divider between the analysis and the merged SAS/R code section */
+.merge-sep { border: none; border-top: 2px dashed var(--line); margin: 2rem 0 1rem; }
+.merge-sas { margin-top: .3rem; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 .cards .card { margin: 0; }
 
