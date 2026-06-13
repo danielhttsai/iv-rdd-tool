@@ -259,6 +259,10 @@ main { max-width: 1280px; margin: 0 auto; padding: 1.5rem 2rem; }
 .merge-sas { margin-top: .3rem; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 .cards .card { margin: 0; }
+/* fixed 3-up grid for card sets that otherwise leave an ugly orphan row (e.g. 6 cards → 3+3) */
+.cards-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .cards-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .cards-3 { grid-template-columns: 1fr; } }
 
 /* DAG diagram */
 .dag {

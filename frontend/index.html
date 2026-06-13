@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=113" />
+<link rel="stylesheet" href="/styles.css?v=114" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -5875,20 +5875,20 @@ HR.WCE(fit, vecnum = rep(1,24), vecdenom = rep(0,24))   <span class="cm"># HR: s
             <td data-en="No unmeasured confounding + positivity; and at least one nuisance model correct (a rich Super Learner library)">無未測混淆＋正性；且至少一個輔助模型正確（Super Learner 函式庫要夠）</td></tr>
           <tr><td colspan="4" class="famhdr" data-en="Family · time-varying treatment / g-methods (treatment–confounder feedback over time)">家族 · 時變治療／g-methods（治療與混淆隨時間互相回饋）</td></tr>
           <tr><td>G-methods</td>
-            <td data-en="Treatment changes month to month; a time-varying confounder is affected by past treatment and also predicts future treatment & the outcome">治療逐期變動；時變混淆受過去治療影響、又預測未來治療與結果（治療-混淆回饋）</td>
+            <td data-en="Whether to keep vaccinating changes period to period; a time-varying health state is affected by past vaccination and also predicts future vaccination & the outcome">是否持續接種逐期變動；時變的健康狀態受過去接種影響、又預測未來接種與結果（接種-健康回饋）</td>
             <td data-en="No exogenous variation — sequential adjustment: standardisation (g-formula) or IP-weighting (MSM); you cannot just condition on Lₜ">不借外生變異——序列校正：標準化（g-formula）或反機率加權（MSM）；不能直接「條件在 Lₜ」</td>
             <td data-en="Sequential exchangeability (no unmeasured time-varying confounding) + positivity at each time + correct models">序列可交換（無未測時變混淆）＋每時點正性＋模型正確</td></tr>
           <tr><td>WCE</td>
-            <td data-en="Dosing varies month to month; how does the effect depend on the timing & accumulation of doses (recent vs long-ago)">用藥逐月增減；效果如何隨「用藥的時間與累積」變化（最近 vs 很久以前的劑量）</td>
+            <td data-en="Repeated vaccination (multiple doses over time); how does the effect depend on the timing & accumulation of doses (the recent dose vs long-ago ones)">重複接種（多劑、隨時間給）；效果如何隨「接種的時間與累積」變化（最近一劑 vs 很久以前的劑）</td>
             <td data-en="No exogenous variation — summarise the exposure history with a weight curve learned from the data, then estimate">不借外生變異——把暴露史用「從資料學出的權重曲線」加權成摘要再估效果</td>
             <td data-en="A well-measured exposure history, a wide-enough window, a correct hazard form, and — the key one — no time-varying confounding by indication">暴露史量得準、時間窗夠長、風險模型形式正確，且最關鍵——無時變的適應症混淆</td></tr>
           <tr><td colspan="4" class="famhdr" data-en="Family · signal detection (hypothesis-generating screening, not a single estimate)">家族 · 訊號偵測（產生假說的篩檢，不是單一估計）</td></tr>
           <tr><td>PSSA</td>
-            <td data-en="Does an index drug trigger a later 'marker' drug (a prescribing cascade)? Look only at people who newly start both within a window">指標藥是否引發後續「標記藥」的起始（處方瀑布）？只看在一個時窗內兩種藥都新起始的人</td>
+            <td data-en="After a vaccine, do people more often start a 'marker' drug (a post-vaccination prescribing cascade)? Look only at people who newly start both within a window">接種某疫苗後，是否更常開始用某種「標記藥」（接種後的處方瀑布）？只看在一個時窗內疫苗與該藥都新起始的人</td>
             <td data-en="Self-controlled — time-invariant confounders cancel within-person; only the calendar trend needs removing (SRnull)">自我對照——時間不變混淆在個人內相消；只需用 SRnull 除掉日曆趨勢</td>
             <td data-en="A plausible cascade direction, a correctly modelled trend, new users, and a sensible time window">瀑布方向合理、趨勢建模正確、新使用者、時間窗合適</td></tr>
           <tr><td>TreeScan</td>
-            <td data-en="Screen one exposure against a whole hierarchy of outcomes — which outcome nodes show an excess too extreme for the 'drug does nothing' world">用一種暴露對「一整棵分層的結果」做篩檢——哪些結果節點的超額極端到不像「藥沒作用」的世界</td>
+            <td data-en="Screen one vaccine against a whole hierarchy of adverse events (an ICD tree) — which outcome nodes show an excess too extreme for the 'vaccine does nothing' world">用一劑疫苗對「一整棵分層的不良事件（ICD 樹）」做安全性篩檢——哪些結果節點的超額極端到不像「疫苗沒作用」的世界</td>
             <td data-en="No single effect — a label-permutation null is the control; scan the whole tree for the most extreme node (multiplicity-controlled)">不估單一效果——用「打亂暴露標籤的排列虛無」當對照，掃描整棵樹找最極端節點（已控多重比較）</td>
             <td data-en="A meaningful tree, a constant baseline across nodes, and no unmodelled confounding (else the permutation null is wrong)">樹有意義、各節點基準為常數、無未建模混淆（否則排列虛無不對）</td></tr>
         </tbody>
@@ -5996,7 +5996,7 @@ HR.WCE(fit, vecnum = rep(1,24), vecdenom = rep(0,24))   <span class="cm"># HR: s
     <p class="lead" data-en="A study design is only as good as the data behind it. Real-world databases differ in <b>type</b> (claims, EHR, registry, biobank), <b>coverage</b> (a national near-census vs a sample), <b>linkage</b> (to deaths, hospital, lab, genomes) and <b>longitudinal traceability</b> — and those features decide which of the designs in this toolbox you can actually run. Below: how database features map to design strengths, then a directory of pharmacoepidemiology databases (from the AsPEN network).">設計再好，也只能跟得上背後的資料。真實世界資料庫差別在<b>類型</b>（理賠、EHR、登錄、生物資料庫）、<b>涵蓋</b>（近乎全民 vs 抽樣樣本）、<b>連結</b>（死亡、住院、檢驗、基因）與<b>長期可追溯性</b>——這些特性決定你<b>實際能跑</b>工具箱裡哪些設計。以下先講「資料庫特性 → 設計強項」，再附一份藥物流行病學資料庫名錄（取自 AsPEN 網路）。</p>
 
     <h2 data-en="Database features → which designs they power">資料庫特性 → 撐得起哪些設計</h2>
-    <div class="cards">
+    <div class="cards cards-3">
       <div class="card"><h3 data-en="Near-universal claims (national)">近乎全民的全國理賠資料</h3><p data-en="A whole-population claims database (every dispensing + diagnosis) is ideal for <b>rare outcomes</b> and for <b>self-controlled</b> designs that need within-person exposure variation. <b>Powers:</b> cohort / case-control (rare events), SCCS &amp; CCTC, PERR, sequential trials. <b>Weak on:</b> lab values, clinical detail, the indication for prescribing.">全人口理賠（每筆給藥＋診斷）最適合<b>罕見結果</b>與需要人內暴露變異的<b>自我對照</b>設計。<b>撐得起：</b>世代／病例對照（罕見事件）、SCCS 與 CCTC、PERR、序列試驗。<b>弱點：</b>檢驗值、臨床細節、處方的適應症。</p></div>
       <div class="card"><h3 data-en="EHR with labs &amp; diagnoses">含檢驗值與診斷的 EHR</h3><p data-en="Electronic health records carry lab values, severity, and richer diagnoses. <b>Powers:</b> adjustment for confounding by indication, <b>active-comparator new-user (ACNU)</b>, and <b>mediation</b> (you have a measured mediator/biomarker M). <b>Weak on:</b> completeness across providers, sample representativeness.">電子病歷帶檢驗值、嚴重度與更豐富的診斷。<b>撐得起：</b>校正適應症混淆、<b>主動對照新使用者（ACNU）</b>、<b>中介分析</b>（有量到的中介／生物標記 M）。<b>弱點：</b>跨院完整度、樣本代表性。</p></div>
       <div class="card"><h3 data-en="Long longitudinal traceability">長期可追溯</h3><p data-en="Databases that follow members for many years (e.g. up to ~20) support <b>new-user</b> and <b>prevalent new-user (PNU)</b> designs, <b>clone-censor-weight</b> sustained strategies, and long-term outcomes. <b>Weak on:</b> people who churn out of the database.">能追蹤成員多年（如達約 20 年）的資料庫，支援<b>新使用者</b>與<b>盛行新使用者（PNU）</b>設計、<b>複製-設限-加權</b>的持續策略、與長期結果。<b>弱點：</b>離開資料庫者的流失。</p></div>
@@ -6177,7 +6177,7 @@ HR.WCE(fit, vecnum = rep(1,24), vecdenom = rep(0,24))   <span class="cm"># HR: s
   </footer>
 </main>
 
-<script src="i18n.js?v=113"></script>
-<script src="app.js?v=113"></script>
+<script src="i18n.js?v=114"></script>
+<script src="app.js?v=114"></script>
 </body>
 </html>
