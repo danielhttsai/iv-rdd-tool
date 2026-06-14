@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>真實世界證據與準實驗工具箱 RWE and Quasi-experimental Toolbox</title>
-<link rel="stylesheet" href="/styles.css?v=124" />
+<link rel="stylesheet" href="/styles.css?v=125" />
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
@@ -13,36 +13,33 @@
   <nav class="tabs">
     <label class="method-pick"><span data-en="Method">方法</span>
       <select id="methodSelect">
-        <option value="iv" data-en="IV · Instrumental variables">IV · 工具變數</option>
-        <option value="rdd" data-en="RDD · Regression discontinuity">RDD · 斷點回歸</option>
-        <option value="did" data-en="DiD · Difference-in-differences">DiD · 差異中的差異</option>
-        <option value="perr" data-en="PERR · Prior event rate ratio">PERR · 事前事件率比</option>
-        <option value="its" data-en="ITS · Interrupted time series">ITS · 中斷時間序列</option>
-        <option value="tit" data-en="TiT · Trend-in-trend">TiT · 趨勢中的趨勢</option>
-        <option value="ccw" data-en="CCW · Clone-censor-weight">CCW · 複製-設限-加權</option>
-        <option value="seq" data-en="Seq · Sequential target trials">Seq · 序列試驗</option>
-        <option value="cctc" data-en="CCTC · Case-crossover &amp; time-control">CCTC · 案例交叉與時間對照</option>
-        <option value="cc" data-en="CC · Case-control">CC · 病例對照</option>
-        <option value="sccs" data-en="SCCS · Self-controlled case series">SCCS · 自身對照病例系列</option>
         <option value="acnu" data-en="ACNU · Active-comparator new-user">ACNU · 主動對照新使用者</option>
-        <option value="pnu" data-en="PNU · Prevalent new-user">PNU · 盛行新使用者</option>
-        <option value="nc" data-en="NC · Negative control &amp; proximal">NC · 陰性對照與近端因果</option>
-        <option value="med" data-en="MED · Mediation analysis">MED · 中介分析</option>
-        <option value="tmle" data-en="TMLE · Doubly-robust / targeted ML">TMLE · 雙重穩健／目標式</option>
+        <option value="cc" data-en="CC · Case-control">CC · 病例對照</option>
+        <option value="cctc" data-en="CCTC · Case-crossover &amp; time-control">CCTC · 案例交叉與時間對照</option>
+        <option value="ccw" data-en="CCW · Clone-censor-weight">CCW · 複製-設限-加權</option>
+        <option value="did" data-en="DiD · Difference-in-differences">DiD · 差異中的差異</option>
+        <option value="extctrl" data-en="External control · borrow a control arm">External control · 外部對照</option>
         <option value="gm" data-en="GM · G-methods (time-varying confounding)">GM · G-methods（時變混淆）</option>
-        <option value="tnd" data-en="TND · Test-negative design">TND · 陰性檢驗設計</option>
+        <option value="its" data-en="ITS · Interrupted time series">ITS · 中斷時間序列</option>
+        <option value="iv" data-en="IV · Instrumental variables" selected>IV · 工具變數</option>
+        <option value="med" data-en="MED · Mediation analysis">MED · 中介分析</option>
+        <option value="miss" data-en="Missing data · multiple imputation">Missing data · 缺失資料與多重插補</option>
+        <option value="nc" data-en="NC · Negative control &amp; proximal">NC · 陰性對照與近端因果</option>
+        <option value="nma" data-en="NMA · network meta-analysis">NMA · 網絡統合分析</option>
+        <option value="perr" data-en="PERR · Prior event rate ratio">PERR · 事前事件率比</option>
+        <option value="pnu" data-en="PNU · Prevalent new-user">PNU · 盛行新使用者</option>
+        <option value="ps" data-en="PS · Propensity score">PS · 傾向分數</option>
         <option value="pssa" data-en="PSSA · Prescription sequence symmetry">PSSA · 處方順序對稱</option>
+        <option value="rdd" data-en="RDD · Regression discontinuity">RDD · 斷點回歸</option>
+        <option value="sccs" data-en="SCCS · Self-controlled case series">SCCS · 自身對照病例系列</option>
+        <option value="seq" data-en="Seq · Sequential target trials">Seq · 序列試驗</option>
+        <option value="srma" data-en="SR/MA · systematic review &amp; meta-analysis">SR/MA · 系統性回顧與統合分析</option>
+        <option value="tit" data-en="TiT · Trend-in-trend">TiT · 趨勢中的趨勢</option>
+        <option value="tmle" data-en="TMLE · Doubly-robust / targeted ML">TMLE · 雙重穩健／目標式</option>
+        <option value="tnd" data-en="TND · Test-negative design">TND · 陰性檢驗設計</option>
+        <option value="transport" data-en="Transportability · extend to a target population">Transportability · 可轉移性</option>
         <option value="tscan" data-en="TreeScan · Tree-based scan statistic">TreeScan · 樹狀掃描統計</option>
         <option value="wce" data-en="WCE · Weighted cumulative exposure">WCE · 加權累積暴露</option>
-        <option value="transport" data-en="Transportability · extend to a target population">Transportability · 可轉移性（搬到目標族群）</option>
-        <option value="extctrl" data-en="External control · borrow a control arm">External control · 外部對照（借一個對照組）</option>
-        <optgroup id="topicGroup" label="跨方法主題">
-          <option value="ps" data-en="PS · Propensity score">PS · 傾向分數</option>
-          <option value="miss" data-en="Missing data · multiple imputation">Missing data · 缺失資料與多重插補</option>
-        </optgroup>
-        <optgroup id="synthGroup" label="證據合成（跨研究）">
-          <option value="srma" data-en="SR/MA · systematic review &amp; meta-analysis">SR/MA · 系統性回顧與統合分析</option>
-        </optgroup>
       </select>
     </label>
     <div class="subtabs">
@@ -55,8 +52,6 @@
     </div>
     <button class="tab tab-sep" id="chooseTab" data-en="Which one?">怎麼選</button>
     <button class="tab" id="dataTab" data-en="Databases">資料庫</button>
-    <button class="tab" id="missTab" data-en="Missing data">缺失資料</button>
-    <button class="tab" id="srmaTab" data-en="SR &amp; meta-analysis">系統性回顧</button>
   </nav>
   <button id="langToggle" class="lang-toggle" type="button" title="切換中／英文" aria-label="Language">EN</button>
 </header>
@@ -6397,13 +6392,13 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       </label>
     </div>
     <div class="cards" style="grid-template-columns:1.3fr 1fr">
-      <div class="card scene"><h3 data-en="Forest plot">森林圖</h3><div id="srmaForest" class="chart"></div></div>
-      <div class="card scene"><h3 data-en="Funnel plot (small-study effects)">漏斗圖（小研究效應）</h3><div id="srmaFunnel" class="chart"></div></div>
+      <div class="card scene"><h3 data-en="Forest plot">森林圖</h3><div id="srmaForest" class="chart" style="height:440px"></div></div>
+      <div class="card scene"><h3 data-en="Funnel plot (small-study effects)">漏斗圖（小研究效應）</h3><div id="srmaFunnel" class="chart" style="height:440px"></div></div>
     </div>
-    <div class="rc">
-      <div class="big"><span class="rc-label" data-en="Fixed-effect pooled RR (95% CI)">固定效果合併 RR（95% CI）</span><span id="srmaFe" class="rc-val">–</span></div>
-      <div class="big highlight"><span class="rc-label" data-en="Random-effects pooled RR (95% CI)">隨機效果合併 RR（95% CI）</span><span id="srmaRe" class="rc-val">–</span></div>
-      <div class="big"><span class="rc-label" data-en="Heterogeneity I²">異質性 I²</span><span id="srmaI2" class="rc-val">–</span></div>
+    <div class="result-cards">
+      <div class="rc"><h3 data-en="Fixed-effect pooled RR (95% CI)">固定效果合併 RR（95% CI）</h3><div class="big" id="srmaFe">–</div></div>
+      <div class="rc highlight"><h3 data-en="Random-effects pooled RR (95% CI)">隨機效果合併 RR（95% CI）</h3><div class="big" id="srmaRe">–</div></div>
+      <div class="rc"><h3 data-en="Heterogeneity I²">異質性 I²</h3><div class="big" id="srmaI2">–</div></div>
     </div>
     <p class="caption" id="srmaReading"></p>
     <p class="caption" id="srmaEgger"></p>
@@ -6452,6 +6447,57 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
       <p data-en="A meta-analysis turns many studies into one number with a confidence (and prediction) interval — but its credibility rests entirely on a transparent, pre-registered method, a careful risk-of-bias appraisal, and a GRADE rating that doesn't oversell. AI speeds up the grind of screening; it doesn't supply the judgement. Pool comparable, well-conducted studies — and when they aren't comparable, say so and explore why rather than forcing a single number.">統合分析把許多研究變成一個帶信賴（與預測）區間的數字——但它的可信度完全取決於透明、事先登錄的方法、謹慎的偏誤風險評讀，以及一個不浮誇的 GRADE 評等。AI 加速篩選的苦工；它不提供判斷。合併的應是可比、執行良好的研究——當它們不可比時，就明說並去探究原因，而不是硬湊出一個數字。</p></div>
   </section>
 
+  <!-- ===================== 網絡統合分析 / Network meta-analysis ===================== -->
+  <section id="nmapanel" class="panel">
+    <h1 data-en="Network meta-analysis (NMA)">網絡統合分析（NMA）</h1>
+    <p class="lead" data-en="A standard meta-analysis pools head-to-head trials of <b>two</b> treatments. But clinicians must choose among <b>many</b> — and few trials compare every pair directly. Network meta-analysis connects all the treatments into one <b>network</b> and estimates every pairwise contrast at once, by combining <b>direct</b> evidence (trials that compared the two) with <b>indirect</b> evidence (inferred through a common comparator). It can even rank the options. The price is one big extra assumption — <b>transitivity</b> — and a consistency check between the direct and indirect routes.">一般的統合分析合併<b>兩種</b>治療的正面對決試驗。但臨床上要在<b>很多種</b>之間選擇，而且很少有試驗直接比過每一對。網絡統合分析把所有治療連成一個<b>網絡</b>，一次估出每一對的對比——做法是把<b>直接</b>證據（真的比過這兩者的試驗）與<b>間接</b>證據（透過共同對照推出來）結合。它甚至能對選項排名。代價是多了一個大假設——<b>可遞移性</b>——以及一個直接 vs 間接的一致性檢查。</p>
+
+    <div class="card info"><h3 data-en="Direct, indirect &amp; mixed evidence">直接、間接與混合證據</h3>
+      <p data-en="If trials compared <b>A vs Placebo</b> and <b>B vs Placebo</b>, but nobody ran <b>A vs B</b> directly, you can still estimate A vs B <b>indirectly</b>: (A−Placebo) − (B−Placebo). Placebo is the <b>common comparator</b> that bridges them. When both a direct A-vs-B trial <i>and</i> the indirect route exist, NMA pools them into a more precise <b>mixed</b> estimate — and checks they agree.">如果有試驗比過 <b>A vs 安慰劑</b> 與 <b>B vs 安慰劑</b>，但沒人直接做 <b>A vs B</b>，你仍能<b>間接</b>估出 A vs B：（A−安慰劑）−（B−安慰劑）。安慰劑就是橋接兩者的<b>共同對照</b>。當「直接 A vs B 試驗」和「間接路徑」都存在時，NMA 把它們合併成更精確的<b>混合</b>估計——並檢查兩者是否相符。</p></div>
+
+    <h2 data-en="Live demo: indirect comparison &amp; the consistency check">即時示範：間接比較與一致性檢查</h2>
+    <p class="lead" data-en="A small network: Placebo, Drug A, Drug B. We have direct trials of A-vs-Placebo (log RR −0.40) and B-vs-Placebo (−0.25). The <b>indirect</b> A-vs-B effect is therefore (−0.40) − (−0.25) = −0.15. Now imagine a <b>direct</b> A-vs-B trial — drag its result. When the direct estimate matches the indirect one, the network is <b>consistent</b> (the loop closes); when they diverge, that's <b>incoherence</b>, and pooling them into one number would be misleading.">一個小網絡：安慰劑、藥 A、藥 B。我們有 A-vs-安慰劑（log RR −0.40）與 B-vs-安慰劑（−0.25）的直接試驗。所以 A-vs-B 的<b>間接</b>效果＝（−0.40）−（−0.25）＝−0.15。現在想像有一場<b>直接</b> A-vs-B 試驗——拖動它的結果。當直接估計和間接估計相符時，網絡<b>一致</b>（迴圈閉合）；當兩者背離，就是<b>不一致（incoherence）</b>，硬把它們合成一個數字會誤導。</p>
+    <div class="controls"><label><span data-en="A direct A-vs-B trial would give (log RR):">假想的直接 A-vs-B 試驗結果（log RR）：</span><b id="nmaDirVal">-0.15</b>
+      <input type="range" id="nmaDirSlider" min="-0.6" max="0.3" value="-0.15" step="0.01" /></label></div>
+    <div class="cards" style="grid-template-columns:1fr 1fr">
+      <div class="card scene"><h3 data-en="The treatment network">治療網絡</h3><div id="nmaNetwork" class="chart" style="height:340px"></div></div>
+      <div class="card scene"><h3 data-en="Direct vs indirect A-vs-B">直接 vs 間接 A-vs-B</h3><div id="nmaBars" class="chart" style="height:340px"></div></div>
+    </div>
+    <div class="result-cards">
+      <div class="rc"><h3 data-en="Indirect A-vs-B (via Placebo)">間接 A-vs-B（經安慰劑）</h3><div class="big" id="nmaIndirect">–</div></div>
+      <div class="rc"><h3 data-en="Direct A-vs-B (the slider)">直接 A-vs-B（滑桿）</h3><div class="big" id="nmaDirect">–</div></div>
+      <div class="rc" id="nmaIncohCard"><h3 data-en="Incoherence (direct − indirect)">不一致（直接 − 間接）</h3><div class="big" id="nmaIncoh">–</div></div>
+    </div>
+    <p class="caption" id="nmaReading"></p>
+    <p class="caption" data-en="Effects are log risk ratios (negative = the first drug is better). When the slider sits at the indirect value (−0.15) the loop is coherent; moving it away opens an inconsistency that node-splitting / the net-heat plot would flag. Synthetic teaching data.">效果為 log 風險比（負＝前一個藥較好）。當滑桿停在間接值（−0.15）時迴圈一致；移開就打開一個不一致，這正是 node-splitting／net-heat 圖會標出來的。合成教學資料。</p>
+
+    <h2 data-en="The assumptions that make it work">讓它成立的假設</h2>
+    <div class="cards cards-3">
+      <div class="card"><h3 data-en="Transitivity (the big one)">可遞移性（最關鍵）</h3><p data-en="The indirect route is only valid if the trials forming it are <b>comparable</b> — the effect modifiers (age, severity, era, dose…) are distributed similarly across the A-vs-Placebo and B-vs-Placebo sets. If, say, the A trials enrolled much sicker patients, Placebo is no longer a fair bridge. Transitivity is a <b>clinical/epidemiological judgement</b>, largely untestable from the data.">間接路徑只有在組成它的試驗<b>可比</b>時才有效——效果修飾子（年齡、嚴重度、年代、劑量……）在 A-vs-安慰劑 與 B-vs-安慰劑 兩組間分布相似。若 A 的試驗收的病人重很多，安慰劑就不再是公平的橋。可遞移性是<b>臨床／流行病學的判斷</b>，大多無法用資料檢驗。</p></div>
+      <div class="card"><h3 data-en="Consistency / coherence (checkable)">一致性／連貫（可檢）</h3><p data-en="The statistical shadow of transitivity: where a loop has both direct and indirect evidence, they should agree. Check it with <b>node-splitting</b> (split each comparison into its direct, indirect and network parts), the <b>net-heat plot</b> (netmeta), or a <b>design-by-treatment interaction</b> test. Disagreement = incoherence — investigate, don't just pool.">可遞移性的統計影子：在同時有直接與間接證據的迴圈裡，兩者應該相符。用 <b>node-splitting</b>（把每個對比拆成直接、間接、網絡三份）、<b>net-heat 圖</b>（netmeta）、或<b>design-by-treatment 交互</b>檢定來查。不相符＝不一致——去探究，別只是合併。</p></div>
+      <div class="card"><h3 data-en="Network geometry">網絡幾何</h3><p data-en="Draw the network first: nodes = treatments, edges = direct comparisons (thicker = more trials). A well-connected network with closed loops supports NMA; a star (everything only vs Placebo) gives indirect-only estimates with no consistency check; a disconnected node can't be ranked at all.">先把網絡畫出來：節點＝治療、連線＝直接比較（越粗＝試驗越多）。連結良好、有閉合迴圈的網絡撐得起 NMA；星形（全部只對安慰劑）只有間接估計、沒有一致性可查；孤立的節點根本排不了名。</p></div>
+    </div>
+
+    <h2 data-en="Ranking treatments — and its traps">對治療排名 —— 與它的陷阱</h2>
+    <div class="card info">
+      <p data-en="NMA can rank every treatment by the probability it is best. <b>SUCRA</b> (Surface Under the Cumulative RAnking curve; the frequentist twin is the <b>P-score</b>) summarises this as 0–100%. <b>Rankograms</b> show the whole distribution of possible ranks. Read rankings with care:">NMA 能依「是最佳的機率」對每個治療排名。<b>SUCRA</b>（累積排名曲線下面積；頻率學派的孿生是 <b>P-score</b>）把它摘成 0–100%。<b>Rankogram</b> 顯示可能名次的整個分布。解讀排名要小心：</p>
+      <ul>
+        <li data-en="A treatment can rank #1 on a <b>tiny, imprecise</b> effect — ranking ignores how large or how certain the difference is. Always read the ranking <b>next to</b> the actual effect estimates and their intervals.">一個治療可能靠<b>微小又不精確</b>的效果排第一——排名忽略了差異有多大、多確定。一定要把排名<b>和</b>實際效果估計與區間並排看。</li>
+        <li data-en="Rankings are unstable when the network is sparse or imbalanced; a single new trial can reshuffle them. Report uncertainty (rankograms), not just the top spot.">網絡稀疏或不平衡時排名不穩；一場新試驗就可能把它洗牌。要報不確定性（rankogram），不是只報冠軍。</li>
+      </ul>
+    </div>
+
+    <h2 data-en="Doing it &amp; rating it (Cochrane NMA toolkit; doing-meta.guide)">怎麼做、怎麼評（Cochrane NMA 工具箱；doing-meta.guide）</h2>
+    <div class="cards cards-3">
+      <div class="card"><h3 data-en="Frequentist — netmeta (R)">頻率學派 —— netmeta（R）</h3><p data-en="A graph-theoretical approach (borrowed from electrical-network theory) fits the whole network by weighted least squares; gives league tables (<code>netleague</code>), net-heat plots, forest plots vs a reference, P-scores, and network-wide I²/τ².">圖論取向（借自電網理論）用加權最小平方擬合整個網絡；給 league table（<code>netleague</code>）、net-heat 圖、相對參考治療的森林圖、P-score，以及全網絡的 I²/τ²。</p></div>
+      <div class="card"><h3 data-en="Bayesian — gemtc / BUGSnet">貝氏 —— gemtc／BUGSnet</h3><p data-en="A hierarchical model fit by MCMC (gemtc/JAGS, BUGSnet); naturally handles multi-arm trials, gives full posteriors, SUCRA &amp; rankograms — but you must check convergence (trace plots, Gelman–Rubin). The classic two-treatment indirect shortcut is the <b>Bucher method</b>.">用 MCMC 擬合的階層模型（gemtc/JAGS、BUGSnet）；自然處理多臂試驗、給完整後驗、SUCRA 與 rankogram——但要檢查收斂（trace plot、Gelman–Rubin）。兩治療的間接捷徑是經典的 <b>Bucher 法</b>。</p></div>
+      <div class="card"><h3 data-en="Certainty — CINeMA + reporting">證據強度 —— CINeMA + 報告</h3><p data-en="<b>CINeMA</b> adapts GRADE to networks (within-study bias, reporting bias, indirectness, imprecision, heterogeneity, <b>incoherence</b>) to rate the certainty of each NMA estimate. Report per the PRISMA-NMA extension. The <b>Cochrane NMA toolkit</b> curates the software (netmeta, gemtc, BUGSnet, mvmeta, ITC)."><b>CINeMA</b> 把 GRADE 改寫到網絡上（研究內偏誤、報告偏誤、間接性、不精確、異質性、<b>不一致</b>），評每個 NMA 估計的證據強度。依 PRISMA-NMA 延伸報告。<b>Cochrane NMA 工具箱</b>整理了相關軟體（netmeta、gemtc、BUGSnet、mvmeta、ITC）。</p></div>
+    </div>
+
+    <div class="card info"><h3 data-en="The honest bottom line">誠實的結論</h3>
+      <p data-en="NMA is powerful — it answers &quot;which of these works best?&quot; even without head-to-head trials — but it stacks an extra, largely untestable assumption (transitivity) on top of everything a pairwise meta-analysis already needs. Draw the network, justify transitivity clinically, test coherence where loops exist, read rankings alongside effect sizes, and rate certainty with CINeMA. A confident-looking ranking from an incoherent or imbalanced network is worse than an honest &quot;we can't tell&quot;.">NMA 很強——即使沒有正面對決試驗，也能回答「這些之中哪個最好？」——但它在一般成對統合分析已需要的一切之上，再疊一個大多無法檢驗的假設（可遞移性）。先畫網絡、用臨床理由論證可遞移性、在有迴圈的地方檢驗連貫、把排名與效果量並排讀、用 CINeMA 評強度。一個來自不一致或不平衡網絡、看起來很有信心的排名，比誠實的「分不出來」更糟。</p></div>
+  </section>
+
   <!-- ===================== 參考文獻 / References ===================== -->
   <footer class="refs">
     <h2 data-en="References &amp; citation">參考文獻與引用</h2>
@@ -6478,6 +6524,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
       <li data-ref="srma"><b data-en="Methods &amp; reporting (SR &amp; meta-analysis tab)">方法與報告（系統性回顧分頁）</b> · Higgins, J. P. T., Thomas, J., Chandler, J., Cumpston, M., Li, T., Page, M. J., &amp; Welch, V. A. (Eds.) (2024). <i>Cochrane Handbook for Systematic Reviews of Interventions</i> (v6.5). Cochrane. <a href="https://www.cochrane.org/authors/handbooks-and-manuals/handbook" target="_blank" rel="noopener">cochrane.org/authors/handbooks-and-manuals</a>. · Page, M. J., McKenzie, J. E., Bossuyt, P. M., et al. (2021). The PRISMA 2020 statement: an updated guideline for reporting systematic reviews. <i>BMJ, 372</i>, n71. <span data-en="〔workflow, PRISMA flow diagram, reporting — SR/MA tab steps ①–⑥〕">〔工作流程、PRISMA 流程圖、報告 —— 系統性回顧分頁步驟①–⑥〕</span></li>
       <li data-ref="srma"><b data-en="Pooling &amp; heterogeneity">合併與異質性</b> · DerSimonian, R., &amp; Laird, N. (1986). Meta-analysis in clinical trials. <i>Controlled Clinical Trials, 7</i>(3), 177–188. · Higgins, J. P. T., Thompson, S. G., Deeks, J. J., &amp; Altman, D. G. (2003). Measuring inconsistency in meta-analyses. <i>BMJ, 327</i>, 557–560 (I²). · Egger, M., Davey Smith, G., Schneider, M., &amp; Minder, C. (1997). Bias in meta-analysis detected by a simple, graphical test. <i>BMJ, 315</i>, 629–634. · Harrer, M., Cuijpers, P., Furukawa, T. A., &amp; Ebert, D. D. (2021). <i>Doing Meta-Analysis with R: A Hands-On Guide.</i> CRC Press. <a href="https://doing-meta.guide/" target="_blank" rel="noopener">doing-meta.guide</a>. <span data-en="〔fixed vs random effects, I²/τ², funnel/Egger, R meta &amp; metafor — SR/MA interactive〕">〔固定 vs 隨機效果、I²/τ²、漏斗／Egger、R 的 meta 與 metafor —— 系統性回顧互動〕</span></li>
       <li data-ref="srma"><b data-en="Certainty of evidence (GRADE)">證據強度（GRADE）</b> · Guyatt, G. H., Oxman, A. D., Vist, G. E., et al. (2008). GRADE: an emerging consensus on rating quality of evidence and strength of recommendations. <i>BMJ, 336</i>, 924–926. · Guyatt, G., Oxman, A. D., Akl, E. A., et al. (2011). GRADE guidelines: 1. Introduction. <i>Journal of Clinical Epidemiology, 64</i>(4), 383–394. <a href="https://www.gradeworkinggroup.org/" target="_blank" rel="noopener">gradeworkinggroup.org</a>. <span data-en="〔certainty rating, downgrade/upgrade, Summary-of-Findings — SR/MA GRADE section〕">〔證據強度評等、降級／升級、結果摘要表 —— 系統性回顧 GRADE 段落〕</span></li>
+      <li data-ref="nma"><b data-en="Network meta-analysis (NMA tab)">網絡統合分析（NMA 分頁）</b> · Cochrane Comparing Multiple Interventions Methods Group. <i>Network Meta-Analysis Toolkit.</i> <a href="https://methods.cochrane.org/cmi/network-meta-analysis-toolkit" target="_blank" rel="noopener">methods.cochrane.org/cmi</a>. · Harrer, M., Cuijpers, P., Furukawa, T. A., &amp; Ebert, D. D. (2021). Network Meta-Analysis. In <i>Doing Meta-Analysis with R.</i> <a href="https://doing-meta.guide/netwma" target="_blank" rel="noopener">doing-meta.guide/netwma</a>. · Salanti, G. (2012). Indirect and mixed-treatment comparison, network, or multiple-treatments meta-analysis. <i>Research Synthesis Methods, 3</i>(2), 80–97. · Bucher, H. C., Guyatt, G. H., Griffith, L. E., &amp; Walter, S. D. (1997). The results of direct and indirect treatment comparisons. <i>Journal of Clinical Epidemiology, 50</i>(6), 683–691. · Rücker, G., &amp; Schwarzer, G. (2015). Ranking treatments in frequentist NMA (P-score). <i>BMC Medical Research Methodology, 15</i>, 58 (netmeta). · Nikolakopoulou, A., Higgins, J. P. T., Papakonstantinou, T., et al. (2020). CINeMA: confidence in network meta-analysis. <i>PLoS Medicine, 17</i>(4), e1003082. <span data-en="〔direct/indirect/mixed evidence, transitivity &amp; consistency, ranking (SUCRA/P-score), netmeta/gemtc/BUGSnet, CINeMA — NMA tab〕">〔直接／間接／混合證據、可遞移性與一致性、排名（SUCRA／P-score）、netmeta/gemtc/BUGSnet、CINeMA —— NMA 分頁〕</span></li>
       <li data-ref="srma"><b data-en="AI / automation for screening">AI／自動化篩選</b> · Ouzzani, M., Hammady, H., Fedorowicz, Z., &amp; Elmagarmid, A. (2016). Rayyan — a web and mobile app for systematic reviews. <i>Systematic Reviews, 5</i>, 210. <a href="https://www.rayyan.com/" target="_blank" rel="noopener">rayyan.com</a>. · Marshall, I. J., &amp; Wallace, B. C. (2019). Toward systematic review automation: a practical guide to using machine learning tools in research synthesis. <i>Systematic Reviews, 8</i>, 163. · Bannach-Brown, A., Przybyła, P., Thomas, J., et al. (2019). Machine learning algorithms for systematic review: reducing workload and human screening error. <i>Systematic Reviews, 8</i>, 23. · Hanegraaf, P., Wondimu, A., Mosselman, J. J., et al. (2024). Inter-reviewer reliability of human literature reviewing and implications for machine-assisted systematic reviews. <i>BMJ Open, 14</i>, e076912. · Guo, E., Gupta, M., Deng, J., et al. (2024). Automated paper screening for clinical reviews using large language models. <i>JMIR, 26</i>, e48996. <span data-en="〔Rayyan, ML active-learning screening, error detection, inter-reviewer reliability, LLM screening — SR/MA AI section〕">〔Rayyan、ML 主動學習篩選、錯誤偵測、審閱者間一致性、LLM 篩選 —— 系統性回顧 AI 段落〕</span></li>
       <li data-ref="iv">Homayra, F., Enns, B., Min, J. E., Kurz, M., Bach, P., Bruneau, J., et al. (2024). Comparative Analysis of Instrumental Variables on the Assignment of Buprenorphine/Naloxone or Methadone for the Treatment of Opioid Use Disorder. <i>Epidemiology, 35</i>(2), 218–231. <span data-en="〔A1–A4b assumption framework〕">〔A1–A4b 假設檢驗框架〕</span></li>
       <li data-ref="iv">Singh, A., Hosanagar, K., &amp; Gandhi, A. (2020). Machine Learning Instrument Variables for Causal Inference. In <i>Proceedings of the 21st ACM Conference on Economics and Computation (EC '20)</i>, 835–836. <span data-en="〔instrument synthesis〕">〔合成工具〕</span></li>
@@ -6604,7 +6651,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
   </footer>
 </main>
 
-<script src="i18n.js?v=124"></script>
-<script src="app.js?v=124"></script>
+<script src="i18n.js?v=125"></script>
+<script src="app.js?v=125"></script>
 </body>
 </html>

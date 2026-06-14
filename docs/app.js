@@ -77,8 +77,13 @@ const methodSelect = document.getElementById("methodSelect");
 const subtabBtns = [...document.querySelectorAll(".subtab")];
 const chooseTab = document.getElementById("chooseTab");
 const dataTab = document.getElementById("dataTab");
-const missTab = document.getElementById("missTab");
-const srmaTab = document.getElementById("srmaTab");
+// Standalone teaching topics that live in the method dropdown but open their own
+// full-page panel (no ①–⑥ sub-tabs): missing data, SR/MA, network meta-analysis.
+const TOPICS = {
+  miss: { panel: "misspanel", ref: "miss", init: () => initMiss() },
+  srma: { panel: "srmapanel", ref: "srma", init: () => initSrma() },
+  nma:  { panel: "nmapanel",  ref: "nma",  init: () => initNma() },
+};
 
 function showPanel(panelId) {
   document.querySelectorAll(".panel").forEach((x) => x.classList.remove("active"));
@@ -87,12 +92,20 @@ function showPanel(panelId) {
   if (PANEL_INIT[panelId]) PANEL_INIT[panelId]();
   window.scrollTo(0, 0);
 }
+function openTopic(key) {
+  const t = TOPICS[key]; if (!t) return;
+  subtabBtns.forEach((x) => x.classList.remove("active"));
+  chooseTab.classList.remove("active");
+  if (dataTab) dataTab.classList.remove("active");
+  if (methodSelect) methodSelect.value = key;
+  showPanel(t.panel);
+  if (t.init) t.init();
+  if (typeof filterRefs === "function") filterRefs(t.ref);
+}
 function showMethodSub() {
   if (methodSelect.value !== curMethod) methodSelect.value = curMethod;  // resync dropdown if we came from a topic panel
   chooseTab.classList.remove("active");
   if (dataTab) dataTab.classList.remove("active");
-  if (missTab) missTab.classList.remove("active");
-  if (srmaTab) srmaTab.classList.remove("active");
   subtabBtns.forEach((b) => b.classList.toggle("active", b.dataset.sub === curSub));
   showPanel(METHOD_PREFIX[curMethod] + curSub);
   if (curSub === "analyze") renderDataPreview(curMethod);   // ③: show the real data rows on top
@@ -101,18 +114,13 @@ function showMethodSub() {
 }
 methodSelect.addEventListener("change", () => {
   const v = methodSelect.value;
-  // The dropdown also lists the two cross-method teaching topics; route those to
-  // their standalone panels instead of the per-method ①–⑥ sub-tabs.
-  if (v === "miss" && missTab) { missTab.click(); return; }
-  if (v === "srma" && srmaTab) { srmaTab.click(); return; }
+  if (TOPICS[v]) { openTopic(v); return; }   // standalone teaching topics (miss / SR-MA / NMA)
   curMethod = v; showMethodSub();
 });
 subtabBtns.forEach((b) => b.addEventListener("click", () => { curSub = b.dataset.sub; showMethodSub(); }));
 chooseTab.addEventListener("click", () => {
   subtabBtns.forEach((x) => x.classList.remove("active"));
   if (dataTab) dataTab.classList.remove("active");
-  if (missTab) missTab.classList.remove("active");
-  if (srmaTab) srmaTab.classList.remove("active");
   chooseTab.classList.add("active");
   showPanel("choose");
   if (typeof filterRefs === "function") filterRefs("choose");
@@ -120,33 +128,9 @@ chooseTab.addEventListener("click", () => {
 if (dataTab) dataTab.addEventListener("click", () => {
   subtabBtns.forEach((x) => x.classList.remove("active"));
   chooseTab.classList.remove("active");
-  if (missTab) missTab.classList.remove("active");
-  if (srmaTab) srmaTab.classList.remove("active");
   dataTab.classList.add("active");
   showPanel("dbpanel");
   if (typeof filterRefs === "function") filterRefs("db");
-});
-if (missTab) missTab.addEventListener("click", () => {
-  subtabBtns.forEach((x) => x.classList.remove("active"));
-  chooseTab.classList.remove("active");
-  if (dataTab) dataTab.classList.remove("active");
-  if (srmaTab) srmaTab.classList.remove("active");
-  missTab.classList.add("active");
-  if (methodSelect) methodSelect.value = "miss";
-  showPanel("misspanel");
-  initMiss();
-  if (typeof filterRefs === "function") filterRefs("miss");
-});
-if (srmaTab) srmaTab.addEventListener("click", () => {
-  subtabBtns.forEach((x) => x.classList.remove("active"));
-  chooseTab.classList.remove("active");
-  if (dataTab) dataTab.classList.remove("active");
-  if (missTab) missTab.classList.remove("active");
-  srmaTab.classList.add("active");
-  if (methodSelect) methodSelect.value = "srma";
-  showPanel("srmapanel");
-  initSrma();
-  if (typeof filterRefs === "function") filterRefs("srma");
 });
 // Delegated handler for in-content cross links (.xref) — survives i18n innerHTML swaps.
 // <a class="xref" data-m="sccs">SCCS</a> → go to that method; data-tab="db" → Databases tab.
@@ -157,7 +141,7 @@ document.addEventListener("click", (e) => {
   if (a.dataset.m) gotoMethod(a.dataset.m, "learn");
   else if (a.dataset.tab === "db" && dataTab) dataTab.click();
   else if (a.dataset.tab === "choose") chooseTab.click();
-  else if (a.dataset.tab === "srma" && srmaTab) srmaTab.click();
+  else if (TOPICS[a.dataset.tab]) openTopic(a.dataset.tab);
 });
 
 // Auto-link method abbreviations inside every panel's prose / tables, so the
@@ -464,6 +448,78 @@ function drawSrmaFunnel(full) {
     shapes: [{ type: "line", x0: Math.exp(center), x1: Math.exp(center), y0: 0, y1: seMax,
                line: { color: AMBER, dash: "dash", width: 1.5 } }],
   }), SCENE_CFG);
+}
+
+// ----------------------------------------------------------------------
+// NMA tab — frontend-only demo: indirect comparison via a common comparator +
+// the direct-vs-indirect consistency (incoherence) check. Closed-form, exact.
+// ----------------------------------------------------------------------
+const NMA_DAP = -0.40, NMA_DBP = -0.25;          // direct log RRs: A-vs-Placebo, B-vs-Placebo
+const NMA_INDIRECT = NMA_DAP - NMA_DBP;          // indirect A-vs-B = (A-P) − (B-P) = −0.15
+let nmaReady = false, nmaTimer = null;
+function initNma() { if (nmaReady) return; nmaReady = true; refreshNma(); }
+{
+  const sl = document.getElementById("nmaDirSlider");
+  if (sl) sl.addEventListener("input", () => {
+    document.getElementById("nmaDirVal").textContent = Number(sl.value).toFixed(2);
+    clearTimeout(nmaTimer); nmaTimer = setTimeout(refreshNma, 80);
+  });
+}
+function _nmaStatus(incoh) {
+  const a = Math.abs(incoh);
+  return a < 0.08 ? GREEN : (a < 0.2 ? AMBER : RED);
+}
+function refreshNma() {
+  const sl = document.getElementById("nmaDirSlider");
+  const direct = sl ? parseFloat(sl.value) : NMA_INDIRECT;
+  const incoh = direct - NMA_INDIRECT;
+  const col = _nmaStatus(incoh);
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerHTML = v; };
+  set("nmaIndirect", `${NMA_INDIRECT.toFixed(2)} <span class="muted">(RR ${Math.exp(NMA_INDIRECT).toFixed(2)})</span>`);
+  set("nmaDirect", `${direct.toFixed(2)} <span class="muted">(RR ${Math.exp(direct).toFixed(2)})</span>`);
+  set("nmaIncoh", `${incoh >= 0 ? "+" : ""}${incoh.toFixed(2)}`);
+  const card = document.getElementById("nmaIncohCard");
+  if (card) { card.className = "rc"; if (col === GREEN) card.classList.add("highlight"); }
+  const verdict = col === GREEN
+    ? tr("一致：直接與間接相符，迴圈閉合——可放心合併成混合估計。", "Consistent: direct and indirect agree, the loop closes — safe to pool into a mixed estimate.")
+    : (col === AMBER
+      ? tr("有些不一致：直接與間接開始背離——node-splitting／net-heat 會亮起來，先查原因再合併。", "Some incoherence: direct and indirect start to diverge — node-splitting / net-heat would light up; investigate before pooling.")
+      : tr("嚴重不一致：直接與間接矛盾——可遞移性很可能被破壞，硬合併會誤導。", "Strong incoherence: direct and indirect contradict — transitivity is likely broken; pooling them would mislead."));
+  set("nmaReading", verdict);
+  drawNmaNetwork(col);
+  drawNmaBars(direct, col);
+}
+function drawNmaNetwork(loopCol) {
+  if (!document.getElementById("nmaNetwork")) return;
+  const N = { P: [0, 0], A: [-1.1, 1.5], B: [1.1, 1.5] };
+  const edge = (a, b, color, width, dash) => ({ x: [N[a][0], N[b][0]], y: [N[a][1], N[b][1]],
+    mode: "lines", line: { color, width, dash: dash || "solid" }, hoverinfo: "skip", showlegend: false });
+  const traces = [
+    edge("P", "A", SLATE, 4),                 // direct A-vs-Placebo
+    edge("P", "B", SLATE, 3),                 // direct B-vs-Placebo
+    edge("A", "B", loopCol, 3, "dot"),        // the A-vs-B loop edge, coloured by coherence
+    { x: [N.P[0], N.A[0], N.B[0]], y: [N.P[1], N.A[1], N.B[1]], mode: "markers+text",
+      text: [tr("安慰劑", "Placebo"), tr("藥 A", "Drug A"), tr("藥 B", "Drug B")], textposition: "middle center",
+      textfont: { color: "#fff", size: 12 }, hoverinfo: "skip", showlegend: false,
+      marker: { size: 54, color: [SLATE, TEAL, PURPLE] } },
+  ];
+  Plotly.react("nmaNetwork", traces, sceneLayout({
+    height: 340, margin: { t: 16, r: 16, b: 16, l: 16 },
+    xaxis: { visible: false, range: [-2, 2], fixedrange: true },
+    yaxis: { visible: false, range: [-0.6, 2.1], fixedrange: true },
+    annotations: [{ x: 0, y: 1.62, text: tr("間接（虛線）", "indirect (dotted)"), showarrow: false, font: { size: 10, color: loopCol } }],
+  }), SCENE_CFG);
+}
+function drawNmaBars(direct, col) {
+  if (!document.getElementById("nmaBars")) return;
+  const labels = [tr("間接（經安慰劑）", "indirect (via Placebo)"), tr("直接（滑桿）", "direct (slider)")];
+  const vals = [NMA_INDIRECT, direct];
+  Plotly.react("nmaBars", [{ x: labels, y: vals, type: "bar", marker: { color: [SLATE, col] },
+    text: vals.map((v) => v.toFixed(2)), textposition: "outside", hoverinfo: "skip" }],
+    sceneLayout({ height: 340, margin: { t: 16, r: 16, b: 40, l: 52 },
+      yaxis: { title: tr("A vs B（log 風險比）", "A vs B (log risk ratio)"), range: [-0.7, 0.4], zeroline: true },
+      shapes: [{ type: "line", x0: -0.5, x1: 1.5, y0: NMA_INDIRECT, y1: NMA_INDIRECT, line: { color: SLATE, dash: "dash", width: 1.5 } }],
+    }), SCENE_CFG);
 }
 
 // ======================================================================
@@ -2405,6 +2461,7 @@ const METHOD_REF = {
   db:   { zh: "資料庫", en: "Databases", src: "AsPEN database directory; Sturkenboom & Schink (2020); NeuroGEN (Tsai et al.)" },
   miss: { zh: "缺失資料", en: "Missing data", src: "Rubin (1987); van Buuren (2018); Sterne et al. (2009), BMJ" },
   srma: { zh: "系統性回顧與統合分析", en: "Systematic review & meta-analysis", src: "Cochrane Handbook (Higgins et al. 2024); PRISMA 2020; DerSimonian & Laird (1986); GRADE (Guyatt et al. 2008)" },
+  nma: { zh: "網絡統合分析", en: "Network meta-analysis", src: "Cochrane NMA Toolkit; Harrer et al. (doing-meta.guide/netwma); Salanti (2012); Bucher et al. (1997); Rücker & Schwarzer (2015)" },
 };
 let refsContext = "iv";   // which page's references/citation to show
 
@@ -7751,10 +7808,6 @@ function drawSeqDemo(s) {
 // Language switch — re-render any dynamic content already on screen
 // ======================================================================
 window.addEventListener("iv-lang", async () => {
-  const tg = document.getElementById("topicGroup");
-  if (tg) tg.label = tr("跨方法主題", "Cross-method topics");  // <optgroup> label (data-en can't reach it)
-  const sg = document.getElementById("synthGroup");
-  if (sg) sg.label = tr("證據合成（跨研究）", "Evidence synthesis (across studies)");
   filterRefs(refsContext);                         // re-scope refs + citation in new language
   refreshPlay();                                   // interactive tab
   if (state.lastReq) {                             // analysis + dashboard
@@ -7907,11 +7960,10 @@ window.addEventListener("iv-lang", async () => {
   EVALUE_METHODS.forEach((m) => { const c = document.getElementById(METHOD_PREFIX[m] + "_evalue"); if (c) _evRecompute(c); }); // ④ E-value readings
   if (missReady) refreshMiss();                          // 缺失資料 demo (re-fetch + redraw in new lang)
   if (srmaReady) refreshSrma();                          // SR/MA meta-analysis (re-fetch + redraw in new lang)
+  if (nmaReady) refreshNma();                            // NMA network + indirect-comparison demo
   if (chooseReady) { drawChooseChart(); renderDtree(); } // six-method chart + decision tree
   autolinkMethods();                                   // re-apply inline method cross-links (applyStatic wiped them)
 });
 
 // initial render of interactive tab data
 refreshPlay();
-{ const tg = document.getElementById("topicGroup"); if (tg) tg.label = tr("跨方法主題", "Cross-method topics");
-  const sg = document.getElementById("synthGroup"); if (sg) sg.label = tr("證據合成（跨研究）", "Evidence synthesis (across studies)"); }  // initial <optgroup> labels
