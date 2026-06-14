@@ -119,7 +119,7 @@ def full_srma(tau=TAU, lang="zh", seed=SEED):
         "把 %d 場疫苗試驗（每場一個 log 風險比）合併。固定效果假設每場估的是<b>同一個</b>效果，"
         "只用各自的精度加權 → 合併 RR=%.2f、95%% CI [%.2f, %.2f]（很窄）。但這些試驗其實<b>彼此不同</b>"
         "（I²=%.0f%%，τ²=%.3f）：隨機效果把這份「研究間變異」加進去，合併 RR=%.2f、95%% CI [%.2f, %.2f]"
-        "——區間寬了約 %.1f 倍，這才<b>誠實</b>反映不確定性。真值 RR=%.2f。"
+        "——區間寬了約 %.1f 倍，更能反映真正的不確定性。真值 RR=%.2f。"
         % (len(yi), float(np.exp(pooled_fe)), float(np.exp(fe_lo)), float(np.exp(fe_hi)),
            res["I2"], res["tau2"], float(np.exp(pooled_re)), float(np.exp(re_lo)),
            float(np.exp(re_hi)), ratio, truth_rr),
@@ -128,7 +128,7 @@ def full_srma(tau=TAU, lang="zh", seed=SEED):
         "precision → pooled RR=%.2f, 95%% CI [%.2f, %.2f] (very narrow). But the trials "
         "genuinely <b>differ</b> (I²=%.0f%%, τ²=%.3f): the random-effects model adds this "
         "between-study variance, giving pooled RR=%.2f, 95%% CI [%.2f, %.2f] — about %.1f× "
-        "wider, which honestly reflects the uncertainty. Truth RR=%.2f."
+        "wider, which better reflects the real uncertainty. Truth RR=%.2f."
         % (len(yi), float(np.exp(pooled_fe)), float(np.exp(fe_lo)), float(np.exp(fe_hi)),
            res["I2"], res["tau2"], float(np.exp(pooled_re)), float(np.exp(re_lo)),
            float(np.exp(re_hi)), ratio, truth_rr))

@@ -69,7 +69,7 @@ def _build_index():
     #    Pyodide 本身改由 pyodide-worker.js 在背景執行緒以 importScripts 載入,
     #    主頁不再載入 pyodide.js,避免主執行緒解析大檔。
     inject = (
-        '<script src="pyodide-bridge.js?v=49"></script>\n'
+        '<script src="pyodide-bridge.js?v=50"></script>\n'
         "<!-- 本檔由 build_docs.py 產生,請勿手改;來源為 frontend/index.html -->\n"
     )
     html = re.sub(r"</head>", inject + "</head>", html, count=1)

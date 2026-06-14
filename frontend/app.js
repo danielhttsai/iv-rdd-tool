@@ -75,8 +75,12 @@ const PANEL_INIT = {
 let curMethod = "iv", curSub = "learn";
 const methodSelect = document.getElementById("methodSelect");
 const subtabBtns = [...document.querySelectorAll(".subtab")];
+const subtabsRow = document.querySelector(".subtabs");
 const chooseTab = document.getElementById("chooseTab");
 const dataTab = document.getElementById("dataTab");
+// The ①–⑥ sub-tabs only apply to the 24 per-method panels. Hide them on the
+// standalone pages (topics, 怎麼選, 資料庫) so a stray click can't jump to a method.
+function setSubtabs(show) { if (subtabsRow) subtabsRow.style.display = show ? "" : "none"; }
 // Standalone teaching topics that live in the method dropdown but open their own
 // full-page panel (no ①–⑥ sub-tabs): missing data, SR/MA, network meta-analysis.
 const TOPICS = {
@@ -96,6 +100,7 @@ function showPanel(panelId) {
 function openTopic(key) {
   const t = TOPICS[key]; if (!t) return;
   subtabBtns.forEach((x) => x.classList.remove("active"));
+  setSubtabs(false);
   chooseTab.classList.remove("active");
   if (dataTab) dataTab.classList.remove("active");
   if (methodSelect) methodSelect.value = key;
@@ -105,6 +110,7 @@ function openTopic(key) {
 }
 function showMethodSub() {
   if (methodSelect.value !== curMethod) methodSelect.value = curMethod;  // resync dropdown if we came from a topic panel
+  setSubtabs(true);
   chooseTab.classList.remove("active");
   if (dataTab) dataTab.classList.remove("active");
   subtabBtns.forEach((b) => b.classList.toggle("active", b.dataset.sub === curSub));
@@ -118,9 +124,13 @@ methodSelect.addEventListener("change", () => {
   if (TOPICS[v]) { openTopic(v); return; }   // standalone teaching topics (miss / SR-MA / NMA)
   curMethod = v; showMethodSub();
 });
-subtabBtns.forEach((b) => b.addEventListener("click", () => { curSub = b.dataset.sub; showMethodSub(); }));
+subtabBtns.forEach((b) => b.addEventListener("click", () => {
+  if (subtabsRow && subtabsRow.style.display === "none") return;  // ignore clicks while on a topic / choose / db page
+  curSub = b.dataset.sub; showMethodSub();
+}));
 chooseTab.addEventListener("click", () => {
   subtabBtns.forEach((x) => x.classList.remove("active"));
+  setSubtabs(false);
   if (dataTab) dataTab.classList.remove("active");
   chooseTab.classList.add("active");
   showPanel("choose");
@@ -128,6 +138,7 @@ chooseTab.addEventListener("click", () => {
 });
 if (dataTab) dataTab.addEventListener("click", () => {
   subtabBtns.forEach((x) => x.classList.remove("active"));
+  setSubtabs(false);
   chooseTab.classList.remove("active");
   dataTab.classList.add("active");
   showPanel("dbpanel");

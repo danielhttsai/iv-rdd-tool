@@ -14,7 +14,7 @@
 
 var PYODIDE_INDEX = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
 // 與 pyodide-bridge.js 的 py 來源快取破壞一致；任何 backend .py 變更時一起 bump。
-var PY_VER = "91";
+var PY_VER = "92";
 var PY_MODULES = ["i18n", "iv_core", "assumptions", "ml_iv", "gen_data", "rdd_core", "rdd_survival", "rdd_assumptions", "rdd_gen", "rdd_ml", "did_core", "did_gen", "did_assumptions", "did_ml", "tit_core", "tit_gen", "tit_assumptions", "tit_realmle", "its_core", "its_gen", "its_assumptions", "its_ml", "perr_core", "perr_gen", "perr_assumptions", "ccw_core", "ccw_gen", "ccw_assumptions", "cctc_core", "cctc_gen", "cctc_assumptions", "seq_core", "seq_gen", "seq_assumptions", "cc_core", "cc_gen", "cc_assumptions", "cc_ml", "sccs_core", "sccs_gen", "sccs_assumptions", "sccs_ml", "acnu_core", "acnu_gen", "acnu_assumptions", "acnu_ml", "pnu_core", "pnu_gen", "pnu_assumptions", "pnu_ml", "nc_core", "nc_gen", "nc_assumptions", "nc_ml", "med_core", "med_gen", "med_assumptions", "med_ml", "ps_core", "ps_gen", "ps_assumptions", "ps_ml", "tmle_core", "tmle_gen", "tmle_assumptions", "tmle_ml", "gm_core", "gm_gen", "gm_assumptions", "gm_ml", "tnd_core", "tnd_gen", "tnd_assumptions", "tnd_ml", "pssa_core", "pssa_gen", "pssa_assumptions", "tscan_core", "tscan_gen", "tscan_assumptions", "wce_core", "wce_gen", "wce_assumptions", "missing_core", "missing_gen", "transport_core", "transport_gen", "transport_assumptions", "srma_core", "srma_gen", "extctrl_core", "extctrl_gen", "extctrl_assumptions", "api"];
 
 var pyodide = null;

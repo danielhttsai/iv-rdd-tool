@@ -16,7 +16,7 @@
   "use strict";
 
   // Worker 檔的快取破壞；改動 worker 或 bridge 邏輯時 bump（py 來源版本在 worker 內的 PY_VER）。
-  var WORKER_VER = "2";
+  var WORKER_VER = "3";
 
   // ⑤「用 AI 強化」等需要 scikit-learn 的端點：首次呼叫時請 Worker 載入 sklearn。
   var SKLEARN_PATHS = {
