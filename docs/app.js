@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const API = "";  // same origin
 const state = {
@@ -1940,6 +1940,7 @@ function initChoose() {
 // merged into one clickable anchor-based tree. Click through → best-fit advice.
 // ----------------------------------------------------------------------
 function gotoMethod(m, sub) {
+  if (TOPICS[m]) { openTopic(m); return; }   // standalone topics (srma / nma / miss / causalml) have no ①–⑥ sub-tabs
   curMethod = m;
   curSub = sub || "learn";
   methodSelect.value = m;
@@ -1961,6 +1962,16 @@ const DNODES = {
       { l: { zh: "暴露錨定：先固定一個暴露／介入，看它造成什麼結果", en: "Exposure-anchored: fix one exposure/intervention, study its effects" }, to: "exOut" },
       { l: { zh: "結果錨定：先固定一個結果，回頭找是哪些暴露造成的", en: "Outcome-anchored: fix one outcome, look back for the exposures" }, to: "outHow" },
       { l: { zh: "機制錨定：已知某暴露有效果，想知道有多少<b>透過某中介</b>發生（中介分析）", en: "Mechanism-anchored: an effect is known — ask how much runs <b>through a mediator</b> (mediation)" }, to: "rMED" },
+      { l: { zh: "證據錨定：你不是在做單一研究，而是想把<b>已有的多篇研究</b>合起來回答（證據合併）", en: "Evidence-anchored: you are not running a single study but want to combine <b>several existing studies</b> (evidence synthesis)" }, to: "synth" },
+    ],
+  },
+  // ================= D · evidence-anchored (cross-study synthesis) =================
+  synth: {
+    step: { zh: "證據合併", en: "Evidence synthesis" },
+    q: { zh: "你要一次比較幾個治療？（這層決定做一般統合分析還是網絡統合分析）", en: "How many treatments are you comparing at once? (this decides ordinary vs network meta-analysis)" },
+    opts: [
+      { l: { zh: "兩個的正面對決（或一個介入 vs 對照）——先系統性回顧找出所有研究，再做統合分析", en: "Two, head-to-head (or one intervention vs a control) — systematically review all studies, then meta-analyse" }, to: "rSRMA" },
+      { l: { zh: "三個以上、而且很少有試驗直接兩兩比過——用直接＋間接證據連成網絡", en: "Three or more, with few head-to-head trials — connect direct + indirect evidence into a network" }, to: "rNMA" },
     ],
   },
   // ================= A · exposure-anchored =================
@@ -2225,17 +2236,8 @@ const DNODES = {
     opts: [
       { l: { zh: "有，但只有發表的彙總結果（沒有個體資料）", en: "Yes, but only published summary results (no individual data)" }, to: "rEXTCTRL" },
       { l: { zh: "有，且拿得到個體層級資料", en: "Yes, and I can get its individual-level data" }, to: "rTRANS" },
-      { l: { zh: "都沒有 → 可能要收原創資料", en: "None → you may need to collect original data" }, to: "rNeedNew" },
     ],
   },
-  rNeedNew: { rec: { kind: "fallback", badge: "★",
-    title: { zh: "建議：可能要收原創資料", en: "Suggested: you may need to collect original data" },
-    why: { zh: "既沒有可借的準隨機變異、也沒有現成的 RCT——那就沒有捷徑了，可能要收原創資料來回答這個問題。實作上可先寫清楚一場理想試驗該怎麼做（用 <b>target trial emulation</b> 把觀察性分析設計成「模擬」那場試驗），再去收能回答它的資料。",
-           en: "With no borrowable quasi-random variation and no existing RCT, there is no shortcut — you may need to collect original data to answer the question. In practice, first write down the ideal trial (use <b>target trial emulation</b> to design the observational analysis as an emulation of that trial), then collect data that can answer it." },
-    scenario: { zh: "疫苗情境：手上既沒有隨機提醒、明確切點、政策時點，也沒有別處的 RCT——那就先寫清楚一場理想試驗該怎麼做，再去收能回答它的資料。",
-                en: "Vaccine scenario: no random reminder, sharp cutoff, policy timing, nor an RCT elsewhere — write down the ideal trial first, then go and collect data that can answer it." },
-    watch: { zh: "別硬把不適合的設計套上去；先確認手上真的沒有任何準隨機來源，再決定收新資料。",
-             en: "Don't force an ill-fitting design; first make sure you truly have no quasi-random source, then decide to collect new data." } } },
   rEXTCTRL: { rec: { kind: "toolbox", method: "extctrl", badge: "外部對照 ✓",
     title: { zh: "最適合：外部對照 ✓（本工具）—— 借一個對照臂補上單臂研究缺的對照", en: "Best fit: External control ✓ (this tool) — borrow a control arm for a single-arm study" },
     why: { zh: "你只有一個<b>單臂</b>（全部都治療）、沒有同期對照。借<b>外部／歷史對照</b>（外部世代、登錄、或那場 RCT 的未治療者）補上對照臂；有個體資料時，用<b>標準化／傾向加權</b>把兩臂的共變項差異校正掉再比較。只有彙總結果時，改走較輕量的 MAIC／STC（配對調整間接比較）。",
@@ -2252,6 +2254,22 @@ const DNODES = {
                 en: "Vaccine scenario: a vaccine's efficacy comes from an RCT in adults in another country, but you care about <b>local older adults</b>. Reweight by the shared distribution of risk factors to transport the trial's effect to your local elderly population." },
     watch: { zh: "↗ 本工具箱未實作，供參考。<b>關鍵假設</b>：所有會改變效果的<b>修飾因子都測得到</b>，且兩族群在這些因子上有<b>重疊（共同支持）</b>。",
              en: "↗ Not implemented here; for reference. <b>Key assumptions</b>: all effect modifiers are <b>measured</b>, and the two populations <b>overlap</b> on them (common support)." } } },
+  rSRMA: { rec: { kind: "toolbox", method: "srma", badge: "SR-MA ✓",
+    title: { zh: "最適合：系統性回顧與統合分析 ✓（本工具）—— 把整個證據體合成一個答案", en: "Best fit: Systematic review & meta-analysis ✓ (this tool) — synthesise the whole evidence base" },
+    why: { zh: "你不是在分析單一份資料，而是想回答「<b>整個證據體</b>說了什麼」。先用事先寫好、可重現的方法（PICO、登錄計畫書、全面檢索、雙人篩選、偏誤風險）找出並評讀所有研究，再在研究夠相似時用<b>統合分析</b>（固定 vs 隨機效果、I²、漏斗圖）合併，最後用 <b>GRADE</b> 評整體證據強度。注意：這是比單一研究<b>更上一層</b>的設計，不是用來控制某一份資料的混淆。",
+           en: "You are not analysing one dataset but asking what <b>the whole body of evidence</b> says. Use a pre-specified, reproducible method (PICO, a registered protocol, a comprehensive search, dual screening, risk-of-bias) to find and appraise every study, then — where studies are similar enough — <b>meta-analyse</b> (fixed vs random effects, I², funnel plot), and finally rate certainty with <b>GRADE</b>. Note this sits <b>one level above</b> a single study; it is not a confounding-control design for one dataset." },
+    scenario: { zh: "疫苗情境：你想知道某疫苗對某結果的整體效果——找出所有相關試驗／世代研究，評讀並合併成一個帶信賴（與預測）區間的合併估計（見「系統性回顧與統合分析」分頁的即時森林圖／漏斗圖）。",
+                en: "Vaccine scenario: you want the overall effect of a vaccine on an outcome — find every relevant trial/cohort study, appraise and pool them into a single estimate with a confidence (and prediction) interval (see the SR-MA page's live forest/funnel plots)." },
+    watch: { zh: "✓ 本工具箱已實作。<b>關鍵</b>：合併的可信度不會超過納入的研究（垃圾進、垃圾出）——透明的事前方法、偏誤風險評讀、處理異質性與發表偏誤，缺一不可。",
+             en: "✓ Implemented in this toolbox. <b>Key</b>: the pool is only as trustworthy as the studies in it (garbage in, garbage out) — a transparent pre-specified method, risk-of-bias appraisal, and handling of heterogeneity & publication bias are all essential." } } },
+  rNMA: { rec: { kind: "toolbox", method: "nma", badge: "NMA ✓",
+    title: { zh: "最適合：網絡統合分析 ✓（本工具）—— 一次比較三個以上治療", en: "Best fit: Network meta-analysis ✓ (this tool) — compare three or more treatments at once" },
+    why: { zh: "臨床上要在<b>很多種</b>治療之間選擇，但很少有試驗直接兩兩比過。網絡統合分析把所有治療連成一個<b>網絡</b>，結合<b>直接</b>證據（真的比過的試驗）與<b>間接</b>證據（透過共同對照推得），一次估出每一對的對比、甚至排名。代價是多一個大假設——<b>可遞移性</b>——以及直接 vs 間接的<b>一致性</b>檢查。",
+           en: "Clinicians must choose among <b>many</b> treatments, but few trials compare every pair head-to-head. Network meta-analysis connects all treatments into one <b>network</b>, combining <b>direct</b> evidence (trials that compared the two) with <b>indirect</b> evidence (via a common comparator), to estimate every pairwise contrast at once — even a ranking. The price is one big extra assumption — <b>transitivity</b> — plus a direct-vs-indirect <b>coherence</b> check." },
+    scenario: { zh: "疫苗情境：有 A vs 安慰劑、B vs 安慰劑的試驗，但沒人直接做 A vs B。用安慰劑當共同對照間接估 A vs B，並在有直接試驗時合併成混合估計（見「網絡統合分析」分頁）。",
+                en: "Vaccine scenario: trials of A vs placebo and B vs placebo exist, but nobody ran A vs B directly. Use placebo as the common comparator to estimate A vs B indirectly, pooling with any direct trial into a mixed estimate (see the NMA page)." },
+    watch: { zh: "✓ 本工具箱已實作。<b>關鍵</b>：可遞移性（各比較的網絡彼此可比）與一致性（直接與間接相符）——信任排名前務必檢查這兩者。",
+             en: "✓ Implemented in this toolbox. <b>Key</b>: transitivity (the compared networks are comparable) and coherence (direct and indirect agree) — check both before trusting a ranking." } } },
 };
 
 // the whole tree as a static map — shown at a leaf, with the reached design lit
@@ -2328,12 +2346,25 @@ const FULLMAP = {
           ] },
       ],
     },
+    {
+      cls: "d",
+      edge: { zh: "證據錨定", en: "evidence-anchored" },
+      head: { zh: "D · 證據錨定（跨研究合併）", en: "D · Evidence-anchored (cross-study synthesis)" },
+      sub: { zh: "不是單一研究 → 把已有的多篇研究合成一個答案（比單一研究高一層）", en: "not a single study → synthesise several existing studies (one level above a single study)" },
+      steps: [
+        { q: { zh: "一次比較幾個治療？", en: "How many treatments at once?" },
+          forks: [
+            { edge: { zh: "兩個正面對決（或介入 vs 對照）", en: "two, head-to-head (or vs control)" },
+              leaves: [{ key: "rSRMA", cond: { zh: "系統性回顧找出所有研究，再合併（固定／隨機效果、I²、GRADE）", en: "systematically find all studies, then pool (fixed/random effects, I², GRADE)" }, tag: "SR-MA ✓", kind: "tb", method: "srma" }] },
+            { edge: { zh: "三個以上、少有直接對決", en: "three or more, few head-to-head" },
+              leaves: [{ key: "rNMA", cond: { zh: "用直接＋間接證據連成網絡（可遞移性＋一致性）", en: "connect direct + indirect evidence into a network (transitivity + coherence)" }, tag: "NMA ✓", kind: "tb", method: "nma" }] },
+          ] },
+      ],
+    },
   ],
   rct: {
     q: { zh: "最後一步（沒辦法的辦法）：上面都不符合——你其實已有一場（別族群的）RCT 可以借嗎？", en: "Last step (last resort): nothing above fits — do you actually have an RCT (in another population) to borrow?" },
     forks: [
-      { edge: { zh: "沒有現成 RCT", en: "no existing RCT" },
-        leaves: [{ key: "rNeedNew", cond: { zh: "可能要收原創資料", en: "you may need to collect original data" }, tag: "收資料 ★", kind: "ex" }] },
       { edge: { zh: "有，但只有彙總結果", en: "yes, summary results only" },
         leaves: [{ key: "rEXTCTRL", cond: { zh: "把那場 RCT／外部資料當對照組", en: "borrow the RCT / external data as a control arm" }, tag: "外部對照 ✓", kind: "tb", method: "extctrl" }] },
       { edge: { zh: "有，且有個體資料", en: "yes, with individual data" },

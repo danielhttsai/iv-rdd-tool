@@ -189,6 +189,7 @@ b { color: #0b1020; }
 .fc-head.a { background: var(--z); }
 .fc-head.b { background: #7c3aed; }
 .fc-head.c { background: #b45309; }
+.fc-head.d { background: #0e7490; }
 a.xref { color: var(--z); cursor: pointer; text-decoration: none; font-weight: 600;
   border-bottom: 1px dotted rgba(63, 125, 98, .55); }
 a.xref:hover { color: #2c5b47; border-bottom-style: solid; }
