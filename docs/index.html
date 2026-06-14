@@ -6342,10 +6342,18 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
     <h1 data-en="Systematic review &amp; meta-analysis">系統性回顧與統合分析</h1>
     <p class="lead" data-en="Every other tab in this toolbox produces <b>one</b> study's estimate. A systematic review sits one level up: it finds <b>all</b> the relevant studies with a pre-specified, reproducible method, appraises them, and — where it makes sense — statistically <b>pools</b> them into a meta-analysis. This page walks the Cochrane workflow, shows a live meta-analysis (fixed vs random effects, heterogeneity, funnel plot), explains how GRADE rates the certainty of the pooled answer, and is honest about where AI tools (Rayyan, machine-learning screening, LLMs) actually help.">本工具箱其他每個分頁都在產生<b>一篇</b>研究的估計。系統性回顧站在更上一層：用<b>事先寫好、可重現</b>的方法找出<b>所有</b>相關研究、評讀它們，並在適當時把它們統計地<b>合併</b>成統合分析。這一頁走過 Cochrane 的工作流程、示範一個即時的統合分析（固定 vs 隨機效果、異質性、漏斗圖）、說明 GRADE 怎麼評估這個合併答案的「證據強度」，並誠實交代 AI 工具（Rayyan、機器學習篩選、大型語言模型）到底幫得上什麼。</p>
 
+    <nav class="page-toc" aria-label="page sections">
+      <a class="toc-link" href="#srma-workflow" data-en="Workflow">工作流程</a>
+      <a class="toc-link" href="#srma-live" data-en="Live meta-analysis">即時統合分析</a>
+      <a class="toc-link" href="#srma-het" data-en="Heterogeneity &amp; funnel">異質性與漏斗</a>
+      <a class="toc-link" href="#srma-grade" data-en="GRADE">GRADE</a>
+      <a class="toc-link" href="#srma-ai" data-en="AI &amp; automation">AI 與自動化</a>
+    </nav>
+
     <div class="card info"><h3 data-en="Where this sits relative to the rest of the toolbox">這在整個工具箱裡的位置</h3>
       <p data-en="The 23 methods answer &quot;what does <b>this</b> dataset say?&quot; A systematic review answers &quot;what does <b>the whole evidence base</b> say?&quot; — and the quality of each included study (was it a good IV / RDD / cohort?) feeds straight into the review's risk-of-bias step. A meta-analysis is only as trustworthy as the studies in it: pooling biased studies just gives a precise wrong answer (&quot;garbage in, garbage out&quot;).">那 23 個方法回答「<b>這一份</b>資料說了什麼？」系統性回顧回答「<b>整個證據體</b>說了什麼？」——而每篇納入研究的品質（它是不是一個好的 IV／RDD／世代研究？）直接餵進回顧的「偏誤風險」步驟。統合分析的可信度，不會超過它納入的研究：把有偏的研究合併起來，只會得到一個很精確的錯答案（垃圾進、垃圾出）。</p></div>
 
-    <h2 data-en="The workflow (Cochrane Handbook)">工作流程（Cochrane Handbook）</h2>
+    <h2 id="srma-workflow" data-en="The workflow (Cochrane Handbook)">工作流程（Cochrane Handbook）</h2>
     <p class="lead" data-en="A systematic review is defined by its <b>method being fixed in advance</b> and documented, so anyone could repeat it. The canonical steps:">系統性回顧的定義，就是它的<b>方法事先固定</b>且有紀錄，任何人都能重做一次。經典步驟：</p>
     <div class="cards cards-3">
       <div class="card"><h3 data-en="① Question &amp; protocol (PICO)">① 問題與計畫書（PICO）</h3><p data-en="Frame a precise question — <b>P</b>opulation, <b>I</b>ntervention, <b>C</b>omparator, <b>O</b>utcome — then write and <b>register a protocol</b> (e.g. PROSPERO) <i>before</i> you start, so the methods can't be bent to the results.">把問題寫精準——族群 <b>P</b>opulation、介入 <b>I</b>ntervention、對照 <b>C</b>omparator、結果 <b>O</b>utcome——然後在開始<i>之前</i>寫好並<b>登錄計畫書</b>（如 PROSPERO），讓方法不會被結果牽著走。</p></div>
@@ -6400,7 +6408,7 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       <div class="card"><h3 data-en="ROBINS-I — non-randomised studies (Ch 25)">ROBINS-I —— 非隨機研究（第 25 章）</h3><p data-en="Seven domains, benchmarked against a hypothetical target trial: ① <b>confounding</b>, ② selection of participants, ③ classification of interventions, ④ deviations from intended interventions, ⑤ missing data, ⑥ measurement of outcomes, ⑦ selective reporting. This is exactly where your IV / RDD / cohort knowledge does the work.">七個領域，以一個假想的目標試驗為基準：① <b>混淆</b>、② 參與者選擇、③ 介入分類、④ 偏離預定介入、⑤ 資料缺失、⑥ 結果測量、⑦ 選擇性報告。這正是你的 IV／RDD／世代知識派上用場的地方。</p></div>
     </div>
 
-    <h2 data-en="Live meta-analysis: fixed vs random effects">即時統合分析：固定 vs 隨機效果</h2>
+    <h2 id="srma-live" data-en="Live meta-analysis: fixed vs random effects">即時統合分析：固定 vs 隨機效果</h2>
     <p class="lead" data-en="12 synthetic vaccine trials, each a log risk ratio with its own precision. The <b>forest plot</b> shows each trial (box = estimate, box size = weight, whiskers = 95% CI) and two pooled diamonds. <b>Fixed-effect</b> assumes every trial estimates the identical effect and weights only by precision — a narrow, over-confident interval when trials truly differ. <b>Random-effects</b> (DerSimonian–Laird) adds the between-study variance τ², widening the interval to reflect that. Drag the slider to change how much the trials genuinely differ.">12 場合成的疫苗試驗，每場是一個帶自己精度的 log 風險比。<b>森林圖</b>顯示每場試驗（方塊＝估計、方塊大小＝權重、鬚＝95% CI）與兩個合併菱形。<b>固定效果</b>假設每場估的是相同效果、只用精度加權——當試驗其實有差異時，區間會窄而過度自信。<b>隨機效果</b>（DerSimonian–Laird）把研究間變異 τ² 加進去，把區間放寬以反映這點。拖動滑桿改變試驗之間真正的差異程度。</p>
     <div class="controls">
       <label><span data-en="Between-study heterogeneity (τ):">研究間異質性（τ）：</span><b id="srmaTauVal">0.20</b>
@@ -6420,7 +6428,7 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
     <p class="caption" id="srmaEgger"></p>
     <p class="caption" data-en="As you raise τ, I² climbs and the random-effects interval widens while the fixed-effect interval barely moves — the visible reason high heterogeneity demands a random-effects model (and a hunt for the cause), not a falsely narrow fixed-effect CI. Synthetic teaching data.">當你把 τ 拉高，I² 上升、隨機效果區間變寬，而固定效果區間幾乎不動——這就是高異質性為什麼需要隨機效果模型（並去找原因），而不是一個假性過窄的固定效果 CI。合成教學資料。</p>
 
-    <h2 data-en="Reading heterogeneity &amp; small-study effects">解讀異質性與小研究效應</h2>
+    <h2 id="srma-het" data-en="Reading heterogeneity &amp; small-study effects">解讀異質性與小研究效應</h2>
     <div class="cards cards-3">
       <div class="card"><h3>I² &amp; τ²</h3><p data-en="<b>τ²</b> is the estimated variance of the true effects across studies; <b>I²</b> is the % of total variation that is real heterogeneity rather than sampling error. Rough bands: 0–40% maybe unimportant, 30–60% moderate, 50–90% substantial, 75–100% considerable. High I² ⇒ explore (subgroups, meta-regression), don't just pool."><b>τ²</b> 是各研究真實效果的估計變異；<b>I²</b> 是總變異中「真正異質」而非抽樣誤差的百分比。粗略分級：0–40% 可能不重要、30–60% 中度、50–90% 實質、75–100% 相當大。I² 高 ⇒ 去探究（次群、統合迴歸），不要只是合併。</p></div>
       <div class="card"><h3 data-en="Funnel plot &amp; publication bias">漏斗圖與發表偏誤</h3><p data-en="Plot each study's effect against its precision. Symmetric inverted funnel = fine; a <b>gap in one bottom corner</b> hints small negative studies went unpublished (publication bias) or that small studies differ. <b>Egger's test</b> formalises the asymmetry — but it is low-powered with few studies, so read it cautiously.">把每篇的效果對其精度作圖。對稱的倒漏斗＝沒問題；<b>某個底角有缺口</b>暗示小型陰性研究沒被發表（發表偏誤）或小研究本就不同。<b>Egger 檢定</b>把不對稱量化——但研究少時檢定力低，要謹慎解讀。</p></div>
@@ -6434,7 +6442,7 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       <div class="card"><h3 data-en="Bias due to missing results (Ch 13)">結果缺失造成的偏誤（第 13 章）</h3><p data-en="Whole studies (or outcomes) going unpublished because results were unwelcome <b>biases the pool upward</b>. Defences: a comprehensive search incl. trial registries &amp; grey literature, the funnel plot &amp; Egger test (below), and selection-model / trim-and-fill sensitivity analyses. Prevention beats correction — register protocols.">整篇研究（或某結果）因結果不討喜而未發表，會<b>把合併往上偏</b>。防線：含試驗登錄與灰色文獻的全面檢索、漏斗圖與 Egger 檢定（下方）、以及選擇模型／trim-and-fill 敏感度分析。預防勝於校正——登錄計畫書。</p></div>
     </div>
 
-    <h2 data-en="GRADE: how certain is the pooled answer?">GRADE：這個合併答案有多確定？</h2>
+    <h2 id="srma-grade" data-en="GRADE: how certain is the pooled answer?">GRADE：這個合併答案有多確定？</h2>
     <div class="card info">
       <p data-en="A pooled estimate is not the end — GRADE rates the <b>certainty</b> (high / moderate / low / very low) of the evidence for each outcome. Bodies of evidence <b>start</b> high for randomised trials and low for observational studies, then move:">合併估計不是終點——GRADE 為每個結果評估證據的<b>強度</b>（高／中／低／極低）。整體證據對隨機試驗<b>起始</b>為高、觀察性研究起始為低，然後上下調整：</p>
       <ul>
@@ -6444,7 +6452,7 @@ X_filled = imp.fit_transform(df[["A", "Y", "X"]])    <span class="cm"># include 
       <p data-en="The result is a Summary-of-Findings table: the pooled effect <i>plus</i> a transparent certainty rating that decision-makers can act on.">產出是「結果摘要表」：合併效果<i>加上</i>一個透明的證據強度評等，讓決策者能據以行動。</p>
     </div>
 
-    <h2 data-en="AI &amp; automation — what actually helps (and its limits)">AI 與自動化 —— 真正幫得上什麼（與其限制）</h2>
+    <h2 id="srma-ai" data-en="AI &amp; automation — what actually helps (and its limits)">AI 與自動化 —— 真正幫得上什麼（與其限制）</h2>
     <p class="lead" data-en="Screening thousands of titles is the most labour-intensive step, so it is where automation is furthest along. Reading the evidence:">篩選數千筆標題是最耗人力的一步，所以自動化在這裡最成熟。對證據的解讀：</p>
     <div class="cards cards-3">
       <div class="card"><h3 data-en="Rayyan &amp; active learning">Rayyan 與主動學習</h3><p data-en="<b>Rayyan</b> (1M+ reviewers, 3M+ reviews) lets two reviewers screen in parallel, <b>blind</b> to each other, auto-deduplicates large reference sets, and ranks the unscreened pile by predicted relevance (a 5-star / zero-shot relevance rating): you label a few, the model re-prioritises, and the relevant records surface early. It <b>accelerates</b> human screening — it does not replace the dual-reviewer judgement, and you still resolve conflicts."><b>Rayyan</b>（逾百萬審閱者、逾三百萬篇回顧）讓兩位審閱者平行、<b>互盲</b>地篩選，自動去重大型參考集，並用「預測相關性」（五星／zero-shot 評分）把未篩的堆排序：你標一些、模型重新排序，相關的記錄就提早浮上來。它<b>加速</b>人工篩選——但不取代雙人審閱的判斷，衝突仍要你裁定。</p></div>
@@ -6468,10 +6476,17 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
     <h1 data-en="Network meta-analysis (NMA)">網絡統合分析（NMA）</h1>
     <p class="lead" data-en="A standard meta-analysis pools head-to-head trials of <b>two</b> treatments. But clinicians must choose among <b>many</b> — and few trials compare every pair directly. Network meta-analysis connects all the treatments into one <b>network</b> and estimates every pairwise contrast at once, by combining <b>direct</b> evidence (trials that compared the two) with <b>indirect</b> evidence (inferred through a common comparator). It can even rank the options. The price is one big extra assumption — <b>transitivity</b> — and a consistency check between the direct and indirect routes.">一般的統合分析合併<b>兩種</b>治療的正面對決試驗。但臨床上要在<b>很多種</b>之間選擇，而且很少有試驗直接比過每一對。網絡統合分析把所有治療連成一個<b>網絡</b>，一次估出每一對的對比——做法是把<b>直接</b>證據（真的比過這兩者的試驗）與<b>間接</b>證據（透過共同對照推出來）結合。它甚至能對選項排名。代價是多了一個大假設——<b>可遞移性</b>——以及一個直接 vs 間接的一致性檢查。</p>
 
+    <nav class="page-toc" aria-label="page sections">
+      <a class="toc-link" href="#nma-live" data-en="Live demo">即時示範</a>
+      <a class="toc-link" href="#nma-assume" data-en="Assumptions">假設</a>
+      <a class="toc-link" href="#nma-rank" data-en="Ranking">治療排名</a>
+      <a class="toc-link" href="#nma-how" data-en="Doing &amp; rating">怎麼做、怎麼評</a>
+    </nav>
+
     <div class="card info"><h3 data-en="Direct, indirect &amp; mixed evidence">直接、間接與混合證據</h3>
       <p data-en="If trials compared <b>A vs Placebo</b> and <b>B vs Placebo</b>, but nobody ran <b>A vs B</b> directly, you can still estimate A vs B <b>indirectly</b>: (A−Placebo) − (B−Placebo). Placebo is the <b>common comparator</b> that bridges them. When both a direct A-vs-B trial <i>and</i> the indirect route exist, NMA pools them into a more precise <b>mixed</b> estimate — and checks they agree.">如果有試驗比過 <b>A vs 安慰劑</b> 與 <b>B vs 安慰劑</b>，但沒人直接做 <b>A vs B</b>，你仍能<b>間接</b>估出 A vs B：（A−安慰劑）−（B−安慰劑）。安慰劑就是橋接兩者的<b>共同對照</b>。當「直接 A vs B 試驗」和「間接路徑」都存在時，NMA 把它們合併成更精確的<b>混合</b>估計——並檢查兩者是否相符。</p></div>
 
-    <h2 data-en="Live demo: indirect comparison &amp; the consistency check">即時示範：間接比較與一致性檢查</h2>
+    <h2 id="nma-live" data-en="Live demo: indirect comparison &amp; the consistency check">即時示範：間接比較與一致性檢查</h2>
     <p class="lead" data-en="A small network: Placebo, Drug A, Drug B. We have direct trials of A-vs-Placebo (log RR −0.40) and B-vs-Placebo (−0.25). The <b>indirect</b> A-vs-B effect is therefore (−0.40) − (−0.25) = −0.15. Now imagine a <b>direct</b> A-vs-B trial — drag its result. When the direct estimate matches the indirect one, the network is <b>consistent</b> (the loop closes); when they diverge, that's <b>incoherence</b>, and pooling them into one number would be misleading.">一個小網絡：安慰劑、藥 A、藥 B。我們有 A-vs-安慰劑（log RR −0.40）與 B-vs-安慰劑（−0.25）的直接試驗。所以 A-vs-B 的<b>間接</b>效果＝（−0.40）−（−0.25）＝−0.15。現在想像有一場<b>直接</b> A-vs-B 試驗——拖動它的結果。當直接估計和間接估計相符時，網絡<b>一致</b>（迴圈閉合）；當兩者背離，就是<b>不一致（incoherence）</b>，硬把它們合成一個數字會誤導。</p>
     <div class="controls"><label><span data-en="A direct A-vs-B trial would give (log RR):">假想的直接 A-vs-B 試驗結果（log RR）：</span><b id="nmaDirVal">-0.15</b>
       <input type="range" id="nmaDirSlider" min="-0.6" max="0.3" value="-0.15" step="0.01" /></label></div>
@@ -6487,14 +6502,14 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
     <p class="caption" id="nmaReading"></p>
     <p class="caption" data-en="Effects are log risk ratios (negative = the first drug is better). When the slider sits at the indirect value (−0.15) the loop is coherent; moving it away opens an inconsistency that node-splitting / the net-heat plot would flag. Synthetic teaching data.">效果為 log 風險比（負＝前一個藥較好）。當滑桿停在間接值（−0.15）時迴圈一致；移開就打開一個不一致，這正是 node-splitting／net-heat 圖會標出來的。合成教學資料。</p>
 
-    <h2 data-en="The assumptions that make it work">讓它成立的假設</h2>
+    <h2 id="nma-assume" data-en="The assumptions that make it work">讓它成立的假設</h2>
     <div class="cards cards-3">
       <div class="card"><h3 data-en="Transitivity (the big one)">可遞移性（最關鍵）</h3><p data-en="The indirect route is only valid if the trials forming it are <b>comparable</b> — the effect modifiers (age, severity, era, dose…) are distributed similarly across the A-vs-Placebo and B-vs-Placebo sets. If, say, the A trials enrolled much sicker patients, Placebo is no longer a fair bridge. Transitivity is a <b>clinical/epidemiological judgement</b>, largely untestable from the data.">間接路徑只有在組成它的試驗<b>可比</b>時才有效——效果修飾子（年齡、嚴重度、年代、劑量……）在 A-vs-安慰劑 與 B-vs-安慰劑 兩組間分布相似。若 A 的試驗收的病人重很多，安慰劑就不再是公平的橋。可遞移性是<b>臨床／流行病學的判斷</b>，大多無法用資料檢驗。</p></div>
       <div class="card"><h3 data-en="Consistency / coherence (checkable)">一致性／連貫（可檢）</h3><p data-en="The statistical shadow of transitivity: where a loop has both direct and indirect evidence, they should agree. Check it with <b>node-splitting</b> (split each comparison into its direct, indirect and network parts), the <b>net-heat plot</b> (netmeta), or a <b>design-by-treatment interaction</b> test. Disagreement = incoherence — investigate, don't just pool.">可遞移性的統計影子：在同時有直接與間接證據的迴圈裡，兩者應該相符。用 <b>node-splitting</b>（把每個對比拆成直接、間接、網絡三份）、<b>net-heat 圖</b>（netmeta）、或<b>design-by-treatment 交互</b>檢定來查。不相符＝不一致——去探究，別只是合併。</p></div>
       <div class="card"><h3 data-en="Network geometry">網絡幾何</h3><p data-en="Draw the network first: nodes = treatments, edges = direct comparisons (thicker = more trials). A well-connected network with closed loops supports NMA; a star (everything only vs Placebo) gives indirect-only estimates with no consistency check; a disconnected node can't be ranked at all.">先把網絡畫出來：節點＝治療、連線＝直接比較（越粗＝試驗越多）。連結良好、有閉合迴圈的網絡撐得起 NMA；星形（全部只對安慰劑）只有間接估計、沒有一致性可查；孤立的節點根本排不了名。</p></div>
     </div>
 
-    <h2 data-en="Ranking treatments — and its traps">對治療排名 —— 與它的陷阱</h2>
+    <h2 id="nma-rank" data-en="Ranking treatments — and its traps">對治療排名 —— 與它的陷阱</h2>
     <div class="card info">
       <p data-en="NMA can rank every treatment by the probability it is best. <b>SUCRA</b> (Surface Under the Cumulative RAnking curve; the frequentist twin is the <b>P-score</b>) summarises this as 0–100%. <b>Rankograms</b> show the whole distribution of possible ranks. Read rankings with care:">NMA 能依「是最佳的機率」對每個治療排名。<b>SUCRA</b>（累積排名曲線下面積；頻率學派的孿生是 <b>P-score</b>）把它摘成 0–100%。<b>Rankogram</b> 顯示可能名次的整個分布。解讀排名要小心：</p>
       <ul>
@@ -6503,7 +6518,7 @@ forest(m); funnel(m); metabias(m, method = "linreg")     <span class="cm"># fore
       </ul>
     </div>
 
-    <h2 data-en="Doing it &amp; rating it (Cochrane NMA toolkit; doing-meta.guide)">怎麼做、怎麼評（Cochrane NMA 工具箱；doing-meta.guide）</h2>
+    <h2 id="nma-how" data-en="Doing it &amp; rating it (Cochrane NMA toolkit; doing-meta.guide)">怎麼做、怎麼評（Cochrane NMA 工具箱；doing-meta.guide）</h2>
     <div class="cards cards-3">
       <div class="card"><h3 data-en="Frequentist — netmeta (R)">頻率學派 —— netmeta（R）</h3><p data-en="A graph-theoretical approach (borrowed from electrical-network theory) fits the whole network by weighted least squares; gives league tables (<code>netleague</code>), net-heat plots, forest plots vs a reference, P-scores, and network-wide I²/τ².">圖論取向（借自電網理論）用加權最小平方擬合整個網絡；給 league table（<code>netleague</code>）、net-heat 圖、相對參考治療的森林圖、P-score，以及全網絡的 I²/τ²。</p></div>
       <div class="card"><h3 data-en="Bayesian — gemtc / BUGSnet">貝氏 —— gemtc／BUGSnet</h3><p data-en="A hierarchical model fit by MCMC (gemtc/JAGS, BUGSnet); naturally handles multi-arm trials, gives full posteriors, SUCRA &amp; rankograms — but you must check convergence (trace plots, Gelman–Rubin). The classic two-treatment indirect shortcut is the <b>Bucher method</b>.">用 MCMC 擬合的階層模型（gemtc/JAGS、BUGSnet）；自然處理多臂試驗、給完整後驗、SUCRA 與 rankogram——但要檢查收斂（trace plot、Gelman–Rubin）。兩治療的間接捷徑是經典的 <b>Bucher 法</b>。</p></div>

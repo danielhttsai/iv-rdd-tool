@@ -435,3 +435,14 @@ pre.sas .kw { color: #6fd0c0; font-weight: 600; }      /* PROC / keyword */
   .controls, .colmap, .play-grid, .rdd-twocol { grid-template-columns: 1fr; }
   table.cmp th, table.cmp td { font-size: .82rem; padding: .5rem .55rem; }
 }
+
+/* In-page section nav (chips) for the long single-page topics (SR-MA, NMA). */
+.page-toc { display: flex; flex-wrap: wrap; gap: .5rem; margin: .2rem 0 1.2rem; }
+.page-toc .toc-link {
+  display: inline-block; padding: .32rem .8rem; border-radius: 999px;
+  background: #eef2f6; border: 1px solid var(--line); color: var(--ink);
+  font-weight: 600; font-size: .86rem; text-decoration: none; cursor: pointer;
+}
+.page-toc .toc-link:hover { background: var(--z); color: #fff; border-color: var(--z); }
+/* offset so the sticky header doesn't cover the jumped-to heading */
+.panel h2[id] { scroll-margin-top: 72px; }

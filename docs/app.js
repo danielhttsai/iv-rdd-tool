@@ -147,6 +147,15 @@ if (dataTab) dataTab.addEventListener("click", () => {
 // Delegated handler for in-content cross links (.xref) — survives i18n innerHTML swaps.
 // <a class="xref" data-m="sccs">SCCS</a> → go to that method; data-tab="db" → Databases tab.
 document.addEventListener("click", (e) => {
+  // In-page section nav (chips on the SR-MA / NMA topic pages): smooth-scroll
+  // to the target heading without writing the hash to the URL.
+  const toc = e.target.closest && e.target.closest("a.toc-link");
+  if (toc) {
+    e.preventDefault();
+    const t = document.getElementById((toc.getAttribute("href") || "").slice(1));
+    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   const a = e.target.closest && e.target.closest("a.xref");
   if (!a) return;
   e.preventDefault();
